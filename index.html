@@ -1,10 +1,518 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TreasureGO - 现代校园市集</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        /* --- 现代潮流配色 --- */
+        :root {
+            --bg-color: #F3F6F9;
+            --primary: #4F46E5;
+            --primary-hover: #4338CA;
+            --accent: #F59E0B;
+            --text-dark: #1F2937;
+            --text-gray: #6B7280;
+            --glass-bg: rgba(255, 255, 255, 0.95);
+            --card-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.05);
+            --float-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Poppins', 'Noto Sans SC', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+            background-image:
+                    radial-gradient(circle at 10% 20%, rgba(79, 70, 229, 0.05) 0%, transparent 40%),
+                    radial-gradient(circle at 90% 80%, rgba(245, 158, 11, 0.05) 0%, transparent 40%);
+        }
+
+        /* --- 🎈 背景漂浮物 (Emoji) --- */
+        #floating-container {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .floating-item {
+            position: absolute;
+            font-size: 4rem;
+            opacity: 0.6;
+            filter: drop-shadow(0 10px 10px rgba(0,0,0,0.1));
+            animation: floatUp 15s linear infinite;
+        }
+
+        @keyframes floatUp {
+            0% { transform: translateY(110vh) rotate(0deg); opacity: 0; }
+            10% { opacity: 0.8; }
+            90% { opacity: 0.8; }
+            100% { transform: translateY(-10vh) rotate(20deg); opacity: 0; }
+        }
+
+        /* --- 更圆润的侧边悬浮栏 --- */
+        .sidebar {
+            position: fixed;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            border-radius: 50px; /* 超圆润的边框 */
+            padding: 20px 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            z-index: 999;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            align-items: center;
+            width: 80px;
+            border: 1px solid #eee;
+        }
+
+        .sidebar.left { left: 20px; }
+        .sidebar.right { right: 20px; }
+
+        .sidebar-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+            transition: all 0.2s;
+            padding: 10px 0;
+            text-decoration: none;
+            color: #333;
+            border-bottom: 1px solid #f9f9f9;
+            width: 100%;
+        }
+
+        .sidebar-item:last-child {
+            border-bottom: none;
+        }
+
+        .sidebar-item:hover {
+            transform: scale(1.1);
+            color: #000;
+        }
+
+        .sidebar-icon {
+            font-size: 24px;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+        }
+
+        .sidebar-text {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-dark);
+            text-align: center;
+        }
+
+        /* --- 导航栏 (毛玻璃效果) --- */
+        .navbar {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 1rem 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 1px solid rgba(255,255,255,0.5);
+        }
+
+        .logo {
+            font-weight: 800;
+            font-size: 1.5rem;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            letter-spacing: -0.5px;
+        }
+
+        .logo span { color: var(--text-dark); }
+
+        /* Logo 图片样式 */
+        .logo-img {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            object-fit: cover;
+            box-shadow: 0 4px 6px rgba(245, 158, 11, 0.3);
+        }
+
+        .nav-actions button {
+            border: none;
+            background: transparent;
+            font-weight: 600;
+            color: var(--text-gray);
+            padding: 0.6rem 1.2rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-radius: 8px;
+        }
+
+        .nav-actions .btn-primary {
+            background-color: var(--text-dark);
+            color: white;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .nav-actions .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+        }
+        .nav-actions button:not(.btn-primary):hover {
+            color: var(--primary);
+            background: rgba(79, 70, 229, 0.05);
+        }
+
+        /* --- 搜索区域 --- */
+        .search-section {
+            text-align: center;
+            padding: 120px 20px 80px;
+            max-width: 800px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 10;
+        }
+
+        .main-title {
+            font-size: 3.5rem;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(to right, #1F2937 0%, #4F46E5 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .search-box-container {
+            display: flex;
+            background: white;
+            padding: 8px;
+            border-radius: 50px;
+            box-shadow: 0 20px 40px -10px rgba(79, 70, 229, 0.15);
+            border: 1px solid rgba(0,0,0,0.05);
+            transition: transform 0.3s;
+        }
+
+        .search-box-container:focus-within {
+            transform: translateY(-2px);
+            box-shadow: 0 25px 50px -10px rgba(79, 70, 229, 0.25);
+            border-color: var(--primary);
+        }
+
+        .search-input {
+            flex: 1;
+            border: none;
+            padding: 15px 25px;
+            font-size: 1.1rem;
+            outline: none;
+            border-radius: 50px;
+            color: var(--text-dark);
+        }
+
+        .search-btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 0 40px;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .search-btn:hover { background-color: var(--primary-hover); }
+
+        /* --- 商品列表 --- */
+        .market-container {
+            max-width: 1200px;
+            margin: 0 auto 100px;
+            padding: 0 20px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 2rem;
+        }
+        .section-header h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        .badge {
+            background: #DEF7EC;
+            color: #03543F;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 30px;
+        }
+
+        .product-card {
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1px solid rgba(0,0,0,0.04);
+            box-shadow: var(--card-shadow);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .product-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 30px -10px rgba(0,0,0,0.1);
+        }
+
+        .card-img-container {
+            height: 200px;
+            width: 100%;
+            background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .card-emoji {
+            font-size: 5rem;
+            filter: drop-shadow(0 10px 10px rgba(0,0,0,0.1));
+            transition: transform 0.3s;
+        }
+        .product-card:hover .card-emoji {
+            transform: scale(1.1) rotate(5deg);
+        }
+
+        .card-info { padding: 1.2rem; }
+
+        .product-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.5rem;
+        }
+
+        .product-title {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: var(--text-dark);
+            line-height: 1.3;
+        }
+        .product-desc {
+            font-size: 0.9rem;
+            color: var(--text-gray);
+            margin-bottom: 1rem;
+        }
+
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 1rem;
+            border-top: 1px solid #f3f4f6;
+        }
+
+        .price-tag {
+            font-weight: 800;
+            font-size: 1.2rem;
+            color: var(--primary);
+        }
+
+        .like-btn {
+            color: #D1D5DB;
+            font-size: 1.2rem;
+            transition: color 0.2s;
+        }
+        .product-card:hover .like-btn { color: #EC4899; }
+
+        /* 手机适配 */
+        @media (max-width: 768px) {
+            .main-title { font-size: 2.5rem; }
+            .search-section { padding: 80px 20px 40px; }
+            .search-input { padding: 12px 20px; font-size: 1rem; }
+            .search-btn { padding: 0 25px; }
+            .sidebar { display: none; } /* 手机端隐藏侧边栏 */
+        }
+    </style>
 </head>
 <body>
+
+<div id="floating-container"></div>
+
+<!-- 左侧悬浮栏 - 更圆润的设计 -->
+<div class="sidebar left">
+    <a href="#" class="sidebar-item">
+        <span class="sidebar-icon">📱</span>
+        <span class="sidebar-text">数码</span>
+    </a>
+    <a href="#" class="sidebar-item">
+        <span class="sidebar-icon">👗</span>
+        <span class="sidebar-text">服饰</span>
+    </a>
+    <a href="#" class="sidebar-item">
+        <span class="sidebar-icon">🏠</span>
+        <span class="sidebar-text">家居</span>
+    </a>
+    <a href="#" class="sidebar-item">
+        <span class="sidebar-icon">📚</span>
+        <span class="sidebar-text">图书</span>
+    </a>
+    <a href="#" class="sidebar-item">
+        <span class="sidebar-icon">🚲</span>
+        <span class="sidebar-text">出行</span>
+    </a>
+</div>
+
+<!-- 右侧悬浮栏 - 更圆润的设计 -->
+<div class="sidebar right">
+    <a href="#" class="sidebar-item">
+        <span class="sidebar-icon">📢</span>
+        <span class="sidebar-text">发布</span>
+    </a>
+    <a href="#" class="sidebar-item">
+        <span class="sidebar-icon">💬</span>
+        <span class="sidebar-text">消息</span>
+    </a>
+    <a href="#" class="sidebar-item">
+        <span class="sidebar-icon">💰</span>
+        <span class="sidebar-text">闲置</span>
+    </a>
+    <a href="#" class="sidebar-item">
+        <span class="sidebar-icon">📝</span>
+        <span class="sidebar-text">反馈</span>
+    </a>
+    <a href="#" class="sidebar-item">
+        <span class="sidebar-icon">🎧</span>
+        <span class="sidebar-text">客服</span>
+    </a>
+</div>
+
+<nav class="navbar">
+    <div class="logo">
+        <img src="assets/images/ChatGPT Image 2025年12月12日 13_20_32.png" alt="TreasureGO Logo" class="logo-img">
+        Treasure<span>Go</span>
+    </div>
+    <div class="nav-actions">
+        <button>Market</button>
+        <button class="btn-primary">Login</button>
+    </div>
+</nav>
+
+<section class="search-section">
+    <h1 class="main-title">Find Hidden<br>Campus Treasures</h1>
+    <div class="search-box-container">
+        <input type="text" class="search-input" placeholder="Search for books, gadgets...">
+        <button class="search-btn">Search</button>
+    </div>
+</section>
+
+<section class="market-container">
+    <div class="section-header">
+        <h3>Fresh Arrivals</h3>
+        <span class="badge">🔥 Hot</span>
+    </div>
+
+    <div class="product-grid">
+        <div class="product-card">
+            <div class="card-img-container">
+                <div class="card-emoji">📸</div>
+            </div>
+            <div class="card-info">
+                <div class="product-meta">
+                    <div class="product-title">Polaroid Camera</div>
+                </div>
+                <p class="product-desc">Vintage style, fully functional. Comes with film.</p>
+                <div class="card-footer">
+                    <span class="price-tag">$45</span>
+                    <div class="like-btn">♥</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="product-card">
+            <div class="card-img-container">
+                <div class="card-emoji">🎮</div>
+            </div>
+            <div class="card-info">
+                <div class="product-title">Switch Lite</div>
+                <p class="product-desc">Yellow edition. No scratches. Urgent sale.</p>
+                <div class="card-footer">
+                    <span class="price-tag">$120</span>
+                    <div class="like-btn">♥</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="product-card">
+            <div class="card-img-container">
+                <div class="card-emoji">📚</div>
+            </div>
+            <div class="card-info">
+                <div class="product-title">Calculus Textbook</div>
+                <p class="product-desc">Edition 5. Highlighted notes included.</p>
+                <div class="card-footer">
+                    <span class="price-tag">$25</span>
+                    <div class="like-btn">♥</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="product-card">
+            <div class="card-img-container">
+                <div class="card-emoji">🎧</div>
+            </div>
+            <div class="card-info">
+                <div class="product-title">Sony Headphones</div>
+                <p class="product-desc">Noise cancelling. Barely used.</p>
+                <div class="card-footer">
+                    <span class="price-tag">$80</span>
+                    <div class="like-btn">♥</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+    const container = document.getElementById('floating-container');
+    const items = ['📷', '💻', '📱', '⌚', '🎸', '👟', '🎒', '🕶️', '🚲', '🛹', '🧸', '🎮', '📚'];
+    const count = 15;
+
+    for (let i = 0; i < count; i++) {
+        createFloater();
+    }
+
+    function createFloater() {
+        const el = document.createElement('div');
+        el.classList.add('floating-item');
+        el.innerText = items[Math.floor(Math.random() * items.length)];
+        el.style.left = Math.random() * 100 + 'vw';
+        const size = (Math.random() * 3 + 3) + 'rem';
+        el.style.fontSize = size;
+        const duration = (Math.random() * 10 + 15) + 's';
+        el.style.animationDuration = duration;
+        el.style.animationDelay = '-' + (Math.random() * 15) + 's';
+        container.appendChild(el);
+    }
+</script>
 
 </body>
 </html>
