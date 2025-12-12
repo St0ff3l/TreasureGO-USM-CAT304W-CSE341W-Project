@@ -6,7 +6,7 @@
     <title>TreasureGO - Discover Treasures</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
-        /* --- 1. 核心变量 (保持不变) --- */
+        /* --- 1. Core Variables --- */
         :root {
             --bg-color: #F3F6F9;
             --primary: #4F46E5;
@@ -32,7 +32,7 @@
                     radial-gradient(circle at 90% 80%, rgba(245, 158, 11, 0.05) 0%, transparent 40%);
         }
 
-        /* --- 2. 动画背景 (保持不变) --- */
+        /* --- 2. Background Animation --- */
         #floating-container {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -56,7 +56,7 @@
             100% { transform: translateY(-10vh) rotate(20deg); opacity: 0; }
         }
 
-        /* --- 3. 侧边栏 (默认桌面样式，保持不变) --- */
+        /* --- 3. Sidebar General Styles --- */
         .sidebar {
             position: fixed;
             top: 50%;
@@ -94,7 +94,44 @@
         .sidebar-icon { font-size: 26px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.05)); }
         .sidebar-text { font-size: 13px; font-weight: 700; }
 
-        /* --- 4. 导航栏 (保持不变) --- */
+        /* --- 4. Right Sidebar Logic (Desktop Default) --- */
+        /*
+           Order Logic:
+           1. Chat (2nd item in HTML)
+           2. Report (3rd item in HTML)
+           3. Publish (1st item in HTML) - Center
+           4. Feedback (4th item in HTML)
+           5. Support (5th item in HTML)
+           6. Categories (6th item in HTML) - Hidden on Desktop
+        */
+
+        /* Chat -> Order 1 */
+        .sidebar.right .sidebar-item:nth-child(2) { order: 1; }
+
+        /* Report -> Order 2 */
+        .sidebar.right .sidebar-item:nth-child(3) { order: 2; }
+
+        /* Publish -> Order 3 (Center) */
+        .sidebar.right .sidebar-item:nth-child(1) {
+            order: 3;
+            color: var(--primary);
+            transform: scale(1.15);
+        }
+
+        /* Feedback -> Order 4 */
+        .sidebar.right .sidebar-item:nth-child(4) { order: 4; }
+
+        /* Support -> Order 5 */
+        .sidebar.right .sidebar-item:nth-child(5) { order: 5; }
+
+        /* Categories -> Hidden on Desktop */
+        .sidebar.right .sidebar-item:nth-child(6) { display: none; }
+
+        .sidebar.right .sidebar-item:nth-child(1) .sidebar-text {
+            font-weight: 800;
+        }
+
+        /* --- 5. Navbar --- */
         .navbar {
             background: var(--glass-bg);
             backdrop-filter: blur(12px);
@@ -136,7 +173,7 @@
         }
         .btn-primary:hover { transform: translateY(-2px); background-color: #000; }
 
-        /* --- 5. 下拉菜单 (保持不变) --- */
+        /* --- 6. Dropdown Menu --- */
         .menu-container { position: relative; display: inline-block; }
         .dots-btn {
             width: 36px; height: 36px; border-radius: 50%;
@@ -161,7 +198,7 @@
         .dropdown-item:hover { background-color: #f3f4f6; color: var(--primary); }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* --- 6. 主内容 (保持不变) --- */
+        /* --- 7. Main Content --- */
         .search-section {
             text-align: center; padding: 100px 20px 60px;
             max-width: 800px; margin: 0 auto; position: relative; z-index: 10;
@@ -189,7 +226,6 @@
 
         .market-container { max-width: 1200px; margin: 0 auto 100px; padding: 0 20px; position: relative; z-index: 10; }
 
-        /* 桌面默认 Grid: 自动填充 */
         .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 30px; }
 
         .product-card {
@@ -209,27 +245,22 @@
         .category-tag { font-size: 0.85rem; color: #9ca3af; background: #f3f4f6; padding: 4px 10px; border-radius: 20px; }
 
         /* ========================================= */
-        /* ✅ 7. Responsive / 响应式适配 (新改的)     */
-        /* 只有屏幕宽度小于 768px (手机/平板) 时生效   */
+        /* --- 8. Media Query for Mobile (<768px) --- */
         /* ========================================= */
         @media (max-width: 768px) {
 
-            /* --- 1. 左边栏：彻底隐藏 --- */
-            .sidebar.left {
-                display: none !important;
-            }
+            .sidebar.left { display: none !important; }
 
-            /* --- 2. 右边栏：变身为底部浮岛 --- */
             .sidebar.right {
                 top: auto;
-                bottom: 25px; /* 距离底部 25px */
+                bottom: 25px;
                 right: auto;
                 left: 50%;
-                transform: translateX(-50%); /* 水平居中 */
+                transform: translateX(-50%);
                 flex-direction: row;
-                width: 90%;         /* 宽度占屏幕 90% */
-                max-width: 380px;   /* 限制最大宽度 */
-                height: auto;       /* 高度自适应 */
+                width: 90%;
+                max-width: 380px;
+                height: auto;
                 padding: 12px 20px;
                 justify-content: space-between;
                 gap: 0;
@@ -238,33 +269,33 @@
                 box-shadow: 0 10px 40px rgba(0,0,0,0.15);
             }
 
-            /* 调整底部栏图标 */
-            .sidebar.right .sidebar-item { transform: none; }
             .sidebar.right .sidebar-icon { font-size: 22px; margin-bottom: 2px; }
             .sidebar.right .sidebar-text { font-size: 10px; }
 
-            /* --- 3. ❌ 背景浮动动画：小屏取消 --- */
-            #floating-container {
-                display: none !important;
+            /* Mobile Item Swapping Logic */
+
+            /* Hide Feedback (4th Item) */
+            .sidebar.right .sidebar-item:nth-child(4) {
+                display: none;
             }
 
-            /* --- 4. ✅ 商品排列：一排两个 --- */
+            /* Show Categories (6th Item) */
+            .sidebar.right .sidebar-item:nth-child(6) {
+                display: flex !important; /* Force display flex to match others */
+                order: 4; /* Place it where Feedback was */
+            }
+
+            #floating-container { display: none !important; }
+
             .product-grid {
-                /* 强制设置为 2 列 */
                 grid-template-columns: repeat(2, 1fr) !important;
-                /* 间距稍微调小，防止卡片太挤 */
                 gap: 15px !important;
             }
-            /* 手机端图片区域稍微变矮一点，防止太长 */
-            .card-img-container {
-                height: 160px;
-            }
+            .card-img-container { height: 160px; }
             .card-emoji { font-size: 4rem; }
-            /* 调整卡片内边距 */
             .card-info { padding: 1rem; }
             .card-footer h4 { font-size: 1rem; }
 
-            /* --- 5. 其他常规适配 --- */
             .navbar { padding: 15px; }
             .nav-actions { gap: 10px; }
             .nav-btn { display: none; }
@@ -307,21 +338,30 @@
         <span class="sidebar-icon">📢</span>
         <span class="sidebar-text">Publish</span>
     </a>
+
     <a href="#" class="sidebar-item">
         <span class="sidebar-icon">💬</span>
         <span class="sidebar-text">Chat</span>
     </a>
+
     <a href="Module_Platform_Governance_AI_Services/pages/report.html" class="sidebar-item">
         <span class="sidebar-icon">🏴</span>
         <span class="sidebar-text">Report</span>
     </a>
+
     <a href="#" class="sidebar-item">
         <span class="sidebar-icon">📝</span>
         <span class="sidebar-text">Feedback</span>
     </a>
+
     <a href="#" class="sidebar-item">
         <span class="sidebar-icon">🎧</span>
         <span class="sidebar-text">Support</span>
+    </a>
+
+    <a href="Module_Product_Ecosystem/pages/Search_Results_Page.html" class="sidebar-item">
+        <span class="sidebar-icon">📂</span>
+        <span class="sidebar-text">Category</span>
     </a>
 </div>
 
