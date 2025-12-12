@@ -6,15 +6,15 @@
     <title>TreasureGO - Discover Treasures</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
-        /* --- 1. Core Colors & Variables --- */
+        /* --- 1. 核心变量 (保持不变) --- */
         :root {
             --bg-color: #F3F6F9;
-            --primary: #4F46E5;        /* Brand Blue-Purple */
+            --primary: #4F46E5;
             --primary-hover: #4338CA;
             --text-dark: #1F2937;
             --text-gray: #6B7280;
             --glass-bg: rgba(255, 255, 255, 0.95);
-            --sidebar-radius: 50px;    /* Sidebar Large Radius */
+            --sidebar-radius: 50px;
             --card-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.05);
         }
 
@@ -32,7 +32,7 @@
                     radial-gradient(circle at 90% 80%, rgba(245, 158, 11, 0.05) 0%, transparent 40%);
         }
 
-        /* --- 2. 🎈 Background Floating Animation --- */
+        /* --- 2. 动画背景 (保持不变) --- */
         #floating-container {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -56,7 +56,7 @@
             100% { transform: translateY(-10vh) rotate(20deg); opacity: 0; }
         }
 
-        /* --- 3. Floating Sidebar --- */
+        /* --- 3. 侧边栏 (默认桌面样式，保持不变) --- */
         .sidebar {
             position: fixed;
             top: 50%;
@@ -90,15 +90,11 @@
             transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
         }
 
-        .sidebar-item:hover {
-            transform: translateY(-3px);
-            color: var(--primary);
-        }
-
+        .sidebar-item:hover { transform: translateY(-3px); color: var(--primary); }
         .sidebar-icon { font-size: 26px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.05)); }
         .sidebar-text { font-size: 13px; font-weight: 700; }
 
-        /* --- 4. Navbar --- */
+        /* --- 4. 导航栏 (保持不变) --- */
         .navbar {
             background: var(--glass-bg);
             backdrop-filter: blur(12px);
@@ -124,44 +120,23 @@
         .logo span { color: var(--text-dark); }
         .logo-img { width: 42px; height: 42px; border-radius: 10px; object-fit: cover; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
 
-        .nav-actions {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
+        .nav-actions { display: flex; align-items: center; gap: 20px; }
 
-        /* Text-only buttons (No Emoji) */
         .nav-btn {
-            border: none;
-            background: transparent;
-            font-weight: 600;
-            color: var(--text-gray);
-            padding: 0.6rem 0.5rem;
-            cursor: pointer;
-            transition: color 0.2s;
-            font-size: 1rem;
+            border: none; background: transparent; font-weight: 600; color: var(--text-gray);
+            padding: 0.6rem 0.5rem; cursor: pointer; transition: color 0.2s; font-size: 1rem;
         }
         .nav-btn:hover { color: var(--text-dark); }
 
-        /* Login Button */
         .btn-primary {
-            border: none;
-            background-color: var(--text-dark);
-            color: white;
-            font-weight: 600;
-            padding: 0.7rem 1.8rem;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-size: 1rem;
+            border: none; background-color: var(--text-dark); color: white;
+            font-weight: 600; padding: 0.7rem 1.8rem; border-radius: 12px;
+            cursor: pointer; transition: all 0.2s; font-size: 1rem;
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            background-color: #000;
-        }
+        .btn-primary:hover { transform: translateY(-2px); background-color: #000; }
 
-        /* --- 5. Dropdown Menu (Three Dots) --- */
+        /* --- 5. 下拉菜单 (保持不变) --- */
         .menu-container { position: relative; display: inline-block; }
         .dots-btn {
             width: 36px; height: 36px; border-radius: 50%;
@@ -186,7 +161,7 @@
         .dropdown-item:hover { background-color: #f3f4f6; color: var(--primary); }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* --- 6. Main Content Area --- */
+        /* --- 6. 主内容 (保持不变) --- */
         .search-section {
             text-align: center; padding: 100px 20px 60px;
             max-width: 800px; margin: 0 auto; position: relative; z-index: 10;
@@ -213,7 +188,10 @@
         .search-btn:hover { background-color: var(--primary-hover); }
 
         .market-container { max-width: 1200px; margin: 0 auto 100px; padding: 0 20px; position: relative; z-index: 10; }
+
+        /* 桌面默认 Grid: 自动填充 */
         .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 30px; }
+
         .product-card {
             background: white; border-radius: 24px; overflow: hidden;
             box-shadow: var(--card-shadow); transition: all 0.3s ease; cursor: pointer;
@@ -229,6 +207,72 @@
         .card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 15px; }
         .price-tag { font-weight: 800; font-size: 1.3rem; color: var(--text-dark); }
         .category-tag { font-size: 0.85rem; color: #9ca3af; background: #f3f4f6; padding: 4px 10px; border-radius: 20px; }
+
+        /* ========================================= */
+        /* ✅ 7. Responsive / 响应式适配 (新改的)     */
+        /* 只有屏幕宽度小于 768px (手机/平板) 时生效   */
+        /* ========================================= */
+        @media (max-width: 768px) {
+
+            /* --- 1. 左边栏：彻底隐藏 --- */
+            .sidebar.left {
+                display: none !important;
+            }
+
+            /* --- 2. 右边栏：变身为底部浮岛 --- */
+            .sidebar.right {
+                top: auto;
+                bottom: 25px; /* 距离底部 25px */
+                right: auto;
+                left: 50%;
+                transform: translateX(-50%); /* 水平居中 */
+                flex-direction: row;
+                width: 90%;         /* 宽度占屏幕 90% */
+                max-width: 380px;   /* 限制最大宽度 */
+                height: auto;       /* 高度自适应 */
+                padding: 12px 20px;
+                justify-content: space-between;
+                gap: 0;
+                z-index: 9999;
+                border-radius: 50px;
+                box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            }
+
+            /* 调整底部栏图标 */
+            .sidebar.right .sidebar-item { transform: none; }
+            .sidebar.right .sidebar-icon { font-size: 22px; margin-bottom: 2px; }
+            .sidebar.right .sidebar-text { font-size: 10px; }
+
+            /* --- 3. ❌ 背景浮动动画：小屏取消 --- */
+            #floating-container {
+                display: none !important;
+            }
+
+            /* --- 4. ✅ 商品排列：一排两个 --- */
+            .product-grid {
+                /* 强制设置为 2 列 */
+                grid-template-columns: repeat(2, 1fr) !important;
+                /* 间距稍微调小，防止卡片太挤 */
+                gap: 15px !important;
+            }
+            /* 手机端图片区域稍微变矮一点，防止太长 */
+            .card-img-container {
+                height: 160px;
+            }
+            .card-emoji { font-size: 4rem; }
+            /* 调整卡片内边距 */
+            .card-info { padding: 1rem; }
+            .card-footer h4 { font-size: 1rem; }
+
+            /* --- 5. 其他常规适配 --- */
+            .navbar { padding: 15px; }
+            .nav-actions { gap: 10px; }
+            .nav-btn { display: none; }
+            .main-title { font-size: 2.2rem; }
+            .search-section { padding-top: 60px; padding-bottom: 40px; }
+            .search-input { padding: 12px 20px; font-size: 1rem; }
+            .search-btn { padding: 0 25px; }
+        }
     </style>
 </head>
 <body>
@@ -289,11 +333,8 @@
 
     <div class="nav-actions">
         <button class="nav-btn" onclick="alert('Top Up Page')">Top Up</button>
-
         <button class="nav-btn" onclick="window.location.href='Pages/Order_System/orders.html'">Orders</button>
-
         <button class="btn-primary" onclick="window.location.href='Pages/Auth/login.html'">Login</button>
-
         <div class="menu-container">
             <div class="dots-btn">•••</div>
             <div class="dropdown-content">
@@ -308,11 +349,10 @@
 <section class="search-section">
     <h1 class="main-title">Discover Hidden<br>Treasures Around You</h1>
 
-    <div class="search-box-container">
-        <input type="text" id="homeSearchInput" class="search-input" placeholder="Search for books, gadgets...">
-
-        <button class="search-btn" onclick="goToSearch()">Search</button>
-    </div>
+    <form class="search-box-container" action="Module_Product_Ecosystem/pages/Search_Results_Page.html" method="GET">
+        <input type="text" name="q" id="homeSearchInput" class="search-input" placeholder="Search for books, gadgets..." required>
+        <button type="submit" class="search-btn">Search</button>
+    </form>
 </section>
 
 <section class="market-container">
@@ -356,7 +396,6 @@
 </section>
 
 <script>
-    // 1. Floating Emoji Animation
     const container = document.getElementById('floating-container');
     const items = ['📷', '💻', '📱', '⌚', '🎸', '👟', '🎒', '🚲'];
     for (let i = 0; i < 12; i++) {
@@ -369,24 +408,6 @@
         el.style.animationDelay = '-' + (Math.random() * 20) + 's';
         container.appendChild(el);
     }
-
-    // 2. Search Logic (Updated Redirection Path)
-    function goToSearch() {
-        const inputVal = document.getElementById('homeSearchInput').value;
-
-        // Updated path here as requested
-        const targetUrl = 'Module_Product_Ecosystem/pages/Search_Results_Page.html';
-
-        // Redirect with query parameter
-        window.location.href = `${targetUrl}?q=${encodeURIComponent(inputVal)}`;
-    }
-
-    // Support 'Enter' key
-    document.getElementById('homeSearchInput').addEventListener('keypress', function (e) {
-        if (e.key === 'Enter') {
-            goToSearch();
-        }
-    });
 </script>
 
 </body>
