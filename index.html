@@ -32,7 +32,7 @@
                     radial-gradient(circle at 90% 80%, rgba(245, 158, 11, 0.05) 0%, transparent 40%);
         }
 
-        /* --- 2. 🎈 Background Floating Animation (Atmosphere) --- */
+        /* --- 2. 🎈 Background Floating Animation --- */
         #floating-container {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -69,7 +69,7 @@
             z-index: 999;
             display: flex;
             flex-direction: column;
-            gap: 20px; /* Increase spacing */
+            gap: 20px;
             align-items: center;
             width: 80px;
             border: 1px solid rgba(255,255,255,0.8);
@@ -119,6 +119,7 @@
             display: flex;
             align-items: center;
             gap: 10px;
+            text-decoration: none;
         }
         .logo span { color: var(--text-dark); }
         .logo-img { width: 42px; height: 42px; border-radius: 10px; object-fit: cover; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
@@ -235,30 +236,30 @@
 <div id="floating-container"></div>
 
 <div class="sidebar left">
-    <a href="#" class="sidebar-item">
+    <a href="Pages/Product_Ecosystem/Search_Results_Page.html?q=Digital" class="sidebar-item">
         <span class="sidebar-icon">📱</span>
         <span class="sidebar-text">Digital</span>
     </a>
-    <a href="#" class="sidebar-item">
+    <a href="Pages/Product_Ecosystem/Search_Results_Page.html?q=Fashion" class="sidebar-item">
         <span class="sidebar-icon">👗</span>
         <span class="sidebar-text">Fashion</span>
     </a>
-    <a href="#" class="sidebar-item">
+    <a href="Pages/Product_Ecosystem/Search_Results_Page.html?q=Home" class="sidebar-item">
         <span class="sidebar-icon">🏠</span>
         <span class="sidebar-text">Home</span>
     </a>
-    <a href="#" class="sidebar-item">
+    <a href="Pages/Product_Ecosystem/Search_Results_Page.html?q=Books" class="sidebar-item">
         <span class="sidebar-icon">📚</span>
         <span class="sidebar-text">Books</span>
     </a>
-    <a href="#" class="sidebar-item">
+    <a href="Pages/Product_Ecosystem/Search_Results_Page.html?q=Transport" class="sidebar-item">
         <span class="sidebar-icon">🚲</span>
         <span class="sidebar-text">Transport</span>
     </a>
 </div>
 
 <div class="sidebar right">
-    <a href="publish.html" class="sidebar-item">
+    <a href="Pages/Product_Ecosystem/Publish_Page.html" class="sidebar-item">
         <span class="sidebar-icon">📢</span>
         <span class="sidebar-text">Publish</span>
     </a>
@@ -281,17 +282,17 @@
 </div>
 
 <nav class="navbar">
-    <div class="logo">
+    <a href="index.html" class="logo">
         <img src="assets/images/ChatGPT Image 2025年12月12日 13_20_32.png" alt="Logo" class="logo-img">
         Treasure<span>Go</span>
-    </div>
+    </a>
 
     <div class="nav-actions">
         <button class="nav-btn" onclick="alert('Top Up Page')">Top Up</button>
 
-        <button class="nav-btn" onclick="window.location.href='orders.html'">Orders</button>
+        <button class="nav-btn" onclick="window.location.href='Pages/Order_System/orders.html'">Orders</button>
 
-        <button class="btn-primary" onclick="window.location.href='login.html'">Login</button>
+        <button class="btn-primary" onclick="window.location.href='Pages/Auth/login.html'">Login</button>
 
         <div class="menu-container">
             <div class="dots-btn">•••</div>
@@ -308,8 +309,9 @@
     <h1 class="main-title">Discover Hidden<br>Treasures Around You</h1>
 
     <div class="search-box-container">
-        <input type="text" class="search-input" placeholder="Search for books, gadgets...">
-        <button class="search-btn">Search</button>
+        <input type="text" id="homeSearchInput" class="search-input" placeholder="Search for books, gadgets...">
+
+        <button class="search-btn" onclick="goToSearch()">Search</button>
     </div>
 </section>
 
@@ -354,7 +356,7 @@
 </section>
 
 <script>
-    // Floating Emoji Animation Logic
+    // 1. Floating Emoji Animation
     const container = document.getElementById('floating-container');
     const items = ['📷', '💻', '📱', '⌚', '🎸', '👟', '🎒', '🚲'];
     for (let i = 0; i < 12; i++) {
@@ -367,6 +369,23 @@
         el.style.animationDelay = '-' + (Math.random() * 20) + 's';
         container.appendChild(el);
     }
+
+    // 2. Search Logic (Redirection)
+    function goToSearch() {
+        const inputVal = document.getElementById('homeSearchInput').value;
+        // The specific path requested
+        const targetUrl = 'Pages/Product_Ecosystem/Search_Results_Page.html';
+
+        // Redirect with query parameter
+        window.location.href = `${targetUrl}?q=${encodeURIComponent(inputVal)}`;
+    }
+
+    // Support 'Enter' key
+    document.getElementById('homeSearchInput').addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+            goToSearch();
+        }
+    });
 </script>
 
 </body>

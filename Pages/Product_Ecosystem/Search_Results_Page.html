@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TreasureGO - Smart Search</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+  <style>
+    /* --- 1. Core Variables --- */
+    :root {
+      --bg-color: #F3F6F9;
+      --primary: #4F46E5;
+      --primary-hover: #4338CA;
+      --text-dark: #1F2937;
+      --text-gray: #6B7280;
+      --glass-bg: rgba(255, 255, 255, 0.95);
+      --card-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.05);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-dark);
+      min-height: 100vh;
+    }
+
+    /* --- 2. Navbar (Keep Original) --- */
+    .navbar {
+      background: var(--glass-bg);
+      backdrop-filter: blur(12px);
+      padding: 1rem 5%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      border-bottom: 1px solid rgba(255,255,255,0.5);
+    }
+    .logo { font-weight: 800; font-size: 1.5rem; color: var(--primary); display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .logo span { color: var(--text-dark); }
+    /* Please ensure the image path is correct, go back two levels to find assets */
+    .logo-img { width: 42px; height: 42px; border-radius: 10px; object-fit: cover; }
+
+    .nav-actions { display: flex; align-items: center; gap: 20px; }
+    .nav-btn { border: none; background: transparent; font-weight: 600; color: var(--text-gray); padding: 0.6rem 0.5rem; cursor: pointer; transition: color 0.2s; font-size: 1rem; }
+    .nav-btn:hover { color: var(--text-dark); }
+
+    .btn-primary { border: none; background-color: var(--text-dark); color: white; font-weight: 600; padding: 0.7rem 1.8rem; border-radius: 12px; cursor: pointer; transition: all 0.2s; font-size: 1rem; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+    .btn-primary:hover { transform: translateY(-2px); background-color: #000; }
+
+    /* Dots Menu */
+    .menu-container { position: relative; display: inline-block; }
+    .dots-btn { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; cursor: pointer; color: var(--text-dark); font-weight: bold; padding-bottom: 6px; }
+    .dots-btn:hover { background: #eee; }
+    .dropdown-content { display: none; position: absolute; right: 0; top: 130%; background-color: white; min-width: 160px; box-shadow: 0 10px 30px rgba(0,0,0,0.12); border-radius: 16px; z-index: 1001; padding: 8px; }
+    .menu-container:hover .dropdown-content { display: block; }
+    .dropdown-item { color: var(--text-dark); padding: 12px 16px; text-decoration: none; display: block; font-size: 14px; font-weight: 500; border-radius: 10px; }
+    .dropdown-item:hover { background-color: #f3f4f6; color: var(--primary); }
+
+    /* --- 3. Search Header --- */
+    .search-header-bg { background: white; padding: 20px 0; border-bottom: 1px solid rgba(0,0,0,0.05); }
+    .search-wrapper { max-width: 800px; margin: 0 auto; display: flex; gap: 10px; padding: 0 20px; }
+    .search-input { flex: 1; padding: 14px 24px; border-radius: 50px; border: 2px solid #eee; background: #f9f9fb; outline: none; transition: 0.2s; }
+    .search-input:focus { border-color: var(--primary); background: white; }
+    .search-btn-small { padding: 0 30px; border-radius: 50px; background: var(--primary); color: white; border: none; cursor: pointer; font-weight: 600; }
+
+    /* --- 4. Main Layout --- */
+    .main-container {
+      max-width: 1200px;
+      margin: 40px auto;
+      padding: 0 20px;
+      display: grid;
+      grid-template-columns: 280px 1fr; /* Fixed left width */
+      gap: 40px;
+      align-items: start;
+    }
+
+    /* =========================================
+       ★ Sidebar: Categories + Filters Combined ★
+       ========================================= */
+    .filter-sidebar {
+      background: white;
+      padding: 20px;
+      border-radius: 24px;
+      box-shadow: var(--card-shadow);
+      position: sticky;
+      top: 100px; /* Stick on scroll */
+      z-index: 900;
+    }
+
+    /* --- Part A: 5 Categories Floating Menu --- */
+    .category-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      margin-bottom: 25px;
+      position: relative;
+    }
+
+    .sidebar-item-wrapper { position: relative; }
+
+    .category-trigger {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 15px; border-radius: 12px;
+      cursor: pointer; transition: all 0.2s;
+      color: var(--text-dark); font-weight: 600; font-size: 0.95rem;
+    }
+    .category-trigger:hover { background-color: #f3f4f6; color: var(--primary); }
+    .category-trigger.active { background-color: var(--primary); color: white; } /* Highlight selected */
+
+    /* --- Floating Panel (Anti-disappear Optimization) --- */
+    .submenu-panel {
+      visibility: hidden;
+      opacity: 0;
+      transform: translateX(-10px);
+
+      position: absolute;
+      left: 100%;
+      top: -10px; /* Slight upward alignment */
+      width: 480px; /* Wide panel, shows more subcategories */
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+      padding: 25px;
+      margin-left: 10px;
+      z-index: 999;
+      border: 1px solid #f0f0f0;
+
+      /* Critical Animation: 0.2s delay to allow mouse movement */
+      transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
+    }
+
+    /* ★ Core Fix: Transparent Bridge ★ */
+    /* This pseudo-element fills the gap between the left button and the right panel to prevent the menu from disappearing */
+    .submenu-panel::before {
+      content: "";
+      position: absolute;
+      left: -20px;
+      top: 0;
+      height: 100%;
+      width: 20px;
+      background: transparent;
+    }
+
+    /* Show on hover */
+    .sidebar-item-wrapper:hover .submenu-panel {
+      visibility: visible;
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    /* Submenu Styles */
+    .submenu-group { margin-bottom: 15px; }
+    .submenu-title { font-size: 0.85rem; color: #999; margin-bottom: 8px; font-weight: 700; text-transform: uppercase; border-bottom: 1px solid #eee; padding-bottom: 4px; }
+    .submenu-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+    .sub-tag {
+      padding: 5px 12px; background: #f9f9fb; border-radius: 50px; font-size: 0.9rem;
+      color: var(--text-dark); cursor: pointer; transition: 0.2s; border: 1px solid transparent;
+    }
+    .sub-tag:hover { background: white; border-color: var(--primary); color: var(--primary); }
+
+    .sidebar-divider { height: 1px; background: #eee; margin: 10px 0 20px 0; }
+
+    /* --- Part B: Traditional Filters (Retained) --- */
+    .filter-group { margin-bottom: 25px; }
+    .filter-title { font-weight: 800; font-size: 1rem; margin-bottom: 12px; display: block; }
+    .filter-option {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 8px;
+      cursor: pointer; color: var(--text-gray); font-size: 0.95rem;
+    }
+    .filter-option:hover { color: var(--primary); }
+    .filter-checkbox { accent-color: var(--primary); transform: scale(1.1); }
+
+    .price-inputs { display: flex; gap: 10px; align-items: center; }
+    .price-input { width: 100%; padding: 8px; border: 1px solid #eee; border-radius: 8px; outline: none; background: #f9f9fb; }
+
+    .btn-apply-filter {
+      width: 100%; padding: 12px; background-color: var(--primary); color: white;
+      border: none; border-radius: 12px; font-weight: 600; font-size: 1rem;
+      cursor: pointer; transition: 0.2s; box-shadow: 0 4px 10px rgba(79, 70, 229, 0.2);
+    }
+    .btn-apply-filter:hover { background-color: var(--primary-hover); transform: translateY(-2px); }
+
+    /* --- Grid & Cards --- */
+    .results-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 25px; }
+    .product-card { background: white; border-radius: 20px; box-shadow: var(--card-shadow); overflow: hidden; transition: 0.3s; }
+    .product-card:hover { transform: translateY(-5px); }
+    .card-img-container { height: 180px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); display: flex; align-items: center; justify-content: center; font-size: 4rem; }
+    .card-info { padding: 1.2rem; }
+    .card-footer { display: flex; justify-content: space-between; margin-top: 10px; color: var(--primary); font-weight: 800; }
+
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="../../index.html" class="logo"><img src="../../assets/images/ChatGPT Image 2025年12月12日 13_20_32.png" alt="Logo" class="logo-img">Treasure<span>Go</span></a>
+  <div class="nav-actions">
+    <button class="nav-btn" onclick="alert('Top Up')">Top Up</button>
+    <button class="nav-btn" onclick="window.location.href='../Order_System/orders.html'">Orders</button>
+    <button class="btn-primary" onclick="window.location.href='../Auth/login.html'">Login</button>
+    <div class="menu-container">
+      <div class="dots-btn">•••</div>
+      <div class="dropdown-content">
+        <a href="#" class="dropdown-item">My Profile</a>
+        <a href="#" class="dropdown-item">Settings</a>
+        <a href="#" class="dropdown-item" style="color: #ef4444;">Log Out</a>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<div class="search-header-bg">
+  <div class="search-wrapper">
+    <input type="text" class="search-input" id="mainSearchInput" placeholder="Search for items...">
+    <button class="search-btn-small" onclick="applyAllFilters()">Search</button>
+  </div>
+</div>
+
+<div class="main-container">
+
+  <aside class="filter-sidebar">
+
+    <span class="filter-title">Categories</span>
+    <ul class="category-list">
+
+      <li class="sidebar-item-wrapper">
+        <div class="category-trigger" id="cat-digital">📱 Digital</div>
+        <div class="submenu-panel">
+          <div class="submenu-group">
+            <div class="submenu-title">Phones</div>
+            <div class="submenu-tags">
+              <span class="sub-tag" onclick="setCategory('Digital', 'iPhone')">iPhone</span>
+              <span class="sub-tag" onclick="setCategory('Digital', 'Samsung')">Samsung</span>
+              <span class="sub-tag" onclick="setCategory('Digital', 'Pixel')">Pixel</span>
+            </div>
+          </div>
+          <div class="submenu-group">
+            <div class="submenu-title">Computers</div>
+            <div class="submenu-tags">
+              <span class="sub-tag" onclick="setCategory('Digital', 'MacBook')">MacBook</span>
+              <span class="sub-tag" onclick="setCategory('Digital', 'Gaming Laptop')">Gaming PC</span>
+            </div>
+          </div>
+        </div>
+      </li>
+
+      <li class="sidebar-item-wrapper">
+        <div class="category-trigger" id="cat-fashion">👗 Fashion</div>
+        <div class="submenu-panel">
+          <div class="submenu-group">
+            <div class="submenu-title">Wear</div>
+            <div class="submenu-tags">
+              <span class="sub-tag" onclick="setCategory('Fashion', 'Sneakers')">Sneakers</span>
+              <span class="sub-tag" onclick="setCategory('Fashion', 'Hoodies')">Hoodies</span>
+              <span class="sub-tag" onclick="setCategory('Fashion', 'Vintage')">Vintage</span>
+            </div>
+          </div>
+        </div>
+      </li>
+
+      <li class="sidebar-item-wrapper">
+        <div class="category-trigger" id="cat-home">🏠 Home</div>
+        <div class="submenu-panel">
+          <div class="submenu-group">
+            <div class="submenu-title">Furniture</div>
+            <div class="submenu-tags">
+              <span class="sub-tag" onclick="setCategory('Home', 'Sofa')">Sofa</span>
+              <span class="sub-tag" onclick="setCategory('Home', 'Chair')">Chair</span>
+              <span class="sub-tag" onclick="setCategory('Home', 'Desk')">Desk</span>
+            </div>
+          </div>
+          <div class="submenu-group">
+            <div class="submenu-title">Appliances</div>
+            <div class="submenu-tags">
+              <span class="sub-tag" onclick="setCategory('Home', 'Lamp')">Lamp</span>
+              <span class="sub-tag" onclick="setCategory('Home', 'Fan')">Fan</span>
+            </div>
+          </div>
+        </div>
+      </li>
+
+      <li class="sidebar-item-wrapper">
+        <div class="category-trigger" id="cat-books">📚 Books</div>
+        <div class="submenu-panel">
+          <div class="submenu-group">
+            <div class="submenu-title">Academic</div>
+            <div class="submenu-tags">
+              <span class="sub-tag" onclick="setCategory('Books', 'Textbooks')">Textbooks</span>
+              <span class="sub-tag" onclick="setCategory('Books', 'Notes')">Notes</span>
+            </div>
+          </div>
+          <div class="submenu-group">
+            <div class="submenu-title">Leisure</div>
+            <div class="submenu-tags">
+              <span class="sub-tag" onclick="setCategory('Books', 'Comics')">Comics</span>
+              <span class="sub-tag" onclick="setCategory('Books', 'Novels')">Novels</span>
+            </div>
+          </div>
+        </div>
+      </li>
+
+      <li class="sidebar-item-wrapper">
+        <div class="category-trigger" id="cat-transport">🚲 Transport</div>
+        <div class="submenu-panel">
+          <div class="submenu-group">
+            <div class="submenu-title">Vehicles</div>
+            <div class="submenu-tags">
+              <span class="sub-tag" onclick="setCategory('Transport', 'Bicycle')">Bicycle</span>
+              <span class="sub-tag" onclick="setCategory('Transport', 'Skateboard')">Skateboard</span>
+              <span class="sub-tag" onclick="setCategory('Transport', 'E-Scooter')">E-Scooter</span>
+            </div>
+          </div>
+        </div>
+      </li>
+
+    </ul>
+
+    <div class="sidebar-divider"></div>
+
+    <div class="filter-group">
+      <span class="filter-title">Condition</span>
+      <label class="filter-option"><input type="checkbox" class="filter-checkbox"> Brand New</label>
+      <label class="filter-option"><input type="checkbox" class="filter-checkbox" checked> Like New</label>
+      <label class="filter-option"><input type="checkbox" class="filter-checkbox"> Used</label>
+    </div>
+
+    <div class="filter-group">
+      <span class="filter-title">Price Range</span>
+      <div class="price-inputs">
+        <input type="number" class="price-input" placeholder="Min">
+        <span>-</span>
+        <input type="number" class="price-input" placeholder="Max">
+      </div>
+    </div>
+
+    <button class="btn-apply-filter" onclick="applyAllFilters()">Apply All Filters</button>
+
+  </aside>
+
+  <main>
+    <div class="results-header">
+      <h3 id="result-status">Showing All Results</h3>
+      <span style="color:#666;">Found 12 items</span>
+    </div>
+
+    <div class="product-grid">
+      <div class="product-card">
+        <div class="card-img-container">📸</div>
+        <div class="card-info">
+          <h4>Polaroid Camera</h4>
+          <div class="card-footer"><span>$45</span> <small style="color:#999;font-weight:400;">Like New</small></div>
+        </div>
+      </div>
+      <div class="product-card">
+        <div class="card-img-container">💻</div>
+        <div class="card-info">
+          <h4>MacBook Air M1</h4>
+          <div class="card-footer"><span>$650</span> <small style="color:#999;font-weight:400;">Used</small></div>
+        </div>
+      </div>
+      <div class="product-card">
+        <div class="card-img-container">👟</div>
+        <div class="card-info">
+          <h4>Nike Air Jordan</h4>
+          <div class="card-footer"><span>$120</span> <small style="color:#999;font-weight:400;">Brand New</small></div>
+        </div>
+      </div>
+      <div class="product-card">
+        <div class="card-img-container">🚲</div>
+        <div class="card-info">
+          <h4>Mountain Bike</h4>
+          <div class="card-footer"><span>$200</span> <small style="color:#999;font-weight:400;">Used</small></div>
+        </div>
+      </div>
+      <div class="product-card">
+        <div class="card-img-container">🛋️</div>
+        <div class="card-info">
+          <h4>IKEA Sofa</h4>
+          <div class="card-footer"><span>$150</span> <small style="color:#999;font-weight:400;">Good</small></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+  let currentCategory = "All";
+  let currentSubCategory = "";
+
+  // 1. Page Load: Check if there is a search term from the home page
+  window.onload = function() {
+    const params = new URLSearchParams(window.location.search);
+    const query = params.get('q');
+    if (query) {
+      const decodedQuery = decodeURIComponent(query);
+      document.getElementById('mainSearchInput').value = decodedQuery;
+      document.getElementById('result-status').innerText = `Results for: "${decodedQuery}"`;
+      // Here you can call the backend API
+    }
+  };
+
+  // 2. User clicks on left sub-category
+  function setCategory(main, sub) {
+    currentCategory = main;
+    currentSubCategory = sub;
+
+    // Auto-fill search box
+    document.getElementById('mainSearchInput').value = sub;
+
+    // Highlight left main category
+    document.querySelectorAll('.category-trigger').forEach(el => el.classList.remove('active'));
+    if(main === 'Digital') document.getElementById('cat-digital').classList.add('active');
+    if(main === 'Fashion') document.getElementById('cat-fashion').classList.add('active');
+    if(main === 'Home') document.getElementById('cat-home').classList.add('active');
+    if(main === 'Books') document.getElementById('cat-books').classList.add('active');
+    if(main === 'Transport') document.getElementById('cat-transport').classList.add('active');
+
+    // Notify user
+    document.getElementById('result-status').innerText = `Selected: ${main} > ${sub} (Add price/condition then click Apply)`;
+  }
+
+  // 3. Click Apply button (Combined search logic)
+  function applyAllFilters() {
+    let searchText = document.getElementById('mainSearchInput').value || currentSubCategory || 'All Items';
+    let statusText = `Searching for: "${searchText}"`;
+
+    // Get selected conditions
+    const checkedConditions = Array.from(document.querySelectorAll('.filter-checkbox:checked')).map(cb => cb.parentNode.innerText.trim());
+    if(checkedConditions.length > 0) {
+      statusText += ` + Conditions: [${checkedConditions.join(', ')}]`;
+    }
+
+    // Get price
+    const minPrice = document.querySelector('input[placeholder="Min"]').value;
+    const maxPrice = document.querySelector('input[placeholder="Max"]').value;
+    if(minPrice || maxPrice) {
+      statusText += ` + Price: $${minPrice || 0} - $${maxPrice || '∞'}`;
+    }
+
+    document.getElementById('result-status').innerText = statusText;
+
+    // Simulate sending to backend
+    console.log("Search Payload:", {
+      q: searchText,
+      category: currentCategory,
+      conditions: checkedConditions,
+      priceMin: minPrice,
+      priceMax: maxPrice
+    });
+
+    alert("Filter Applied! Check console for details.");
+  }
+
+  // 4. Enter key search
+  document.getElementById('mainSearchInput').addEventListener('keypress', function (e) {
+    if (e.key === 'Enter') {
+      applyAllFilters();
+    }
+  });
+</script>
+
+</body>
+</html>
