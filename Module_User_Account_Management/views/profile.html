@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Profile - TreasureGo</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+
+  <style>
+    /* --- 1. 核心变量 --- */
+    :root {
+      --bg-color: #F3F6F9;
+      --primary: #4F46E5;
+      --primary-hover: #4338CA;
+      --text-dark: #1F2937;
+      --text-gray: #6B7280;
+      --glass-bg: rgba(255, 255, 255, 0.95);
+      --card-radius: 20px;
+      --card-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.05);
+      --input-bg: #F9FAFB;
+      --border-color: #E5E7EB;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-dark);
+      min-height: 100vh;
+      background-image:
+              radial-gradient(circle at 10% 20%, rgba(79, 70, 229, 0.05) 0%, transparent 40%),
+              radial-gradient(circle at 90% 80%, rgba(245, 158, 11, 0.05) 0%, transparent 40%);
+    }
+
+    /* --- 2. 导航栏 --- */
+    .navbar {
+      background: var(--glass-bg);
+      backdrop-filter: blur(12px);
+      padding: 1rem 5%;
+      display: flex; justify-content: space-between; align-items: center;
+      position: sticky; top: 0; z-index: 1000;
+      border-bottom: 1px solid rgba(255,255,255,0.5);
+    }
+    .logo { font-weight: 800; font-size: 1.5rem; color: var(--primary); display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .logo span { color: var(--text-dark); }
+    .logo-img { width: 42px; height: 42px; border-radius: 10px; object-fit: cover; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+
+    .nav-actions { display: flex; align-items: center; gap: 20px; }
+    .nav-btn { border: none; background: transparent; font-weight: 600; color: var(--text-gray); padding: 0.6rem 0.5rem; cursor: pointer; transition: color 0.2s; font-size: 1rem; }
+    .nav-btn:hover { color: var(--text-dark); }
+    .nav-avatar-small {
+      width: 40px; height: 40px; background: #EEF2FF; color: var(--primary);
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-weight: bold; cursor: pointer; border: 2px solid white;
+      box-shadow: 0 4px 10px rgba(79, 70, 229, 0.2); transition: 0.2s;
+    }
+    .nav-avatar-small:hover { transform: scale(1.05); }
+
+    /* --- 3. 布局系统 --- */
+    .layout-container {
+      max-width: 1200px;
+      margin: 30px auto;
+      padding: 0 20px;
+      display: grid;
+      grid-template-columns: 240px 1fr 200px;
+      gap: 25px;
+      align-items: start;
+    }
+
+    /* --- 左侧 Sidebar --- */
+    .sidebar-card {
+      background: white; border-radius: var(--card-radius);
+      padding: 20px; box-shadow: var(--card-shadow);
+      position: sticky; top: 100px;
+    }
+    .menu-title { font-size: 0.85rem; color: var(--text-gray); font-weight: 700; margin-bottom: 10px; margin-top: 20px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .menu-title:first-child { margin-top: 0; }
+
+    /* 通用菜单项样式 */
+    .menu-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 15px; margin-bottom: 5px;
+      color: var(--text-dark); text-decoration: none;
+      border-radius: 12px; transition: 0.2s; font-weight: 500; font-size: 0.95rem;
+      cursor: pointer; border: none; background: transparent; width: 100%; text-align: left;
+      font-family: inherit;
+    }
+    .menu-item:hover { background: #EEF2FF; color: var(--primary); }
+    .menu-item i { font-size: 1.2rem; }
+
+    /* 内部视图激活状态 */
+    .menu-item.active-view { background: var(--primary); color: white; box-shadow: 0 4px 10px rgba(79, 70, 229, 0.3); }
+
+    /* --- 中间内容区容器 --- */
+    .main-content { display: flex; flex-direction: column; gap: 25px; }
+
+    /* 视图切换控制 */
+    .view-section { display: none; animation: fadeIn 0.3s ease; }
+    .view-section.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* --- View 1: Overview --- */
+    .profile-header-card {
+      background: white; border-radius: var(--card-radius);
+      padding: 40px; text-align: center; box-shadow: var(--card-shadow);
+      background-image: linear-gradient(to bottom, #EEF2FF 0%, #fff 150px);
+    }
+    .large-avatar {
+      width: 100px; height: 100px; margin: 0 auto 15px;
+      background: white; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 3rem; border: 4px solid white;
+      box-shadow: 0 10px 25px rgba(79, 70, 229, 0.15);
+    }
+    .user-name { font-size: 1.8rem; font-weight: 800; margin-bottom: 5px; }
+    .user-meta { color: var(--text-gray); font-size: 0.95rem; display: flex; align-items: center; justify-content: center; gap: 10px; }
+    .role-badge { background: #ECFDF5; color: #059669; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; }
+
+    .stats-row { display: flex; justify-content: center; gap: 30px; margin-top: 25px; padding-top: 25px; border-top: 1px solid #F3F4F6; }
+    .stat-item { text-align: center; min-width: 80px; }
+    .stat-num { font-size: 1.2rem; font-weight: 800; display: block; }
+    .stat-label { font-size: 0.85rem; color: var(--text-gray); }
+
+    .tabs-container { background: white; border-radius: var(--card-radius); padding: 20px; box-shadow: var(--card-shadow); min-height: 300px; margin-top: 25px; }
+    .tabs-header { display: flex; border-bottom: 1px solid #E5E7EB; margin-bottom: 20px; }
+    .tab-btn { padding: 10px 20px; cursor: pointer; font-weight: 600; color: var(--text-gray); border-bottom: 3px solid transparent; transition: 0.2s; }
+    .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+    .mock-content { text-align: center; padding: 40px; color: #9CA3AF; }
+
+    /* --- View 2 & 3: Settings --- */
+    .settings-card { background: white; border-radius: var(--card-radius); padding: 30px; box-shadow: var(--card-shadow); }
+    .settings-header { margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid #F3F4F6; }
+    .settings-header h2 { font-size: 1.5rem; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+    .form-group { margin-bottom: 20px; }
+    .form-group.full-width { grid-column: span 2; }
+    .form-label { display: block; font-size: 0.9rem; font-weight: 600; color: var(--text-dark); margin-bottom: 8px; }
+    .form-input {
+      width: 100%; padding: 12px 15px; border-radius: 12px; border: 1px solid var(--border-color);
+      background: var(--input-bg); font-family: inherit; font-size: 0.95rem; outline: none; transition: 0.2s;
+    }
+    .form-input:focus { border-color: var(--primary); background: white; box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); }
+
+    .btn-save {
+      background: var(--primary); color: white; border: none; padding: 12px 30px; border-radius: 12px;
+      font-weight: 600; cursor: pointer; transition: 0.2s; font-size: 1rem;
+    }
+    .btn-save:hover { background: var(--primary-hover); }
+
+    /* Security Specific */
+    .security-item { display: flex; justify-content: space-between; align-items: center; padding: 20px 0; border-bottom: 1px solid #F3F4F6; }
+    .security-info h4 { font-size: 1rem; margin-bottom: 5px; }
+    .security-info p { font-size: 0.85rem; color: var(--text-gray); }
+    .btn-outline { border: 1px solid #E5E7EB; background: white; padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; }
+    .btn-danger { color: #EF4444; border-color: #FEE2E2; background: #FEF2F2; }
+
+    /* --- 右侧操作栏 --- */
+    .action-card {
+      background: white; border-radius: var(--card-radius); padding: 20px; box-shadow: var(--card-shadow);
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .action-btn {
+      display: flex; align-items: center; gap: 10px; padding: 12px; border-radius: 12px; text-decoration: none;
+      color: var(--text-dark); font-weight: 500; transition: 0.2s;
+    }
+    .action-btn:hover { background: #F3F4F6; color: var(--primary); }
+    .btn-primary-action { background: var(--text-dark); color: white; justify-content: center; font-weight: 600; margin-bottom: 10px; }
+    .btn-primary-action:hover { background: black; color: white; transform: translateY(-2px); }
+
+    @media (max-width: 900px) { .layout-container { grid-template-columns: 1fr; } .sidebar-card, .action-card { display: none; } }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="../../index.html" class="logo">
+    <img src="../../Public_Assets/images/TreasureGo_Logo.png" alt="Logo" class="logo-img" onerror="this.style.display='none'">
+    Treasure<span>Go</span>
+  </a>
+  <div class="nav-actions">
+    <button class="nav-btn" onclick="location.href='../../index.html'">Home</button>
+    <button class="nav-btn">Orders</button>
+    <div class="nav-avatar-small" id="nav-avatar-top" onclick="location.reload()">👤</div>
+  </div>
+</nav>
+
+<div class="layout-container">
+
+  <aside class="sidebar-card">
+    <div class="menu-title">Dashboard</div>
+
+    <button class="menu-item active-view" onclick="switchView('overview', this)">
+      <i class="ri-user-line"></i> Overview
+    </button>
+
+    <a href="#" class="menu-item"><i class="ri-vip-crown-line"></i> Membership</a>
+    <a href="#" class="menu-item"><i class="ri-shopping-bag-3-line"></i> My Orders</a>
+    <a href="#" class="menu-item"><i class="ri-store-2-line"></i> My Listings</a>
+    <a href="#" class="menu-item"><i class="ri-heart-3-line"></i> Favorites</a>
+
+    <div class="menu-title" style="margin-top: 20px;">Settings</div>
+
+    <button class="menu-item" onclick="switchView('personal', this)">
+      <i class="ri-user-settings-line"></i> Personal
+    </button>
+
+    <button class="menu-item" onclick="switchView('security', this)">
+      <i class="ri-shield-check-line"></i> Security
+    </button>
+
+    <a href="#" class="menu-item" onclick="handleLogout()" style="color: #EF4444; margin-top: 10px;">
+      <i class="ri-logout-box-r-line"></i> Log Out
+    </a>
+  </aside>
+
+  <main class="main-content">
+
+    <div id="view-overview" class="view-section active">
+      <div class="profile-header-card">
+        <div class="large-avatar" id="u_avatar">👤</div>
+        <h1 class="user-name" id="u_name">Loading...</h1>
+        <div class="user-meta">
+          <span id="u_email">...</span>
+          <span class="role-badge" id="u_role">USER</span>
+        </div>
+
+        <div class="stats-row">
+          <div class="stat-item"><span class="stat-num" id="s_posted">0</span><span class="stat-label">Published</span></div>
+          <div class="stat-item"><span class="stat-num" id="s_sold">0</span><span class="stat-label">Sold</span></div>
+          <div class="stat-item"><span class="stat-num" id="s_score">5.0</span><span class="stat-label">Rating</span></div>
+          <div class="stat-item"><span class="stat-num" id="s_membership" style="color: #F59E0B;">Free</span><span class="stat-label">Membership</span></div>
+        </div>
+      </div>
+
+      <div class="tabs-container">
+        <div class="tabs-header">
+          <div class="tab-btn active">Active Listings</div>
+          <div class="tab-btn">Recent Reviews</div>
+        </div>
+        <div class="mock-content">
+          <div class="mock-icon"><i class="ri-inbox-line"></i></div>
+          <p>No active listings found.</p>
+        </div>
+      </div>
+    </div>
+
+    <div id="view-personal" class="view-section">
+      <div class="settings-card">
+        <div class="settings-header">
+          <h2><i class="ri-user-settings-line"></i> Personal Information</h2>
+        </div>
+        <form onsubmit="event.preventDefault(); alert('Save feature not implemented yet.');">
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">Username</label>
+              <input type="text" class="form-input" id="input_username" readonly style="background:#f3f4f6; cursor:not-allowed;">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Email</label>
+              <input type="email" class="form-input" id="input_email" readonly style="background:#f3f4f6; cursor:not-allowed;">
+            </div>
+            <div class="form-group">
+              <label class="form-label">First Name</label>
+              <input type="text" class="form-input" placeholder="Enter first name">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Last Name</label>
+              <input type="text" class="form-input" placeholder="Enter last name">
+            </div>
+            <div class="form-group full-width">
+              <label class="form-label">Bio</label>
+              <textarea class="form-input" rows="4" placeholder="Tell us about yourself..."></textarea>
+            </div>
+          </div>
+          <button class="btn-save">Save Changes</button>
+        </form>
+      </div>
+    </div>
+
+    <div id="view-security" class="view-section">
+      <div class="settings-card">
+        <div class="settings-header">
+          <h2><i class="ri-shield-check-line"></i> Account Security</h2>
+        </div>
+
+        <div class="security-item">
+          <div class="security-info">
+            <h4>Password</h4>
+            <p>Last changed 3 months ago</p>
+          </div>
+          <button class="btn-outline">Change Password</button>
+        </div>
+
+        <div class="security-item">
+          <div class="security-info">
+            <h4>Two-Factor Authentication</h4>
+            <p>Add an extra layer of security to your account</p>
+          </div>
+          <div style="font-size: 1.5rem; color: #E5E7EB; cursor: pointer;"><i class="ri-toggle-line"></i></div>
+        </div>
+
+        <div class="security-item" style="border-bottom: none;">
+          <div class="security-info">
+            <h4 style="color: #EF4444;">Delete Account</h4>
+            <p>Permanently delete your account and all data</p>
+          </div>
+          <button class="btn-outline btn-danger">Delete</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <aside class="action-card">
+    <a href="../../Module_Product_Ecosystem/pages/Publish_Page.html" class="action-btn btn-primary-action">
+      <i class="ri-add-circle-line"></i> Publish Item
+    </a>
+    <a href="#" class="action-btn"><i class="ri-message-3-line"></i> Messages</a>
+    <a href="#" class="action-btn"><i class="ri-customer-service-2-line"></i> Help Center</a>
+    <a href="../../Module_Platform_Governance_AI_Services/pages/report.html" class="action-btn">
+      <i class="ri-alarm-warning-line"></i> Report
+    </a>
+    <a href="#" class="action-btn"><i class="ri-feedback-line"></i> Feedback</a>
+  </aside>
+
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', async () => {
+    await fetchProfileData();
+  });
+
+  async function fetchProfileData() {
+    try {
+      const res = await fetch('../api/get_profile.php');
+      const json = await res.json();
+
+      if (json.status !== 'success') {
+        window.location.href = 'login.php';
+        return;
+      }
+      renderProfile(json.data);
+    } catch (err) {
+      console.error("API Error:", err);
+    }
+  }
+
+  function renderProfile(user) {
+    setText('u_name', user.User_Username);
+    setText('u_email', user.User_Email);
+    setText('u_role', user.User_Role);
+    setText('s_posted', user.posted_count || 0);
+    setText('s_sold', user.sold_count || 0);
+    setText('s_membership', user.Memberships_tier || 'Free');
+
+    const inputUser = document.getElementById('input_username');
+    const inputEmail = document.getElementById('input_email');
+    if(inputUser) inputUser.value = user.User_Username;
+    if(inputEmail) inputEmail.value = user.User_Email;
+
+    const avatarEl = document.getElementById('u_avatar');
+    const navAvatarEl = document.getElementById('nav-avatar-top');
+
+    if (user.User_Profile_image) {
+      const imgTag = `<img src="${user.User_Profile_image}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+      avatarEl.innerHTML = imgTag;
+      navAvatarEl.innerHTML = imgTag;
+    } else if (user.User_Username) {
+      const initial = user.User_Username.charAt(0).toUpperCase();
+      avatarEl.innerText = initial;
+      navAvatarEl.innerText = initial;
+    }
+  }
+
+  function switchView(viewName, btnElement) {
+    document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+    document.getElementById('view-' + viewName).classList.add('active');
+
+    const allBtns = document.querySelectorAll('.sidebar-card button[onclick^="switchView"]');
+    allBtns.forEach(btn => btn.classList.remove('active-view'));
+
+    if (btnElement) {
+      btnElement.classList.add('active-view');
+    }
+  }
+
+  function setText(id, text) {
+    const el = document.getElementById(id);
+    if (el) el.innerText = text;
+  }
+
+  async function handleLogout() {
+    if(confirm("Are you sure you want to log out?")) {
+      window.location.href = '../api/logout.php';
+    }
+  }
+</script>
+</body>
+</html>

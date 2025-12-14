@@ -1,0 +1,1 @@
+<?php require_once '../views/verify_email.html'; ?>

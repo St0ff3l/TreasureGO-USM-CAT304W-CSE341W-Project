@@ -1,0 +1,1 @@
+<?php require_once '../views/reset_password.html'; ?>

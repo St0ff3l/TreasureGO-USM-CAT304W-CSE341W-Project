@@ -1,0 +1,1 @@
+<?php require_once '../views/forgot_password.html'; ?>
