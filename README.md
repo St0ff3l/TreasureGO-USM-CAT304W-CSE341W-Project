@@ -1,7 +1,7 @@
-# TreasureGO
+# TreasureGo
 
 ## Project Overview
-TreasureGO is a web platform for buying and selling second-hand items. Users can post listings, search and filter products, and complete purchases. The interface is lightweight and responsive, optimized for both mobile and desktop experiences.
+TreasureGo is a web platform for buying and selling second-hand items. Users can post listings, search and filter products, and complete purchases. The interface is lightweight and responsive, optimized for both mobile and desktop experiences.
 
 ## Key Features
 - **User system:** registration/login, profile management, avatar display, and session checks (PHP backend).
