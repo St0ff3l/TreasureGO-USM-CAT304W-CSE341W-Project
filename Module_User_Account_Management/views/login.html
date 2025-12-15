@@ -29,11 +29,10 @@
       align-items: center;
     }
 
-    /* --- Background Animation (修复了这里！) --- */
+    /* --- Background Animation --- */
     #floating-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
     .floating-item { position: absolute; font-size: 4rem; opacity: 0.6; animation: floatUp 15s linear infinite; }
 
-    /* 👇 关键修复：添加了中间的透明度变化，让图标显形 */
     @keyframes floatUp {
       0% { transform: translateY(110vh) rotate(0deg); opacity: 0; }
       10% { opacity: 0.8; }
@@ -173,7 +172,9 @@
 
   <div class="links-container">
     <a href="../../index.html" class="text-link">← Back to Home</a>
-    <a href="#" class="text-link" onclick="alert('Forgot Password feature coming soon!')">Forgot Password?</a>
+
+    <a href="forgot_password.php" class="text-link">Forgot Password?</a>
+
   </div>
 </div>
 

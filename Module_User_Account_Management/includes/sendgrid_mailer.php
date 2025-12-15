@@ -41,6 +41,10 @@ function sendEmail($to, $subject, $htmlContent, $textContent = null) {
     ];
 
     $ch = curl_init();
+    // 设置连接超时 5 秒，执行超时 10 秒
+    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+
     curl_setopt($ch, CURLOPT_URL, $url);
     curl_setopt($ch, CURLOPT_POST, 1);
     curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
