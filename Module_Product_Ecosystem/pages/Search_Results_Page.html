@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>TreasureGO - Smart Search</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
   <style>
@@ -17,16 +17,17 @@
       --card-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.05);
     }
 
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
     body {
       font-family: 'Poppins', sans-serif;
       background-color: var(--bg-color);
       color: var(--text-dark);
       min-height: 100vh;
+      overflow-x: hidden;
     }
 
-    /* --- 2. Navbar (Keep Original) --- */
+    /* --- 2. Navbar --- */
     .navbar {
       background: var(--glass-bg);
       backdrop-filter: blur(12px);
@@ -41,8 +42,6 @@
     }
     .logo { font-weight: 800; font-size: 1.5rem; color: var(--primary); display: flex; align-items: center; gap: 10px; text-decoration: none; }
     .logo span { color: var(--text-dark); }
-
-    /* Updated Logo Path */
     .logo-img { width: 42px; height: 42px; border-radius: 10px; object-fit: cover; }
 
     .nav-actions { display: flex; align-items: center; gap: 20px; }
@@ -62,11 +61,31 @@
     .dropdown-item:hover { background-color: #f3f4f6; color: var(--primary); }
 
     /* --- 3. Search Header --- */
-    .search-header-bg { background: white; padding: 20px 0; border-bottom: 1px solid rgba(0,0,0,0.05); }
-    .search-wrapper { max-width: 800px; margin: 0 auto; display: flex; gap: 10px; padding: 0 20px; }
-    .search-input { flex: 1; padding: 14px 24px; border-radius: 50px; border: 2px solid #eee; background: #f9f9fb; outline: none; transition: 0.2s; }
+    .search-header-bg { background: white; padding: 20px 0; border-bottom: 1px solid rgba(0,0,0,0.05); position: relative; z-index: 900; }
+    .search-wrapper { max-width: 800px; margin: 0 auto; display: flex; gap: 10px; padding: 0 20px; align-items: center; }
+    .search-input { flex: 1; padding: 14px 24px; border-radius: 50px; border: 2px solid #eee; background: #f9f9fb; outline: none; transition: 0.2s; font-size: 16px; }
     .search-input:focus { border-color: var(--primary); background: white; }
-    .search-btn-small { padding: 0 30px; border-radius: 50px; background: var(--primary); color: white; border: none; cursor: pointer; font-weight: 600; }
+    .search-btn-small { padding: 0 30px; height: 50px; border-radius: 50px; background: var(--primary); color: white; border: none; cursor: pointer; font-weight: 600; white-space: nowrap; }
+
+    /* Mobile Filter Trigger */
+    .mobile-filter-trigger {
+      display: none;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: #f0f0f0;
+      color: var(--text-dark);
+      border: none;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 24px;
+      font-weight: 800;
+      line-height: 0;
+      padding-bottom: 12px;
+      flex-shrink: 0;
+    }
+    .mobile-filter-trigger:active { background: #e5e5e5; }
 
     /* --- 4. Main Layout --- */
     .main-container {
@@ -74,13 +93,13 @@
       margin: 40px auto;
       padding: 0 20px;
       display: grid;
-      grid-template-columns: 280px 1fr; /* Fixed left width */
+      grid-template-columns: 280px 1fr;
       gap: 40px;
       align-items: start;
     }
 
     /* =========================================
-       ★ Sidebar: Categories + Filters Combined ★
+       Sidebar: Categories + Filters Combined
        ========================================= */
     .filter-sidebar {
       background: white;
@@ -88,11 +107,14 @@
       border-radius: 24px;
       box-shadow: var(--card-shadow);
       position: sticky;
-      top: 100px; /* Stick on scroll */
+      top: 100px;
       z-index: 900;
+      transition: transform 0.3s ease;
     }
 
-    /* --- Part A: 5 Categories Floating Menu --- */
+    .mobile-sidebar-close { display: none; text-align: right; font-size: 1.5rem; color: #999; cursor: pointer; margin-bottom: 10px; }
+
+    /* --- Categories Menu --- */
     .category-list {
       list-style: none;
       display: flex;
@@ -102,7 +124,7 @@
       position: relative;
     }
 
-    .sidebar-item-wrapper { position: relative; }
+    .sidebar-item-wrapper { position: relative; transition: all 0.3s ease; }
 
     .category-trigger {
       display: flex; align-items: center; gap: 12px;
@@ -111,18 +133,17 @@
       color: var(--text-dark); font-weight: 600; font-size: 0.95rem;
     }
     .category-trigger:hover { background-color: #f3f4f6; color: var(--primary); }
-    .category-trigger.active { background-color: var(--primary); color: white; } /* Highlight selected */
+    .category-trigger.active { background-color: var(--primary); color: white; }
 
-    /* --- Floating Panel (Anti-disappear Optimization) --- */
+    /* --- Submenu Panel --- */
     .submenu-panel {
       visibility: hidden;
       opacity: 0;
       transform: translateX(-10px);
-
       position: absolute;
       left: 100%;
-      top: -10px; /* Slight upward alignment */
-      width: 480px; /* Wide panel, shows more subcategories */
+      top: -10px;
+      width: 480px;
       background: white;
       border-radius: 20px;
       box-shadow: 0 20px 50px rgba(0,0,0,0.15);
@@ -130,61 +151,69 @@
       margin-left: 10px;
       z-index: 999;
       border: 1px solid #f0f0f0;
-
-      /* Critical Animation: 0.2s delay to allow mouse movement */
       transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
     }
-
-    /* ★ Core Fix: Transparent Bridge ★ */
-    /* This pseudo-element fills the gap between the left button and the right panel to prevent the menu from disappearing */
     .submenu-panel::before {
-      content: "";
-      position: absolute;
-      left: -20px;
-      top: 0;
-      height: 100%;
-      width: 20px;
-      background: transparent;
+      content: ""; position: absolute; left: -20px; top: 0; height: 100%; width: 20px; background: transparent;
     }
 
-    /* Show on hover */
-    .sidebar-item-wrapper:hover .submenu-panel {
-      visibility: visible;
-      opacity: 1;
-      transform: translateX(0);
+    @media (min-width: 769px) {
+      .sidebar-item-wrapper:hover .submenu-panel {
+        visibility: visible; opacity: 1; transform: translateX(0);
+      }
     }
 
-    /* Submenu Styles */
     .submenu-group { margin-bottom: 15px; }
     .submenu-title { font-size: 0.85rem; color: #999; margin-bottom: 8px; font-weight: 700; text-transform: uppercase; border-bottom: 1px solid #eee; padding-bottom: 4px; }
     .submenu-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+
     .sub-tag {
       padding: 5px 12px; background: #f9f9fb; border-radius: 50px; font-size: 0.9rem;
       color: var(--text-dark); cursor: pointer; transition: 0.2s; border: 1px solid transparent;
     }
     .sub-tag:hover { background: white; border-color: var(--primary); color: var(--primary); }
 
+    .sub-tag.active {
+      background: white;
+      border-color: var(--primary);
+      color: var(--primary);
+      font-weight: 600;
+      box-shadow: 0 2px 5px rgba(79, 70, 229, 0.1);
+    }
+
     .sidebar-divider { height: 1px; background: #eee; margin: 10px 0 20px 0; }
 
-    /* --- Part B: Traditional Filters (Retained) --- */
+    /* --- Filters --- */
     .filter-group { margin-bottom: 25px; }
     .filter-title { font-weight: 800; font-size: 1rem; margin-bottom: 12px; display: block; }
-    .filter-option {
-      display: flex; align-items: center; gap: 10px; margin-bottom: 8px;
-      cursor: pointer; color: var(--text-gray); font-size: 0.95rem;
-    }
+    .filter-option { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; cursor: pointer; color: var(--text-gray); font-size: 0.95rem; }
     .filter-option:hover { color: var(--primary); }
     .filter-checkbox { accent-color: var(--primary); transform: scale(1.1); }
-
     .price-inputs { display: flex; gap: 10px; align-items: center; }
     .price-input { width: 100%; padding: 8px; border: 1px solid #eee; border-radius: 8px; outline: none; background: #f9f9fb; }
 
-    .btn-apply-filter {
-      width: 100%; padding: 12px; background-color: var(--primary); color: white;
-      border: none; border-radius: 12px; font-weight: 600; font-size: 1rem;
-      cursor: pointer; transition: 0.2s; box-shadow: 0 4px 10px rgba(79, 70, 229, 0.2);
-    }
+    .btn-apply-filter { width: 100%; padding: 12px; background-color: var(--primary); color: white; border: none; border-radius: 12px; font-weight: 600; font-size: 1rem; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 10px rgba(79, 70, 229, 0.2); }
     .btn-apply-filter:hover { background-color: var(--primary-hover); transform: translateY(-2px); }
+
+    /* Clear/Reset Button */
+    .btn-clear-filter {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+      background: transparent;
+      border: 1px dashed #ccc;
+      border-radius: 12px;
+      color: #888;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+    }
+    .btn-clear-filter:hover {
+      background: #f3f3f3;
+      color: var(--text-dark);
+      border-color: #999;
+    }
 
     /* --- Grid & Cards --- */
     .results-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
@@ -195,13 +224,71 @@
     .card-info { padding: 1.2rem; }
     .card-footer { display: flex; justify-content: space-between; margin-top: 10px; color: var(--primary); font-weight: 800; }
 
+    .overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5); z-index: 899;
+      display: none; opacity: 0; transition: opacity 0.3s;
+    }
+
+    /* =========================================
+       ★ MOBILE ADAPTATION (Max-Width: 768px) ★
+       ========================================= */
+    @media (max-width: 768px) {
+      .navbar { padding: 1rem; }
+      .nav-actions .nav-btn, .nav-actions .btn-primary { display: none; }
+      .mobile-filter-trigger { display: flex; margin-left: 8px; }
+      .search-wrapper { padding: 0 15px; }
+      .search-btn-small { padding: 0 20px; font-size: 0.9rem; }
+      .main-container { display: block; margin-top: 20px; }
+
+      .filter-sidebar {
+        position: fixed; top: 0; left: -100%;
+        width: 85%; height: 100vh;
+        overflow-y: auto;
+        border-radius: 0 20px 20px 0;
+        transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 2000;
+        padding-bottom: 80px;
+      }
+      .filter-sidebar.active { left: 0; }
+      .mobile-sidebar-close { display: block; }
+
+      .submenu-panel {
+        position: static;
+        width: 100%;
+        margin-left: 0;
+        box-shadow: none; border: none;
+        background: transparent;
+        padding: 10px 0 10px 15px;
+        display: none;
+        visibility: visible; opacity: 1; transform: none;
+      }
+      .submenu-panel::before { display: none; }
+
+      .sidebar-item-wrapper { overflow: visible; }
+      .sidebar-item-wrapper.mobile-expanded .submenu-panel { display: block; }
+
+      .category-trigger.active {
+        border-radius: 12px;
+        margin-bottom: 5px;
+      }
+
+      .product-grid { grid-template-columns: 1fr 1fr; gap: 15px; }
+      .card-img-container { height: 140px; font-size: 3rem; }
+      .card-info { padding: 10px; }
+      .card-info h4 { font-size: 0.9rem; }
+      .card-footer { font-size: 0.9rem; }
+    }
+
   </style>
 </head>
 <body>
 
+<div class="overlay" id="sidebarOverlay" onclick="toggleMobileSidebar()"></div>
+
 <nav class="navbar">
   <a href="../../index.html" class="logo">
-    <img src="../../Public_Assets/images/TreasureGo_Logo.png" alt="Logo" class="logo-img">
+    <img src="../../Public_Assets/images/TreasureGo_Logo.png" alt="Logo" class="logo-img" style="background:#ddd;">
     Treasure<span>Go</span>
   </a>
   <div class="nav-actions">
@@ -223,106 +310,21 @@
   <div class="search-wrapper">
     <input type="text" class="search-input" id="mainSearchInput" placeholder="Search for items...">
     <button class="search-btn-small" onclick="applyAllFilters()">Search</button>
+    <button class="mobile-filter-trigger" onclick="toggleMobileSidebar()">•••</button>
   </div>
 </div>
 
 <div class="main-container">
 
-  <aside class="filter-sidebar">
+  <aside class="filter-sidebar" id="filterSidebar">
+    <div class="mobile-sidebar-close" onclick="toggleMobileSidebar()">&times; Close</div>
 
     <span class="filter-title">Categories</span>
-    <ul class="category-list">
 
-      <li class="sidebar-item-wrapper">
-        <div class="category-trigger" id="cat-digital">📱 Digital</div>
-        <div class="submenu-panel">
-          <div class="submenu-group">
-            <div class="submenu-title">Phones</div>
-            <div class="submenu-tags">
-              <span class="sub-tag" onclick="setCategory('Digital', 'iPhone')">iPhone</span>
-              <span class="sub-tag" onclick="setCategory('Digital', 'Samsung')">Samsung</span>
-              <span class="sub-tag" onclick="setCategory('Digital', 'Pixel')">Pixel</span>
-            </div>
-          </div>
-          <div class="submenu-group">
-            <div class="submenu-title">Computers</div>
-            <div class="submenu-tags">
-              <span class="sub-tag" onclick="setCategory('Digital', 'MacBook')">MacBook</span>
-              <span class="sub-tag" onclick="setCategory('Digital', 'Gaming Laptop')">Gaming PC</span>
-            </div>
-          </div>
-        </div>
+    <ul class="category-list" id="dynamic-category-list">
+      <li style="padding:15px;text-align:center;color:#999;font-size:0.9rem;">
+        Loading categories...
       </li>
-
-      <li class="sidebar-item-wrapper">
-        <div class="category-trigger" id="cat-fashion">👗 Fashion</div>
-        <div class="submenu-panel">
-          <div class="submenu-group">
-            <div class="submenu-title">Wear</div>
-            <div class="submenu-tags">
-              <span class="sub-tag" onclick="setCategory('Fashion', 'Sneakers')">Sneakers</span>
-              <span class="sub-tag" onclick="setCategory('Fashion', 'Hoodies')">Hoodies</span>
-              <span class="sub-tag" onclick="setCategory('Fashion', 'Vintage')">Vintage</span>
-            </div>
-          </div>
-        </div>
-      </li>
-
-      <li class="sidebar-item-wrapper">
-        <div class="category-trigger" id="cat-home">🏠 Home</div>
-        <div class="submenu-panel">
-          <div class="submenu-group">
-            <div class="submenu-title">Furniture</div>
-            <div class="submenu-tags">
-              <span class="sub-tag" onclick="setCategory('Home', 'Sofa')">Sofa</span>
-              <span class="sub-tag" onclick="setCategory('Home', 'Chair')">Chair</span>
-              <span class="sub-tag" onclick="setCategory('Home', 'Desk')">Desk</span>
-            </div>
-          </div>
-          <div class="submenu-group">
-            <div class="submenu-title">Appliances</div>
-            <div class="submenu-tags">
-              <span class="sub-tag" onclick="setCategory('Home', 'Lamp')">Lamp</span>
-              <span class="sub-tag" onclick="setCategory('Home', 'Fan')">Fan</span>
-            </div>
-          </div>
-        </div>
-      </li>
-
-      <li class="sidebar-item-wrapper">
-        <div class="category-trigger" id="cat-books">📚 Books</div>
-        <div class="submenu-panel">
-          <div class="submenu-group">
-            <div class="submenu-title">Academic</div>
-            <div class="submenu-tags">
-              <span class="sub-tag" onclick="setCategory('Books', 'Textbooks')">Textbooks</span>
-              <span class="sub-tag" onclick="setCategory('Books', 'Notes')">Notes</span>
-            </div>
-          </div>
-          <div class="submenu-group">
-            <div class="submenu-title">Leisure</div>
-            <div class="submenu-tags">
-              <span class="sub-tag" onclick="setCategory('Books', 'Comics')">Comics</span>
-              <span class="sub-tag" onclick="setCategory('Books', 'Novels')">Novels</span>
-            </div>
-          </div>
-        </div>
-      </li>
-
-      <li class="sidebar-item-wrapper">
-        <div class="category-trigger" id="cat-transport">🚲 Transport</div>
-        <div class="submenu-panel">
-          <div class="submenu-group">
-            <div class="submenu-title">Vehicles</div>
-            <div class="submenu-tags">
-              <span class="sub-tag" onclick="setCategory('Transport', 'Bicycle')">Bicycle</span>
-              <span class="sub-tag" onclick="setCategory('Transport', 'Skateboard')">Skateboard</span>
-              <span class="sub-tag" onclick="setCategory('Transport', 'E-Scooter')">E-Scooter</span>
-            </div>
-          </div>
-        </div>
-      </li>
-
     </ul>
 
     <div class="sidebar-divider"></div>
@@ -342,6 +344,8 @@
         <input type="number" class="price-input" placeholder="Max">
       </div>
     </div>
+
+    <button class="btn-clear-filter" onclick="clearAllFilters()">Reset / Clear All</button>
 
     <button class="btn-apply-filter" onclick="applyAllFilters()">Apply All Filters</button>
 
@@ -397,50 +401,71 @@
   let currentCategory = "All";
   let currentSubCategory = "";
 
-  // 1. Page Load: Check if there is a search term from the home page
-  window.onload = function() {
-    const params = new URLSearchParams(window.location.search);
-    const query = params.get('q');
-    if (query) {
-      const decodedQuery = decodeURIComponent(query);
-      document.getElementById('mainSearchInput').value = decodedQuery;
-      document.getElementById('result-status').innerText = `Results for: "${decodedQuery}"`;
-      // Here you can call the backend API
-    }
-  };
+  // 1. Mobile Logic: Sidebar Toggle
+  function toggleMobileSidebar() {
+    const sidebar = document.getElementById('filterSidebar');
+    const overlay = document.getElementById('sidebarOverlay');
 
-  // 2. User clicks on left sub-category
-  function setCategory(main, sub) {
+    if (sidebar.classList.contains('active')) {
+      sidebar.classList.remove('active');
+      overlay.style.display = 'none';
+      overlay.style.opacity = '0';
+      document.body.style.overflow = 'auto';
+    } else {
+      sidebar.classList.add('active');
+      overlay.style.display = 'block';
+      setTimeout(() => overlay.style.opacity = '1', 10);
+      document.body.style.overflow = 'hidden';
+    }
+  }
+
+  // 2. Mobile Logic: Accordion Submenu
+  function toggleMobileSubmenu(element) {
+    if (window.innerWidth <= 768) {
+      const currentExpanded = document.querySelector('.sidebar-item-wrapper.mobile-expanded');
+      if (currentExpanded && currentExpanded !== element) {
+        currentExpanded.classList.remove('mobile-expanded');
+      }
+      element.classList.toggle('mobile-expanded');
+    }
+  }
+
+  // 3. Select Category
+  function setCategory(event, main, sub) {
+    if (event) event.stopPropagation();
+
     currentCategory = main;
     currentSubCategory = sub;
 
-    // Auto-fill search box
+    // Fill Input
     document.getElementById('mainSearchInput').value = sub;
 
-    // Highlight left main category
+    // Highlighting Logic
     document.querySelectorAll('.category-trigger').forEach(el => el.classList.remove('active'));
-    if(main === 'Digital') document.getElementById('cat-digital').classList.add('active');
-    if(main === 'Fashion') document.getElementById('cat-fashion').classList.add('active');
-    if(main === 'Home') document.getElementById('cat-home').classList.add('active');
-    if(main === 'Books') document.getElementById('cat-books').classList.add('active');
-    if(main === 'Transport') document.getElementById('cat-transport').classList.add('active');
+    // 这里因为是动态生成的，ID规则是 'cat-' + name.toLowerCase()
+    let triggerId = 'cat-' + main.toLowerCase();
+    let trigger = document.getElementById(triggerId);
+    if(trigger) trigger.classList.add('active');
 
-    // Notify user
-    document.getElementById('result-status').innerText = `Selected: ${main} > ${sub} (Add price/condition then click Apply)`;
+    document.querySelectorAll('.sub-tag').forEach(tag => tag.classList.remove('active'));
+    if (event && event.target) {
+      event.target.classList.add('active');
+    }
+
+    // Update Status Text
+    document.getElementById('result-status').innerText = `Selected: ${main} > ${sub} (Pending Apply)`;
   }
 
-  // 3. Click Apply button (Combined search logic)
+  // 4. Click Apply button
   function applyAllFilters() {
     let searchText = document.getElementById('mainSearchInput').value || currentSubCategory || 'All Items';
     let statusText = `Searching for: "${searchText}"`;
 
-    // Get selected conditions
     const checkedConditions = Array.from(document.querySelectorAll('.filter-checkbox:checked')).map(cb => cb.parentNode.innerText.trim());
     if(checkedConditions.length > 0) {
       statusText += ` + Conditions: [${checkedConditions.join(', ')}]`;
     }
 
-    // Get price
     const minPrice = document.querySelector('input[placeholder="Min"]').value;
     const maxPrice = document.querySelector('input[placeholder="Max"]').value;
     if(minPrice || maxPrice) {
@@ -449,7 +474,12 @@
 
     document.getElementById('result-status').innerText = statusText;
 
-    // Simulate sending to backend
+    // Close sidebar on mobile
+    if (window.innerWidth <= 768) {
+      const sidebar = document.getElementById('filterSidebar');
+      if(sidebar.classList.contains('active')) toggleMobileSidebar();
+    }
+
     console.log("Search Payload:", {
       q: searchText,
       category: currentCategory,
@@ -461,12 +491,113 @@
     alert("Filter Applied! Check console for details.");
   }
 
-  // 4. Enter key search
+  // 5. Clear / Reset Logic
+  function clearAllFilters() {
+    currentCategory = "All";
+    currentSubCategory = "";
+
+    document.querySelectorAll('.category-trigger').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.sub-tag').forEach(el => el.classList.remove('active'));
+
+    document.getElementById('mainSearchInput').value = "";
+    document.querySelectorAll('.price-input').forEach(input => input.value = "");
+
+    document.querySelectorAll('.filter-checkbox').forEach(cb => cb.checked = false);
+
+    document.getElementById('result-status').innerText = "Filters Cleared.";
+
+    if (window.innerWidth <= 768) {
+      document.querySelectorAll('.sidebar-item-wrapper.mobile-expanded').forEach(el => el.classList.remove('mobile-expanded'));
+    }
+  }
+
   document.getElementById('mainSearchInput').addEventListener('keypress', function (e) {
     if (e.key === 'Enter') {
       applyAllFilters();
     }
   });
+
+  // ==========================================
+  // ★ NEW: 动态加载分类 Logic
+  // ==========================================
+
+  // Emoji 映射表 (保持你的设计风格)
+  const iconMap = {
+    'Digital': '📱',
+    'Fashion': '👗',
+    'Home': '🏠',
+    'Books': '📚',
+    'Transport': '🚲',
+    'default': '📦'
+  };
+
+  async function loadCategories() {
+    try {
+      // 请求路径：从 pages/ 目录去访问上一级的 api/ 目录
+      const response = await fetch('../api/get_categories.php');
+      const result = await response.json();
+
+      if (result.success) {
+        renderCategories(result.data);
+      } else {
+        console.error("API Error:", result.message);
+        document.getElementById('dynamic-category-list').innerHTML = `<li style="text-align:center;padding:10px;color:red">Error loading data</li>`;
+      }
+    } catch (error) {
+      console.error("Fetch Error:", error);
+      document.getElementById('dynamic-category-list').innerHTML = `<li style="text-align:center;padding:10px;color:red">Connection Failed</li>`;
+    }
+  }
+
+  function renderCategories(categories) {
+    const listContainer = document.getElementById('dynamic-category-list');
+    listContainer.innerHTML = ''; // 清空 Loading
+
+    categories.forEach(parent => {
+      // 1. 获取图标
+      const icon = iconMap[parent.Category_Name] || iconMap['default'];
+
+      // 2. 创建 HTML 结构
+      const li = document.createElement('li');
+      li.className = 'sidebar-item-wrapper';
+      li.setAttribute('onclick', 'toggleMobileSubmenu(this)'); // 绑定手机端点击事件
+
+      // 构建子分类 HTML
+      let subHtml = '';
+      if (parent.children && parent.children.length > 0) {
+        subHtml += `
+            <div class="submenu-panel">
+                <div class="submenu-group">
+                    <div class="submenu-title">Explore</div>
+                    <div class="submenu-tags">
+                        ${parent.children.map(child => `
+                            <span class="sub-tag"
+                                  onclick="setCategory(event, '${parent.Category_Name}', '${child.Category_Name}')">
+                                ${child.Category_Name}
+                            </span>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>`;
+      }
+
+      // 组装完整 HTML
+      li.innerHTML = `
+            <div class="category-trigger" id="cat-${parent.Category_Name.toLowerCase()}">
+                ${icon} ${parent.Category_Name}
+            </div>
+            ${subHtml}
+        `;
+
+      listContainer.appendChild(li);
+    });
+  }
+
+  // 页面加载完成后，自动执行加载函数
+  document.addEventListener('DOMContentLoaded', () => {
+    loadCategories();
+  });
+
 </script>
 
 </body>
