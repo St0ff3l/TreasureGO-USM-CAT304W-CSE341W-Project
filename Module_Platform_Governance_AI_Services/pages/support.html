@@ -202,28 +202,6 @@
         }
         .send-btn:hover { background: var(--primary-hover); transform: scale(1.05); }
 
-        /* --- Modal (Dialog) Custom Styles --- */
-        dialog::backdrop {
-            background: rgba(0, 0, 0, 0.4);
-            backdrop-filter: blur(4px);
-        }
-
-        dialog {
-            /* 关键修改：取消默认居中，设置为顶部显示 */
-            margin: 0 auto;         /* 左右居中 */
-            margin-top: 120px;      /* 距离顶部 120px，避开 Navbar */
-
-            animation: slideDown 0.4s cubic-bezier(0.25, 1, 0.5, 1);
-            border: none;
-            outline: none;
-        }
-
-        /* 下滑动画 */
-        @keyframes slideDown {
-            from { transform: translateY(-50px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-
         @media (max-width: 1024px) {
             .kb-sidebar { display: none; }
             .chat-layout { padding-left: 20px; }
@@ -307,27 +285,11 @@
     </div>
 </div>
 
-<dialog id="loginDialog" style="border-radius:24px; padding:30px; box-shadow: 0 20px 50px rgba(0,0,0,0.15); text-align:center; width: 320px;">
-    <div style="font-size: 40px; margin-bottom: 10px;">🔒</div>
-    <h3 style="margin-bottom:10px; color: var(--text-dark); font-size: 1.2rem;">Login Required</h3>
-    <p style="margin-bottom:25px; color:#6B7280; font-size: 0.95rem; line-height: 1.5;">
-        You need to log in to chat with our AI Assistant.
-    </p>
-    <div style="display:flex; gap:10px; justify-content:center;">
-        <button onclick="document.getElementById('loginDialog').close()"
-                style="padding:10px 20px; border:1px solid #E5E7EB; background:white; color: #374151; border-radius:12px; cursor:pointer; font-weight: 600;">
-            Cancel
-        </button>
-        <button onclick="window.location.href='../../Module_User_Account_Management/pages/login.php'"
-                style="padding:10px 20px; border:none; background:#4F46E5; color:white; border-radius:12px; cursor:pointer; font-weight: 600;">
-            Go to Login
-        </button>
-    </div>
-</dialog>
+<script src="../../Public_Assets/js/auth_modal.js"></script>
 
 <script>
     // ============================================
-    // ✅ 1. Check Session Status
+    // 1. Check Session Status
     // ============================================
     document.addEventListener('DOMContentLoaded', async () => {
         const loginBtn = document.getElementById('nav-login-btn');
@@ -366,7 +328,7 @@
     });
 
     // ============================================
-    // ✅ 2. Chat Logic (With Top-Positioned Dialog)
+    // 2. Chat Logic (With Shared Auth Modal)
     // ============================================
     const chatMessages = document.getElementById('chatMessages');
     const userInput = document.getElementById('userInput');
@@ -416,11 +378,11 @@
                 // Remove "Thinking..."
                 document.querySelector(`[data-id="${loadingId}"]`)?.remove();
 
-                // 🌟 Rollback: Remove the user's message bubble
+                // Rollback: Remove the user's message bubble
                 document.querySelector(`[data-id="${userMsgId}"]`)?.remove();
 
-                // 🌟 Show the custom Dialog (it will appear at top now)
-                document.getElementById('loginDialog').showModal();
+                // ✅ Show the SHARED Global Auth Modal
+                AuthModal.show();
                 return;
             }
 
