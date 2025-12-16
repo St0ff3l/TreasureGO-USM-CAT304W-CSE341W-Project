@@ -1,12 +1,15 @@
 /**
- * TreasureGo - Global Auth Modal API
- * * A reusable component to prompt users to login.
- * Usage: AuthModal.show()
+ * TreasureGo - Global Authentication Modal Component
+ * * A standalone, reusable component that prompts unauthenticated users to log in.
+ * It dynamically injects necessary CSS and HTML into the DOM upon initialization.
+ * * Usage:
+ * AuthModal.show();  // Initializes and opens the modal
+ * AuthModal.close(); // Closes the modal
  */
 const AuthModal = {
     /**
-     * The HTML template for the modal dialog.
-     * @type {string}
+     * The HTML structure for the modal dialog.
+     * Contains the icon, message, and action buttons.
      */
     htmlContent: `
         <dialog id="globalLoginDialog" class="tg-auth-modal">
@@ -29,22 +32,34 @@ const AuthModal = {
     `,
 
     /**
-     * Initializes the modal by injecting CSS and HTML into the DOM.
-     * Idempotent: safe to call multiple times.
+     * Initializes the component.
+     * Checks if the modal already exists in the DOM; if not, injects the styles and HTML.
+     * This method is idempotent (safe to call multiple times).
      */
     init: function() {
+        // Prevent duplicate injection
         if (document.getElementById('globalLoginDialog')) return;
 
-        // 1. Inject CSS Styles
+        // 1. Create and inject CSS Styles
         const style = document.createElement('style');
         style.innerHTML = `
+            /* Backdrop styling (blur effect) */
             .tg-auth-modal::backdrop { 
                 background: rgba(0, 0, 0, 0.4); 
                 backdrop-filter: blur(4px); 
             }
+
+            /* Modal container styling */
             .tg-auth-modal {
-                margin: 0 auto; 
-                margin-top: 120px; /* Top positioning */
+                /* Positioning: Visual Center */
+                position: fixed;     /* Fix position relative to the viewport */
+                top: 30%;            /* Position at 30% from the top (Visual Gold Mean) */
+                bottom: auto;        /* Disable default vertical centering logic */
+                left: 0; 
+                right: 0;            /* Stretch horizontally to allow margin auto to work */
+                margin: 0 auto;      /* Center horizontally */
+                
+                /* Appearance */
                 border-radius: 24px; 
                 padding: 30px; 
                 box-shadow: 0 20px 50px rgba(0,0,0,0.15); 
@@ -52,24 +67,28 @@ const AuthModal = {
                 width: 320px; 
                 border: none; 
                 outline: none;
+                
+                /* Animation */
                 animation: tgSlideDown 0.4s cubic-bezier(0.25, 1, 0.5, 1);
             }
+
+            /* Slide down animation keyframes */
             @keyframes tgSlideDown { 
-                from { transform: translateY(-50px); opacity: 0; } 
+                from { transform: translateY(-30px); opacity: 0; } 
                 to { transform: translateY(0); opacity: 1; } 
             }
         `;
         document.head.appendChild(style);
 
-        // 2. Inject HTML Content
+        // 2. Inject HTML Template into body
         document.body.insertAdjacentHTML('beforeend', this.htmlContent);
     },
 
     /**
-     * Shows the login modal.
+     * Triggers the initialization and displays the modal using the native showModal() API.
      */
     show: function() {
-        this.init(); // Ensure elements exist
+        this.init(); // Ensure dependencies are loaded
         const dialog = document.getElementById('globalLoginDialog');
         if (dialog) {
             dialog.showModal();
@@ -77,7 +96,7 @@ const AuthModal = {
     },
 
     /**
-     * Closes the login modal.
+     * Closes the modal dialog.
      */
     close: function() {
         const dialog = document.getElementById('globalLoginDialog');
