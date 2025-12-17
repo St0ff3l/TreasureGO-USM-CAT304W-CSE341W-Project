@@ -405,6 +405,11 @@
             font-weight: 600;
         }
 
+        /* Override AuthModal Cancel button style */
+        #globalLoginDialog button[onclick*="handleCancel"] {
+            border: none !important;
+        }
+
         @media (max-width: 768px) {
             .page-title { font-size: 2rem; }
             .stats-grid { grid-template-columns: 1fr; }
