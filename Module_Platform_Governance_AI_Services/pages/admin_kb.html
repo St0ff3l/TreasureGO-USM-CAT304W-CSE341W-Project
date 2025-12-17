@@ -1,83 +1,277 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>TreasureGo - KB Manager</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TreasureGo - Knowledge Base Manager</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
-    /* 简化的 CSS，建议复用你之前的 */
-    body { font-family: 'Poppins', sans-serif; background: #F3F6F9; padding: 20px; }
-    .container { max-width: 1000px; margin: 0 auto; background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
-    h2 { color: #4F46E5; margin-bottom: 20px; }
+    /* --- Core Styles --- */
+    body { font-family: 'Poppins', sans-serif; background-color: #F3F6F9; padding: 30px; color: #1F2937; margin: 0; }
 
-    .form-group { margin-bottom: 15px; }
-    label { display: block; margin-bottom: 5px; font-weight: 600; color: #374151; }
-    input, textarea, select { width: 100%; padding: 10px; border: 1px solid #E5E7EB; border-radius: 8px; font-family: inherit; }
+    .container {
+      max-width: 1000px; margin: 0 auto; background: white;
+      padding: 40px; border-radius: 24px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    }
+
+    /* --- Header --- */
+    header { border-bottom: 2px solid #F3F4F6; padding-bottom: 20px; margin-bottom: 30px; }
+    h2 { color: #4F46E5; font-size: 24px; margin: 0; }
+    p.subtitle { color: #6B7280; font-size: 14px; margin-top: 5px; }
+
+    /* --- Form Section --- */
+    .form-section { background: #F9FAFB; padding: 25px; border-radius: 16px; border: 1px solid #E5E7EB; }
+    .form-group { margin-bottom: 20px; }
+
+    label { display: block; margin-bottom: 8px; font-weight: 600; color: #374151; font-size: 14px; }
+
+    input, textarea, select {
+      width: 100%; padding: 12px 15px; border: 1px solid #D1D5DB; border-radius: 10px;
+      font-family: inherit; font-size: 14px; transition: all 0.2s; box-sizing: border-box;
+    }
+    input:focus, textarea:focus { border-color: #4F46E5; outline: none; box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); background: white; }
     textarea { height: 100px; resize: vertical; }
 
-    .btn { padding: 10px 20px; background: #4F46E5; color: white; border: none; border-radius: 8px; cursor: pointer; }
-    .btn:hover { background: #4338CA; }
+    .btn-submit {
+      padding: 12px 30px; background: #4F46E5; color: white; border: none; border-radius: 10px;
+      cursor: pointer; font-weight: 600; font-size: 15px; transition: 0.2s; width: 100%;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .btn-submit:hover { background: #4338CA; transform: translateY(-1px); }
 
-    table { width: 100%; border-collapse: collapse; margin-top: 30px; }
-    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
-    th { background: #F9FAFB; color: #6B7280; }
+    /* --- Table Section --- */
+    .table-container { margin-top: 40px; overflow-x: auto; }
+    table { width: 100%; border-collapse: separate; border-spacing: 0; }
+
+    th { text-align: left; padding: 15px; background: #F3F4F6; color: #4B5563; font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #E5E7EB; }
+    th:first-child { border-top-left-radius: 10px; }
+    th:last-child { border-top-right-radius: 10px; }
+
+    td { padding: 15px; border-bottom: 1px solid #F3F4F6; font-size: 14px; color: #374151; vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background-color: #FAFAFA; }
+
+    /* --- Badges & Buttons --- */
+    .badge {
+      display: inline-block; padding: 4px 10px; border-radius: 20px;
+      font-size: 12px; font-weight: 600;
+      background: #EEF2FF; color: #4F46E5; border: 1px solid #C7D2FE;
+    }
+
+    .btn-del {
+      color: #DC2626; background: #FEF2F2; padding: 6px 12px; border-radius: 8px;
+      font-size: 13px; cursor: pointer; border: 1px solid #FEE2E2; transition: 0.2s;
+    }
+    .btn-del:hover { background: #FEE2E2; border-color: #FECACA; }
+
+    .hint { font-size: 12px; color: #6B7280; margin-top: 5px; }
   </style>
 </head>
 <body>
 
 <div class="container">
-  <h2>📚 知识库管理 (Knowledge Base Admin)</h2>
+  <header>
+    <h2>📚 Knowledge Base Manager</h2>
+    <p class="subtitle">Manage the AI's standard answers and categories (RAG System)</p>
+  </header>
 
-  <form id="kbForm">
-    <div class="form-group">
-      <label>常见问题 (Question / Keyword)</label>
-      <input type="text" id="question" placeholder="例如：如何申请退款？" required>
-    </div>
+  <div class="form-section">
+    <form id="kbForm">
+      <div class="form-group">
+        <label for="question">User Question / Keywords</label>
+        <input type="text" id="question" placeholder="e.g., How to request a refund?" required autocomplete="off">
+        <div class="hint">Keywords or standard questions the user might ask.</div>
+      </div>
 
-    <div class="form-group">
-      <label>标准回答 (Answer)</label>
-      <textarea id="answer" placeholder="请在此输入 AI 参考的标准答案..." required></textarea>
-    </div>
+      <div class="form-group">
+        <label for="answer">AI Standard Answer</label>
+        <textarea id="answer" placeholder="Enter the approved answer for the AI here..." required></textarea>
+        <div class="hint">The AI will use this content as the ground truth.</div>
+      </div>
 
-    <div class="form-group">
-      <label>分类 (Category)</label>
-      <select id="category">
-        <option value="Refund">退款 (Refund)</option>
-        <option value="Order">订单 (Order)</option>
-        <option value="Account">账户 (Account)</option>
-        <option value="Safety">安全 (Safety)</option>
-      </select>
-    </div>
+      <div class="form-group">
+        <label for="category">Category</label>
+        <input list="category-options" id="category" placeholder="Select or type a new category..." required autocomplete="off">
+        <datalist id="category-options">
+        </datalist>
+        <div class="hint">* Typing a new name creates a custom category automatically.</div>
+      </div>
 
-    <button type="submit" class="btn">💾 保存到数据库</button>
-  </form>
+      <button type="submit" class="btn-submit">💾 Save Entry</button>
+    </form>
+  </div>
 
-  <hr style="margin: 30px 0; border: 0; border-top: 1px solid #eee;">
-
-  <h3>现有条目</h3>
-  <table>
-    <thead>
-    <tr>
-      <th>ID</th>
-      <th>问题</th>
-      <th>分类</th>
-      <th>操作</th>
-    </tr>
-    </thead>
-    <tbody id="kbList">
-    <tr>
-      <td>10001</td>
-      <td>如何重置密码?</td>
-      <td>Account</td>
-      <td><button style="color:red; background:none; border:none; cursor:pointer;">删除</button></td>
-    </tr>
-    </tbody>
-  </table>
+  <div class="table-container">
+    <h3 style="margin-bottom: 15px; font-size: 18px;">Current Entries</h3>
+    <table>
+      <thead>
+      <tr>
+        <th style="width: 50px;">ID</th>
+        <th style="width: 25%;">Question</th>
+        <th style="width: 40%;">Answer Preview</th>
+        <th style="width: 15%;">Category</th>
+        <th>Action</th>
+      </tr>
+      </thead>
+      <tbody id="kbList">
+      <tr><td colspan="5" style="text-align:center; color:#999; padding:20px;">Loading data...</td></tr>
+      </tbody>
+    </table>
+  </div>
 </div>
 
 <script>
-  // 这里你需要写一段 JS：
-  // 1. 页面加载时，fetch('../api/get_kb_list.php') 填充表格
-  // 2. 表单提交时，fetch('../api/save_kb.php') 发送 POST 请求
+  // ===============================================
+  // 1. Configuration & Initialization
+  // ===============================================
+  const API_BASE = '../api/';
+
+  document.addEventListener('DOMContentLoaded', loadKBList);
+
+  // ===============================================
+  // 2. Load Data (GET) - Updated Logic
+  // ===============================================
+  async function loadKBList() {
+    const tbody = document.getElementById('kbList');
+    const dataList = document.getElementById('category-options'); // 获取下拉列表元素
+
+    try {
+      const res = await fetch(API_BASE + 'admin_kb_getlist.php');
+      const json = await res.json();
+
+      tbody.innerHTML = '';
+
+      // --- 关键更新开始: 动态生成下拉选项 ---
+
+      // 1. 定义默认分类 (确保这些总是存在的)
+      const categories = new Set([
+        "Transaction/Rights",
+        "Account Management",
+        "Fraud/Report",
+        "Violations",
+        "Product Management"
+      ]);
+
+      if (json.success && json.data && json.data.length > 0) {
+        json.data.forEach(item => {
+          // 2. 把数据库里查到的所有分类也加进 Set (Set 会自动去重)
+          if(item.KB_Category) {
+            categories.add(item.KB_Category);
+          }
+
+          // 3. 渲染表格 (原有逻辑)
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>#${item.KB_ID}</td>
+            <td style="font-weight:600;">${escapeHtml(item.KB_Question)}</td>
+            <td style="color:#666;">${escapeHtml(item.KB_Answer).substring(0, 60)}...</td>
+            <td><span class="badge">${escapeHtml(item.KB_Category)}</span></td>
+            <td>
+              <button class="btn-del" onclick="deleteKB(${item.KB_ID})">Delete</button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+
+        // 4. 更新页面上的 Datalist 下拉框
+        dataList.innerHTML = ''; // 先清空
+        categories.forEach(cat => {
+          const option = document.createElement('option');
+          option.value = cat;
+          dataList.appendChild(option);
+        });
+
+      } else if (json.success && json.data.length === 0) {
+        // 如果没数据，至少把默认分类渲染出来
+        dataList.innerHTML = '';
+        categories.forEach(cat => {
+          const option = document.createElement('option');
+          option.value = cat;
+          dataList.appendChild(option);
+        });
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px;">No entries found. Start adding some!</td></tr>';
+      } else {
+        alert('Failed to load data: ' + (json.error || 'Unknown error'));
+      }
+    } catch (e) {
+      console.error(e);
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:red;">Connection Error. Please check console.</td></tr>';
+    }
+  }
+
+  // ===============================================
+  // 3. Save Data (POST)
+  // ===============================================
+  document.getElementById('kbForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const submitBtn = document.querySelector('.btn-submit');
+    const originalText = submitBtn.innerText;
+    submitBtn.innerText = 'Saving...';
+    submitBtn.disabled = true;
+
+    const payload = {
+      question: document.getElementById('question').value,
+      answer: document.getElementById('answer').value,
+      category: document.getElementById('category').value
+    };
+
+    try {
+      const res = await fetch(API_BASE + 'admin_kb_save.php', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(payload)
+      });
+      const json = await res.json();
+
+      if (json.success) {
+        document.getElementById('kbForm').reset();
+        loadKBList(); // 重新加载列表，这时新分类会自动加入下拉框
+      } else {
+        alert('Save failed: ' + json.error);
+      }
+    } catch (e) {
+      alert('System Error: Could not save data.');
+    } finally {
+      submitBtn.innerText = originalText;
+      submitBtn.disabled = false;
+    }
+  });
+
+  // ===============================================
+  // 4. Delete Data (POST)
+  // ===============================================
+  async function deleteKB(id) {
+    if(!confirm('Are you sure you want to delete this entry? The AI will no longer use it.')) return;
+
+    try {
+      const res = await fetch(API_BASE + 'admin_kb_delete.php', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({id: id})
+      });
+      const json = await res.json();
+
+      if(json.success) {
+        loadKBList();
+      } else {
+        alert('Delete failed: ' + json.error);
+      }
+    } catch (e) {
+      alert('System Error: Could not delete data.');
+    }
+  }
+
+  function escapeHtml(text) {
+    if (!text) return "";
+    return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+  }
 </script>
 
 </body>
