@@ -325,7 +325,7 @@
 </div>
 
 <div class="sidebar right">
-    <a href="Module_Product_Ecosystem/pages/Publish_Page.html" class="sidebar-item">
+    <a href="Module_Product_Ecosystem/pages/Publish_Page.html" class="sidebar-item" onclick="handlePublishClick(event)">
         <span class="sidebar-icon">📢</span>
         <span class="sidebar-text">Publish</span>
     </a>
@@ -441,20 +441,79 @@
 </script>
 
 <script>
+    // 1. AuthModal 逻辑 (集成自 auth_modal.js)
+    const AuthModal = {
+        htmlContent: `
+            <dialog id="globalLoginDialog" class="tg-auth-modal">
+                <div style="font-size: 40px; margin-bottom: 10px;">🔒</div>
+                <h3 style="margin-bottom:10px; color: #1F2937; font-size: 1.2rem; font-family: 'Poppins', sans-serif;">Login Required</h3>
+                <p style="margin-bottom:25px; color:#6B7280; font-size: 0.95rem; line-height: 1.5; font-family: 'Poppins', sans-serif;">
+                    You need to log in to access this feature.
+                </p>
+                <div style="display:flex; gap:10px; justify-content:center;">
+                    <button onclick="AuthModal.close()"
+                            style="padding:10px 20px; border:1px solid #E5E7EB; background:white; color: #374151; border-radius:12px; cursor:pointer; font-weight: 600;">
+                        Cancel
+                    </button>
+                    <button onclick="window.location.href='Module_User_Account_Management/pages/login.php'"
+                            style="padding:10px 20px; border:none; background:#4F46E5; color:white; border-radius:12px; cursor:pointer; font-weight: 600;">
+                        Go to Login
+                    </button>
+                </div>
+            </dialog>
+        `,
+        init: function() {
+            if (document.getElementById('globalLoginDialog')) return;
+            const style = document.createElement('style');
+            style.innerHTML = `
+                .tg-auth-modal::backdrop { background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(4px); }
+                .tg-auth-modal {
+                    position: fixed; top: 30%; bottom: auto; left: 0; right: 0; margin: 0 auto;
+                    border-radius: 24px; padding: 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+                    text-align: center; width: 320px; border: none; outline: none;
+                    animation: tgSlideDown 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+                }
+                @keyframes tgSlideDown { from { transform: translateY(-30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+            `;
+            document.head.appendChild(style);
+            document.body.insertAdjacentHTML('beforeend', this.htmlContent);
+        },
+        show: function() {
+            this.init();
+            const dialog = document.getElementById('globalLoginDialog');
+            if (dialog) dialog.showModal();
+        },
+        close: function() {
+            const dialog = document.getElementById('globalLoginDialog');
+            if (dialog) dialog.close();
+        }
+    };
+
+    // 2. 全局登录状态变量
+    let isUserLoggedIn = false;
+
+    // 3. 点击 Publish 时的拦截函数
+    function handlePublishClick(event) {
+        if (!isUserLoggedIn) {
+            event.preventDefault(); // 阻止链接跳转
+            AuthModal.show();       // 显示登录弹窗
+        }
+        // 如果已登录，不做任何操作，让 <a href> 正常跳转
+    }
+
+    // 4. 搜索功能
     function goToSearch() {
         const inputVal = document.getElementById('homeSearchInput').value;
         const targetUrl = 'Module_Product_Ecosystem/pages/Search_Results_Page.html';
         window.location.href = `${targetUrl}?q=${encodeURIComponent(inputVal)}`;
     }
-    // 支持回车键
     document.getElementById('homeSearchInput').addEventListener('keypress', function (e) {
         if (e.key === 'Enter') {
             goToSearch();
         }
     });
-</script>
 
-<script>
+    // 5. 页面加载时检查 Session 状态
     document.addEventListener('DOMContentLoaded', async () => {
         const loginBtn = document.getElementById('nav-login-btn');
         const userMenu = document.getElementById('nav-user-menu');
@@ -465,7 +524,10 @@
             const data = await res.json();
 
             if (data.is_logged_in) {
-                // 已登录
+                // 更新全局变量
+                isUserLoggedIn = true;
+
+                // UI 更新
                 loginBtn.style.display = 'none';
                 userMenu.style.display = 'inline-block';
 
@@ -484,11 +546,13 @@
                 }
             } else {
                 // 未登录
+                isUserLoggedIn = false;
                 loginBtn.style.display = 'inline-block';
                 userMenu.style.display = 'none';
             }
         } catch (err) {
             console.error("Session check failed:", err);
+            isUserLoggedIn = false;
             loginBtn.style.display = 'inline-block';
             userMenu.style.display = 'none';
         }

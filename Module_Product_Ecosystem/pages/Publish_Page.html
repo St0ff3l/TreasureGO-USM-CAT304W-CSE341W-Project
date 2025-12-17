@@ -22,18 +22,13 @@
       --input-bg: #f9f9fb;
     }
 
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
       font-family: 'Poppins', sans-serif;
       background-color: var(--bg-color);
       color: var(--text-dark);
       min-height: 100vh;
-      /* Background Gradient */
       background-image:
               radial-gradient(circle at 10% 20%, rgba(79, 70, 229, 0.05) 0%, transparent 40%),
               radial-gradient(circle at 90% 80%, rgba(245, 158, 11, 0.05) 0%, transparent 40%);
@@ -65,9 +60,7 @@
       text-decoration: none;
     }
 
-    .logo span {
-      color: var(--text-dark);
-    }
+    .logo span { color: var(--text-dark); }
 
     .logo-img {
       width: 42px;
@@ -77,186 +70,90 @@
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     }
 
-    .nav-actions {
-      display: flex;
-      align-items: center;
-      gap: 20px;
-    }
+    .nav-actions { display: flex; align-items: center; gap: 20px; }
 
     .nav-btn {
-      border: none;
-      background: transparent;
-      font-weight: 600;
-      color: var(--text-gray);
-      padding: 0.6rem 0.5rem;
-      cursor: pointer;
-      transition: color 0.2s;
-      font-size: 1rem;
+      border: none; background: transparent; font-weight: 600;
+      color: var(--text-gray); padding: 0.6rem 0.5rem; cursor: pointer;
+      transition: color 0.2s; font-size: 1rem;
     }
-
-    .nav-btn:hover {
-      color: var(--text-dark);
-    }
+    .nav-btn:hover { color: var(--text-dark); }
 
     .btn-primary {
-      border: none;
-      background-color: var(--text-dark);
-      color: white;
-      font-weight: 600;
-      padding: 0.7rem 1.8rem;
-      border-radius: 12px;
-      cursor: pointer;
-      transition: all 0.2s;
-      font-size: 1rem;
+      border: none; background-color: var(--text-dark); color: white;
+      font-weight: 600; padding: 0.7rem 1.8rem; border-radius: 12px;
+      cursor: pointer; transition: all 0.2s; font-size: 1rem;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     }
-
-    .btn-primary:hover {
-      transform: translateY(-2px);
-      background-color: #000;
-    }
+    .btn-primary:hover { transform: translateY(-2px); background-color: #000; }
 
     /* =========================================
        3. Publish Form Container
        ========================================= */
     .publish-container {
-      max-width: 700px;
-      margin: 40px auto;
-      background: var(--card-bg);
-      border-radius: 24px;
-      padding: 40px;
+      max-width: 700px; margin: 40px auto; background: var(--card-bg);
+      border-radius: 24px; padding: 40px;
       box-shadow: 0 20px 40px rgba(0, 0, 0, 0.05);
     }
 
     .page-title {
-      font-size: 1.8rem;
-      font-weight: 800;
-      margin-bottom: 30px;
-      color: var(--text-dark);
-      text-align: center;
+      font-size: 1.8rem; font-weight: 800; margin-bottom: 30px;
+      color: var(--text-dark); text-align: center;
     }
 
-    .form-group {
-      margin-bottom: 24px;
-    }
+    .form-group { margin-bottom: 24px; }
 
     label {
-      display: block;
-      font-weight: 600;
-      font-size: 0.95rem;
-      margin-bottom: 8px;
-      color: var(--text-dark);
+      display: block; font-weight: 600; font-size: 0.95rem;
+      margin-bottom: 8px; color: var(--text-dark);
     }
 
     /* Inputs & Textareas */
-    input[type="text"],
-    input[type="number"],
-    textarea,
-    select {
-      width: 100%;
-      padding: 14px 16px;
-      background: var(--input-bg);
-      border: 2px solid transparent;
-      border-radius: 16px;
-      font-size: 1rem;
-      font-family: inherit;
-      outline: none;
-      transition: all 0.2s;
-      color: var(--text-dark);
+    input[type="text"], input[type="number"], textarea, select {
+      width: 100%; padding: 14px 16px; background: var(--input-bg);
+      border: 2px solid transparent; border-radius: 16px;
+      font-size: 1rem; font-family: inherit; outline: none;
+      transition: all 0.2s; color: var(--text-dark);
     }
 
-    input:focus,
-    textarea:focus,
-    select:focus {
-      background: #fff;
-      border-color: var(--primary);
+    input:focus, textarea:focus, select:focus {
+      background: #fff; border-color: var(--primary);
       box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
     }
 
-    textarea {
-      resize: vertical;
-      min-height: 120px;
-    }
+    textarea { resize: vertical; min-height: 120px; }
+
+    /* Layout for dual selects (Category & Price/Condition) */
+    .row-group { display: flex; gap: 15px; }
+    .row-group .half-width { flex: 1; }
 
     /* Image Upload Area */
     .upload-area {
-      border: 2px dashed #d1d5db;
-      border-radius: 20px;
-      padding: 40px 20px;
-      text-align: center;
-      background: var(--input-bg);
-      cursor: pointer;
-      transition: all 0.2s;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
+      border: 2px dashed #d1d5db; border-radius: 20px; padding: 40px 20px;
+      text-align: center; background: var(--input-bg); cursor: pointer;
+      transition: all 0.2s; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 10px;
     }
-
-    .upload-area:hover {
-      border-color: var(--primary);
-      background: #eef2ff;
-    }
-
-    .upload-icon {
-      font-size: 2.5rem;
-      color: var(--primary);
-    }
-
-    .upload-text {
-      color: var(--text-gray);
-      font-size: 0.9rem;
-    }
+    .upload-area:hover { border-color: var(--primary); background: #eef2ff; }
+    .upload-icon { font-size: 2.5rem; color: var(--primary); }
+    .upload-text { color: var(--text-gray); font-size: 0.9rem; }
 
     /* Action Buttons */
-    .btn-group {
-      display: flex;
-      gap: 15px;
-      margin-top: 40px;
-    }
-
+    .btn-group { display: flex; gap: 15px; margin-top: 40px; }
     .btn-submit {
-      flex: 2;
-      padding: 16px;
-      background: var(--primary);
-      color: white;
-      border: none;
-      border-radius: 50px;
-      font-size: 1.1rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: 0.2s;
+      flex: 2; padding: 16px; background: var(--primary); color: white;
+      border: none; border-radius: 50px; font-size: 1.1rem;
+      font-weight: 700; cursor: pointer; transition: 0.2s;
       box-shadow: 0 10px 20px rgba(79, 70, 229, 0.25);
     }
-
-    .btn-submit:hover {
-      background: var(--primary-hover);
-      transform: translateY(-2px);
-    }
-
+    .btn-submit:hover { background: var(--primary-hover); transform: translateY(-2px); }
     .btn-cancel {
-      flex: 1;
-      padding: 16px;
-      background: #f3f4f6;
-      color: var(--text-gray);
-      border: none;
-      border-radius: 50px;
-      font-size: 1.1rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: 0.2s;
-      text-align: center;
-      text-decoration: none;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      flex: 1; padding: 16px; background: #f3f4f6; color: var(--text-gray);
+      border: none; border-radius: 50px; font-size: 1.1rem; font-weight: 600;
+      cursor: pointer; transition: 0.2s; text-align: center;
+      text-decoration: none; display: flex; align-items: center; justify-content: center;
     }
-
-    .btn-cancel:hover {
-      background: #e5e7eb;
-      color: var(--text-dark);
-    }
+    .btn-cancel:hover { background: #e5e7eb; color: var(--text-dark); }
   </style>
 </head>
 <body>
@@ -293,24 +190,45 @@
       <input type="text" name="product_name" placeholder="What are you selling?" required>
     </div>
 
-    <div class="form-group">
-      <label>Price ($)</label>
-      <input type="number" name="price" placeholder="0.00" min="0" step="0.01" required>
+    <div class="form-group row-group">
+      <div class="half-width">
+        <label>Category</label>
+        <select id="parentCategory" required>
+          <option value="" disabled selected>Select Category</option>
+        </select>
+      </div>
+      <div class="half-width">
+        <label>Sub-Category</label>
+        <select id="subCategory" name="category_id" required disabled>
+          <option value="" disabled selected>Select Sub-Category</option>
+        </select>
+      </div>
     </div>
 
-    <div class="form-group">
-      <label>Condition</label>
-      <select name="condition" required>
-        <option value="" disabled selected>Select condition...</option>
-        <option value="New">Brand New</option>
-        <option value="Like New">Like New</option>
-        <option value="Used">Used</option>
-      </select>
+    <div class="form-group row-group">
+      <div class="half-width">
+        <label>Price ($)</label>
+        <input type="number" name="price" placeholder="0.00" min="0" step="0.01" required>
+      </div>
+      <div class="half-width">
+        <label>Condition</label>
+        <select name="condition" required>
+          <option value="" disabled selected>Select...</option>
+          <option value="New">Brand New</option>
+          <option value="Like New">Like New</option>
+          <option value="Used">Used</option>
+        </select>
+      </div>
     </div>
 
     <div class="form-group">
       <label>Description</label>
-      <textarea name="description" placeholder="Describe the item..." required></textarea>
+      <textarea name="description" placeholder="Describe the item details, usage, etc..." required></textarea>
+    </div>
+
+    <div class="form-group">
+      <label>Meet-up Location / Address</label>
+      <input type="text" name="address" placeholder="e.g. Block A Lobby, Library Entrance, or specific address" required>
     </div>
 
     <div class="btn-group">
@@ -322,10 +240,100 @@
 </div>
 
 <script>
-  // Feature 1: Image Preview
+  // ==========================================
+  // 1. Data Structure from your Database
+  // ==========================================
+  const categoryData = {
+    "100000000": {
+      name: "Digital",
+      subs: [
+        {id: "100000005", name: "Mobile Phones"},
+        {id: "100000006", name: "Laptops & Computers"},
+        {id: "100000007", name: "Tablets & iPads"},
+        {id: "100000008", name: "Cameras & Photography"},
+        {id: "100000009", name: "Audio & Headphones"},
+        {id: "100000010", name: "Gaming & Consoles"},
+        {id: "100000011", name: "Tech Accessories"}
+      ]
+    },
+    "100000001": {
+      name: "Fashion",
+      subs: [
+        {id: "100000012", name: "Men's Clothing"},
+        {id: "100000013", name: "Women's Clothing"},
+        {id: "100000014", name: "Sneakers & Shoes"},
+        {id: "100000015", name: "Bags & Wallets"},
+        {id: "100000016", name: "Watches & Jewelry"}
+      ]
+    },
+    "100000002": {
+      name: "Home",
+      subs: [
+        {id: "100000017", name: "Furniture"},
+        {id: "100000018", name: "Kitchen & Dining"},
+        {id: "100000019", name: "Home Appliances"},
+        {id: "100000020", name: "Decor & Lighting"},
+        {id: "100000021", name: "Storage & Organization"}
+      ]
+    },
+    "100000003": {
+      name: "Books",
+      subs: [
+        {id: "100000022", name: "University Textbooks"},
+        {id: "100000023", name: "Fiction & Novels"},
+        {id: "100000024", name: "Comics & Manga"},
+        {id: "100000025", name: "Notes & Study Materials"},
+        {id: "100000026", name: "Stationery"}
+      ]
+    },
+    "100000004": {
+      name: "Transport",
+      subs: [
+        {id: "100000027", name: "Bicycles"},
+        {id: "100000028", name: "E-Scooters"},
+        {id: "100000029", name: "Skateboards"},
+        {id: "100000030", name: "Helmets & Gear"}
+      ]
+    }
+  };
+
+  // ==========================================
+  // 2. Logic to populate dropdowns
+  // ==========================================
+  const parentSelect = document.getElementById('parentCategory');
+  const subSelect = document.getElementById('subCategory');
+
+  // Populate Parent Categories
+  for (const [id, data] of Object.entries(categoryData)) {
+    const option = document.createElement('option');
+    option.value = id;
+    option.textContent = data.name;
+    parentSelect.appendChild(option);
+  }
+
+  // Handle Parent Change
+  parentSelect.addEventListener('change', function() {
+    const parentId = this.value;
+    const subCategories = categoryData[parentId].subs;
+
+    subSelect.innerHTML = '<option value="" disabled selected>Select Sub-Category</option>';
+    subSelect.disabled = false;
+
+    subCategories.forEach(sub => {
+      const option = document.createElement('option');
+      option.value = sub.id; // This value is sent as category_id
+      option.textContent = sub.name;
+      subSelect.appendChild(option);
+    });
+  });
+
+
+  // ==========================================
+  // 3. Existing Feature: Image Preview
+  // ==========================================
   document.getElementById('fileInput').addEventListener('change', function(e) {
     const preview = document.getElementById('imagePreview');
-    preview.innerHTML = ''; // Clear previous previews
+    preview.innerHTML = '';
 
     for (let file of this.files) {
       if (file.type.startsWith('image/')) {
@@ -333,14 +341,11 @@
         reader.onload = function(event) {
           const img = document.createElement('img');
           img.src = event.target.result;
-
-          // Inline styles for preview image
           img.style.width = '80px';
           img.style.height = '80px';
           img.style.borderRadius = '12px';
           img.style.objectFit = 'cover';
           img.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
-
           preview.appendChild(img);
         };
         reader.readAsDataURL(file);
@@ -348,39 +353,44 @@
     }
   });
 
-  // Feature 2: Form Submission
+  // ==========================================
+  // 4. Form Submission (Secure Version)
+  // ==========================================
   document.getElementById('publishForm').addEventListener('submit', async function(e) {
-    e.preventDefault(); // Prevent default page reload
-
+    e.preventDefault();
     const formData = new FormData(this);
 
-    // TODO: Replace '1' with actual User_ID from session/cookie
-    formData.append('user_id', 1);
+    // SECURITY UPDATE: We do NOT append 'user_id' here anymore.
+    // The backend (PHP) will check the session.
 
-    // Basic Client-side Validation
-    if (!formData.get('product_name').trim()) {
-      alert('Please enter product name');
-      return;
-    }
+    // Basic Validation
+    if (!formData.get('product_name').trim()) { alert('Please enter product name'); return; }
+    if (!formData.get('category_id')) { alert('Please select a category'); return; }
+    if (!formData.get('address').trim()) { alert('Please enter an address'); return; }
 
     const submitBtn = document.querySelector('.btn-submit');
-
     try {
-      // UI: Disable button to prevent double submit
       submitBtn.innerText = 'Publishing...';
       submitBtn.disabled = true;
 
-      // API Request
       const response = await fetch('../api/Product_Upload.php', {
         method: 'POST',
         body: formData
       });
 
+      // Handle "Not Logged In" error (401)
+      if (response.status === 401) {
+        alert('❌ Session expired or not logged in. Redirecting to login...');
+        // Adjust this path if your login page is somewhere else
+        window.location.href = '../../login.html';
+        return;
+      }
+
       const result = await response.json();
 
       if (result.success) {
         alert('✅ ' + result.message);
-        window.location.href = '../../index.html'; // Redirect on success
+        window.location.href = '../../index.html';
       } else {
         alert('❌ Error: ' + result.message);
       }
@@ -389,7 +399,6 @@
       console.error('Network Error:', error);
       alert('❌ Failed to connect to server.');
     } finally {
-      // UI: Restore button state
       submitBtn.innerText = 'Publish Now';
       submitBtn.disabled = false;
     }
