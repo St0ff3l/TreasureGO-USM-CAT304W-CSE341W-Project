@@ -1,8 +1,8 @@
 <?php
-// ============================================
-// API: 更新 "问题是否解决" 的状态
-// 文件路径: Module_Platform_Governance_AI_Services/api/support_resolve_chat.php
-// ============================================
+// ==============================================================================//
+// API: 更新 "问题是否解决" 的状态                                                   //
+// 文件路径: Module_Platform_Governance_AI_Services/api/support_resolve_chat.php  //
+// ==============================================================================//
 
 session_start();
 require_once __DIR__ . '/config/treasurego_db_config.php';

@@ -359,11 +359,13 @@
 
     <div class="nav-actions">
         <button class="nav-btn" onclick="alert('Top Up Page')">Top Up</button>
+        <button id="nav-admin-btn" class="nav-btn" style="display: none;" onclick="window.location.href='Module_User_Account_Management/pages/admin_dashboard.php'">Admin Dashboard</button>
         <button class="nav-btn" onclick="window.location.href='Pages/Order_System/orders.html'">Orders</button>
 
         <button id="nav-login-btn" class="btn-primary" onclick="window.location.href='Module_User_Account_Management/pages/login.php'">Login</button>
 
         <div id="nav-user-menu" class="menu-container" style="display: none;">
+
             <div id="nav-avatar" class="dots-btn" onclick="window.location.href='Module_User_Account_Management/pages/profile.php'">
                 👤
             </div>
@@ -514,10 +516,19 @@
     });
 
     // 5. 页面加载时检查 Session 状态
+    // 5. 页面加载时检查 Session 状态（12/17）
+    // 5. 页面加载时检查 Session 状态
     document.addEventListener('DOMContentLoaded', async () => {
         const loginBtn = document.getElementById('nav-login-btn');
         const userMenu = document.getElementById('nav-user-menu');
         const avatarBtn = document.getElementById('nav-avatar');
+        const adminBtn = document.getElementById('nav-admin-btn');
+
+        // 安全检查：确保所有元素都存在
+        if (!loginBtn || !userMenu || !avatarBtn) {
+            console.error('Navigation elements not found');
+            return;
+        }
 
         try {
             const res = await fetch('Module_User_Account_Management/api/session_status.php');
@@ -532,6 +543,7 @@
                 userMenu.style.display = 'inline-block';
 
                 if (data.user) {
+                    // 设置头像
                     if (data.user.avatar_url) {
                         avatarBtn.innerHTML = `<img src="${data.user.avatar_url}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
                         avatarBtn.style.background = 'transparent';
@@ -543,20 +555,34 @@
                         avatarBtn.style.color = '#4F46E5';
                         avatarBtn.style.border = '2px solid #fff';
                     }
+
+                    // 如果是管理员，显示 Admin Dashboard 按钮
+                    if (adminBtn && data.user.role === 'admin') {
+                        adminBtn.style.display = 'inline-block';
+                    } else if (adminBtn) {
+                        adminBtn.style.display = 'none';
+                    }
                 }
             } else {
                 // 未登录
                 isUserLoggedIn = false;
                 loginBtn.style.display = 'inline-block';
                 userMenu.style.display = 'none';
+                if (adminBtn) {
+                    adminBtn.style.display = 'none';
+                }
             }
         } catch (err) {
             console.error("Session check failed:", err);
             isUserLoggedIn = false;
             loginBtn.style.display = 'inline-block';
             userMenu.style.display = 'none';
+            if (adminBtn) {
+                adminBtn.style.display = 'none';
+            }
         }
     });
+
 </script>
 
 </body>
