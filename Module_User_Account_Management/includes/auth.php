@@ -30,4 +30,22 @@ function get_current_user_id() {
     start_session_safe();
     return $_SESSION['user_id'] ?? null;
 }
+
+// 检查是否是管理员
+function is_admin() {
+    start_session_safe();
+    return isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin';
+}
+
+// 强制要求管理员权限
+function require_admin() {
+    if (!is_logged_in()) {
+        header("Location: login.php");
+        exit();
+    }
+    if (!is_admin()) {
+        http_response_code(403);
+        die("Access Denied: Admin privileges required.");
+    }
+}
 ?>
