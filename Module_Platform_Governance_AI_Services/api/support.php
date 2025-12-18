@@ -146,16 +146,18 @@ $kbStr
     $isChinese = preg_match("/\p{Han}+/u", $currentMsgContent);
     $langNote = $isChinese ? "User speaks CHINESE." : "User speaks ENGLISH/MALAY.";
 
-    // 2. 构造强力指令
-    // 这段话用户看不见，但 AI 能看见，并且在历史记录的最后面，权重最高！
+    // 2. 构造强力指令 (修复版：强制要求输出标签)
     $injection = <<<EOT
 User New Input: "$currentMsgContent"
 
 [SYSTEM INSTRUCTION]:
 1. $langNote Reply in this language.
 2. **FORCE RE-CHECK KNOWLEDGE BASE**: Ignore previous "I'm sorry" or "Fallback" messages in history.
-3. If "$currentMsgContent" is in the KB (e.g. Password, Refund), ANSWER IT NOW using the KB content.
-4. Only use Memory for personal chat.
+3. **MANDATORY FORMATTING (CRITICAL)**: 
+   - If you found the answer in the Knowledge Base (e.g. Refund, Password, Shipping), START YOUR REPLY WITH: "{TYPE:SOLUTION} {INTENT:Support}".
+   - If this is just a greeting or chat, START WITH: "{TYPE:CHAT} {INTENT:Chat}".
+   - If you cannot find the answer, START WITH: "{TYPE:FALLBACK} {INTENT:Support}".
+4. If "$currentMsgContent" is in the KB, ANSWER IT NOW using the KB content.
 EOT;
 
     $finalMessages[] = ["role" => "user", "content" => $injection];
