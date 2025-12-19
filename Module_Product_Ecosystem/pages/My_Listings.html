@@ -170,9 +170,13 @@
 </div>
 
 <script>
-  document.addEventListener('DOMContentLoaded', () => {
+  // --- 修改开始 ---
+  // 使用 pageshow 事件，因为它可以检测到通过“后退”按钮返回页面的情况
+  window.addEventListener('pageshow', (event) => {
+    // 无论是首次加载还是从缓存(后退)加载，都重新获取数据
     fetchUserListings();
   });
+  // --- 修改结束 ---
 
   function switchTab(tabId, btnElement) {
     document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
@@ -186,7 +190,11 @@
 
   async function fetchUserListings() {
     try {
-      const response = await fetch(API_URL);
+      // 修改这里：给 URL 后面加一个随机时间戳参数 (?t=...)
+      // 这样每次请求 URL 都不一样，强制浏览器向服务器请求最新数据
+      const timestamp = new Date().getTime();
+      const response = await fetch(`${API_URL}?t=${timestamp}`);
+
       const result = await response.json();
 
       if (result.success) {
