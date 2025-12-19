@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>My Favorites - TreasureGO</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        /* --- Global Styles --- */
+        :root {
+            --bg-color: #F3F6F9;
+            --primary: #4F46E5;
+            --text-dark: #1F2937;
+            --text-gray: #6B7280;
+            --glass-bg: rgba(255, 255, 255, 0.95);
+            --card-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.05);
+            --danger: #EF4444;
+            --danger-bg: #FEE2E2;
+            --success: #10B981;
+            --success-bg: #D1FAE5;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Poppins', 'Noto Sans SC', sans-serif; background: var(--bg-color); color: var(--text-dark); min-height: 100vh; padding-bottom: 80px; }
+
+        /* --- Navbar (Reused) --- */
+        .navbar {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            padding: 1rem 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 1px solid rgba(255,255,255,0.5);
+        }
+        .logo { font-weight: 800; font-size: 1.5rem; color: var(--primary); display: flex; align-items: center; gap: 10px; text-decoration: none; }
+        .logo span { color: var(--text-dark); }
+        .logo-img { width: 42px; height: 42px; border-radius: 10px; object-fit: cover; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+
+        .nav-actions { display: flex; align-items: center; gap: 20px; }
+        .nav-btn { border: none; background: transparent; font-weight: 600; color: var(--text-gray); padding: 0.6rem 0.5rem; cursor: pointer; transition: color 0.2s; font-size: 1rem; }
+        .nav-btn:hover { color: var(--text-dark); }
+        .btn-primary { border: none; background-color: var(--text-dark); color: white; font-weight: 600; padding: 0.7rem 1.8rem; border-radius: 12px; cursor: pointer; transition: all 0.2s; font-size: 1rem; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+
+        .menu-container { position: relative; display: inline-block; }
+        .dots-btn { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; cursor: pointer; font-weight: bold; }
+
+        /* --- Page Layout --- */
+        .container { max-width: 1000px; margin: 40px auto; padding: 0 20px; }
+
+        /* Header */
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .page-title { font-size: 1.8rem; font-weight: 800; }
+        .item-count { font-size: 0.9rem; color: var(--text-gray); font-weight: 500; margin-left: 10px; }
+
+        /* Header Actions */
+        .header-actions { display: flex; gap: 10px; }
+        .btn-action { background: white; border: 1px solid #ddd; color: var(--text-dark); padding: 8px 16px; border-radius: 20px; cursor: pointer; font-size: 0.9rem; transition: 0.2s; font-weight: 600; }
+        .btn-action:hover { background: #f9fafb; border-color: #ccc; }
+        .btn-action.active { background: var(--text-dark); color: white; border-color: var(--text-dark); }
+
+        /* Grid */
+        .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px; }
+
+        /* Product Card */
+        .product-card {
+            background: white; border-radius: 20px; box-shadow: var(--card-shadow); overflow: hidden;
+            transition: 0.3s; position: relative; cursor: pointer; border: 2px solid transparent;
+        }
+        .product-card:hover { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(0,0,0,0.1); }
+
+        /* Selection Style */
+        .product-card.selected { border-color: var(--primary); background: #EEF2FF; }
+        .product-card.selected .card-img-container { opacity: 0.8; }
+
+        /* Checkbox Circle */
+        .select-checkbox {
+            position: absolute; top: 10px; left: 10px; width: 24px; height: 24px;
+            background: white; border: 2px solid #ddd; border-radius: 50%;
+            z-index: 20; display: none;
+            align-items: center; justify-content: center; color: white; font-size: 14px;
+        }
+        .product-card.selected .select-checkbox { background: var(--primary); border-color: var(--primary); display: flex; }
+
+        /* Delete Single Button */
+        .btn-delete-item {
+            position: absolute; top: 10px; right: 10px; width: 28px; height: 28px;
+            background: rgba(255,255,255,0.9); border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            color: #999; font-size: 18px; cursor: pointer; z-index: 10; transition: 0.2s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .btn-delete-item:hover { background: var(--danger); color: white; }
+
+        .card-img-container { height: 180px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .card-img { width: 100%; height: 100%; object-fit: cover; }
+
+        .card-info { padding: 1.2rem; position: relative; }
+
+        /* New: Trend Badge */
+        .trend-badge {
+            display: inline-flex; align-items: center; gap: 4px;
+            font-size: 0.7rem; padding: 2px 8px; border-radius: 6px; font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .trend-down { background: var(--success-bg); color: var(--success); }
+        .trend-up { background: var(--danger-bg); color: var(--danger); }
+
+        .card-title { font-size: 1rem; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-dark); }
+
+        .price-row { display: flex; align-items: baseline; gap: 6px; margin-top: 4px; }
+        .current-price { font-weight: 800; color: var(--text-dark); font-size: 1.1rem; }
+        .old-price { text-decoration: line-through; color: #9CA3AF; font-size: 0.85rem; }
+
+        /* New: Quick Cart Button */
+        .btn-quick-cart {
+            position: absolute; bottom: 15px; right: 15px;
+            width: 36px; height: 36px; border-radius: 50%;
+            background: var(--text-dark); color: white; border: none;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .btn-quick-cart:hover { background: var(--primary); transform: scale(1.1); }
+
+        /* Bottom Floating Action Bar */
+        .selection-bar {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(100px);
+            background: var(--text-dark); color: white; padding: 12px 24px; border-radius: 50px;
+            display: flex; align-items: center; gap: 20px; z-index: 2000;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3); transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            opacity: 0; width: 90%; max-width: 450px; justify-content: space-between;
+        }
+        .selection-bar.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+        .btn-bar-delete { background: var(--danger); border: none; color: white; padding: 8px 20px; border-radius: 20px; font-weight: 600; cursor: pointer; }
+        .btn-bar-cart { background: var(--success); border: none; color: white; padding: 8px 20px; border-radius: 20px; font-weight: 600; cursor: pointer; margin-left: auto; }
+        .btn-bar-cancel { background: transparent; border: none; color: #ccc; cursor: pointer; font-weight: 500; }
+
+        /* Empty State */
+        .empty-state { text-align: center; padding: 60px 20px; display: none; }
+        .empty-icon { font-size: 4rem; margin-bottom: 20px; display: block; opacity: 0.5; }
+        .btn-go-home { background: var(--primary); color: white; padding: 12px 30px; border-radius: 25px; text-decoration: none; font-weight: 600; display: inline-block; margin-top: 20px; }
+
+        @media (max-width: 768px) {
+            .product-grid { grid-template-columns: 1fr 1fr; gap: 15px; }
+            .card-img-container { height: 150px; }
+            .btn-action { padding: 6px 12px; font-size: 0.85rem; }
+            .btn-quick-cart { width: 32px; height: 32px; font-size: 0.9rem; }
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar">
+    <a href="../../index.html" class="logo">
+        <img src="../../Public_Assets/images/TreasureGo_Logo.png" alt="Logo" class="logo-img">
+        Treasure<span>Go</span>
+    </a>
+    <div class="nav-actions">
+        <button class="nav-btn" onclick="alert('Top Up')">Top Up</button>
+        <button class="btn-primary" onclick="window.location.href='../Auth/login.html'">Login</button>
+        <div class="menu-container">
+            <div class="dots-btn">•••</div>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+
+    <div class="page-header">
+        <div>
+            <div class="page-title">My Favorites</div>
+            <span class="item-count">Loading...</span>
+        </div>
+        <div class="header-actions">
+            <button class="btn-action" id="btnSelect" onclick="toggleSelectMode()">Select</button>
+        </div>
+    </div>
+
+    <div id="favorites-content">
+        <div class="product-grid" id="favoritesGrid">
+        </div>
+    </div>
+
+    <div class="empty-state" id="empty-state" style="display:none;">
+        <span class="empty-icon">❤️</span>
+        <h2>Your wishlist is empty</h2>
+        <p style="color:#999;">Save items you want to watch!</p>
+        <a href="../../index.html" class="btn-go-home">Start Shopping</a>
+    </div>
+
+</div>
+
+<div class="selection-bar" id="selectionBar">
+    <div style="display:flex; align-items:center; gap:15px;">
+        <span id="selectedCount">0</span> selected
+        <button class="btn-bar-cancel" onclick="toggleSelectMode()">Cancel</button>
+    </div>
+    <div style="display:flex; gap:10px;">
+        <button class="btn-bar-delete" onclick="deleteSelectedItems()">Delete</button>
+        <button class="btn-bar-cart" onclick="alert('Added selected to cart!')">Add to Cart</button>
+    </div>
+</div>
+
+<script>
+    let isSelectMode = false;
+
+    // 🔥 JS 修改部分：添加加载逻辑和渲染函数 🔥
+    document.addEventListener('DOMContentLoaded', () => {
+        loadFavorites();
+    });
+
+    async function loadFavorites() {
+        try {
+            const response = await fetch('../api/Get_User_Favorites.php');
+            const result = await response.json();
+
+            const grid = document.getElementById('favoritesGrid');
+            const contentDiv = document.getElementById('favorites-content');
+            const emptyState = document.getElementById('empty-state');
+            const countSpan = document.querySelector('.item-count');
+
+            // 检查是否已登录
+            if (!result.success && result.message === 'Not logged in') {
+                window.location.href = '../Auth/login.html';
+                return;
+            }
+
+            if (result.success && result.data.length > 0) {
+                // 有数据
+                grid.innerHTML = ''; // 清空
+                contentDiv.style.display = 'block';
+                emptyState.style.display = 'none';
+                countSpan.innerText = `${result.data.length} items saved`;
+
+                result.data.forEach(item => {
+                    createFavoriteCard(item, grid);
+                });
+            } else {
+                // 无数据
+                contentDiv.style.display = 'none';
+                emptyState.style.display = 'block';
+                countSpan.innerText = '0 items saved';
+            }
+
+        } catch (error) {
+            console.error('Error loading favorites:', error);
+        }
+    }
+
+    function createFavoriteCard(item, container) {
+        // 处理图片路径
+        let imgSrc = '../../Public_Assets/images/placeholder.jpg'; // 默认图
+        if (item.Main_Image) {
+            const cleanPath = item.Main_Image.replace(/^.*?Public_Product_Images\//, 'Public_Product_Images/');
+            imgSrc = `../${cleanPath}`;
+        }
+
+        // 计算价格趋势
+        let trendBadge = '';
+        const savePrice = parseFloat(item.Favorites_Save_Price);
+        const currentPrice = parseFloat(item.Product_Price);
+        const diff = currentPrice - savePrice;
+
+        if (diff > 0) {
+            trendBadge = `<div class="trend-badge trend-up">▲ Up $${diff.toFixed(2)}</div>`;
+        } else if (diff < 0) {
+            trendBadge = `<div class="trend-badge trend-down">▼ Drop $${Math.abs(diff).toFixed(2)}</div>`;
+        }
+
+        const cardHTML = `
+            <div class="product-card" data-fav-id="${item.Favorite_ID}" onclick="handleCardClick(this, 'Product_Detail.html?id=${item.Product_ID}')">
+                <div class="select-checkbox">✓</div>
+                <div class="btn-delete-item" onclick="deleteSingleItem(event, this, ${item.Product_ID})">×</div>
+                <div class="card-img-container">
+                    <img src="${imgSrc}" alt="${item.Product_Title}" class="card-img" onerror="this.src='../../Public_Assets/images/placeholder.jpg'">
+                </div>
+                <div class="card-info">
+                    ${trendBadge}
+                    <h4 class="card-title">${item.Product_Title}</h4>
+                    <div class="price-row">
+                        <span class="current-price">$${currentPrice.toFixed(2)}</span>
+                    </div>
+                    <button class="btn-quick-cart" onclick="addToCart(event, '${item.Product_Title}')">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                    </button>
+                </div>
+            </div>
+        `;
+        container.innerHTML += cardHTML;
+    }
+
+    // Toggle Select Mode (保持不变)
+    function toggleSelectMode() {
+        isSelectMode = !isSelectMode;
+        const btnSelect = document.getElementById('btnSelect');
+        const checkboxes = document.querySelectorAll('.select-checkbox');
+        const deleteBtns = document.querySelectorAll('.btn-delete-item');
+        const cartBtns = document.querySelectorAll('.btn-quick-cart');
+        const selectionBar = document.getElementById('selectionBar');
+        const cards = document.querySelectorAll('.product-card');
+
+        if (isSelectMode) {
+            btnSelect.innerText = 'Done';
+            btnSelect.classList.add('active');
+            checkboxes.forEach(cb => cb.style.display = 'flex');
+            deleteBtns.forEach(btn => btn.style.display = 'none');
+            cartBtns.forEach(btn => btn.style.display = 'none');
+            selectionBar.classList.add('show');
+        } else {
+            btnSelect.innerText = 'Select';
+            btnSelect.classList.remove('active');
+            checkboxes.forEach(cb => cb.style.display = 'none');
+            deleteBtns.forEach(btn => btn.style.display = 'flex');
+            cartBtns.forEach(btn => btn.style.display = 'flex');
+            selectionBar.classList.remove('show');
+
+            cards.forEach(card => card.classList.remove('selected'));
+            updateSelectionCount();
+        }
+    }
+
+    // Handle Card Click (保持不变)
+    function handleCardClick(card, url) {
+        if (isSelectMode) {
+            card.classList.toggle('selected');
+            updateSelectionCount();
+        } else {
+            window.location.href = url; // 确保这里可以跳转
+        }
+    }
+
+    // Quick Add to Cart (保持不变)
+    function addToCart(event, itemName) {
+        event.stopPropagation();
+        alert(`Added "${itemName}" to cart!`);
+    }
+
+    // Update Count (保持不变)
+    function updateSelectionCount() {
+        const count = document.querySelectorAll('.product-card.selected').length;
+        document.getElementById('selectedCount').innerText = count;
+    }
+
+    // Delete Selected Items (保持不变)
+    function deleteSelectedItems() {
+        const selectedCards = document.querySelectorAll('.product-card.selected');
+        const count = selectedCards.length;
+
+        if (count === 0) return;
+
+        if (confirm(`Remove ${count} items from favorites?`)) {
+            selectedCards.forEach(card => {
+                card.style.opacity = '0';
+                setTimeout(() => card.remove(), 300);
+            });
+            setTimeout(() => {
+                toggleSelectMode();
+                checkEmpty();
+            }, 300);
+        }
+    }
+
+    // 🔥 JS 修改部分：更新 deleteSingleItem 为异步调用 API 🔥
+    async function deleteSingleItem(event, btn, productId) {
+        event.stopPropagation();
+        if(confirm("Remove this item from favorites?")) {
+            // 调用后端删除
+            const formData = new FormData();
+            formData.append('product_id', productId);
+
+            try {
+                const res = await fetch('../api/Toggle_Favorite.php', { method: 'POST', body: formData });
+                const result = await res.json();
+
+                if (result.success) {
+                    // 移除 DOM 元素
+                    const card = btn.closest('.product-card');
+                    card.style.opacity = '0';
+                    setTimeout(() => {
+                        card.remove();
+                        checkEmpty(); // 重新检查是否为空
+                    }, 300);
+                } else {
+                    alert('Error removing item');
+                }
+            } catch(e) { console.error(e); }
+        }
+    }
+
+    // Helper: Check Empty (保持不变)
+    function checkEmpty() {
+        const remaining = document.querySelectorAll('.product-card');
+        if (remaining.length === 0) {
+            document.getElementById('favorites-content').style.display = 'none';
+            document.getElementById('empty-state').style.display = 'block';
+            document.querySelector('.item-count').innerText = '0 items saved';
+        } else {
+            document.querySelector('.item-count').innerText = remaining.length + ' items saved';
+        }
+    }
+</script>
+
+</body>
+</html>

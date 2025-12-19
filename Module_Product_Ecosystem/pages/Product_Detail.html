@@ -333,7 +333,12 @@
             window.location.href = '../../index.html';
             return;
         }
+
+        // 加载详情
         loadProductDetails(productId);
+
+        // 🔥 核心修改：加载收藏状态 🔥
+        checkFavoriteStatus();
     });
 
     // 3. 加载商品详情
@@ -474,13 +479,81 @@
         });
     }
 
+    // 🔥 新增：检查收藏状态 (修复版) 🔥
+    async function checkFavoriteStatus() {
+        // 使用全局变量 productId
+        if (!productId) return;
 
-    // Toast & Fav Logic (保持不变)
-    function toggleFav() {
-        const btn = document.getElementById('favBtn');
-        btn.classList.toggle('active');
-        if(btn.classList.contains('active')) { showToast('❤️ Added to Favorites'); } else { showToast('💔 Removed from Favorites'); }
+        try {
+            const response = await fetch('../api/Get_User_Favorites.php');
+            const result = await response.json();
+
+            if (result.success && Array.isArray(result.data)) {
+
+                // 🔍 调试信息：按 F12 看 Console，如果没变红，看看这里打印了什么
+                console.log("当前商品ID:", productId);
+                console.log("收藏列表:", result.data);
+
+                // 🔥 关键修复：把两边都转成 String 再比较，防止类型不匹配 (1 vs "1")
+                const isFavorited = result.data.some(item => String(item.Product_ID) === String(productId));
+
+                if (isFavorited) {
+                    const btn = document.getElementById('favBtn');
+                    if (btn) {
+                        btn.classList.add('active'); // 添加红色样式
+                        console.log("✅ 已匹配，点亮爱心");
+                    }
+                } else {
+                    console.log("⚪ 未匹配，保持灰色");
+                }
+            }
+        } catch (error) {
+            console.error('检查收藏状态出错:', error);
+        }
     }
+
+    // 🔥 Fav Logic (已替换为 API 交互) 🔥
+    async function toggleFav() {
+        const btn = document.getElementById('favBtn');
+
+        // 这里的 productId 是你页面顶部 urlParams 获取到的全局变量
+        if (!productId) return;
+
+        const formData = new FormData();
+        formData.append('product_id', productId);
+
+        try {
+            const response = await fetch('../api/Toggle_Favorite.php', {
+                method: 'POST',
+                body: formData
+            });
+            const result = await response.json();
+
+            if (result.success) {
+                // 根据后端返回的动作更新 UI
+                if (result.action === 'added') {
+                    btn.classList.add('active');
+                    showToast('❤️ Added to Favorites');
+                } else {
+                    btn.classList.remove('active');
+                    showToast('💔 Removed from Favorites');
+                }
+            } else {
+                // 如果失败（例如未登录）
+                if(result.message === 'Please login first') {
+                    if(confirm("You need to login to add favorites. Go to login?")) {
+                        window.location.href = '../Auth/login.html';
+                    }
+                } else {
+                    showToast('⚠️ ' + result.message);
+                }
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showToast('❌ Network Error');
+        }
+    }
+
     function showToast(message) {
         var x = document.getElementById("toast");
         x.innerText = message;
