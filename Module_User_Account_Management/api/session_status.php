@@ -30,6 +30,7 @@ if (is_logged_in()) {
         if ($user) {
             $response['is_logged_in'] = true;
             $response['user'] = [
+                'user_id' => $user_id, // Add user_id to response
                 'username' => $user['User_Username'],
                 'role' => $user['User_Role'],
                 // 👇 修改这里：如果有图就用图，没图就给 null

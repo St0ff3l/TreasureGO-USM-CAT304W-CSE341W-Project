@@ -63,6 +63,10 @@ try {
             getFundRequests($conn, $request);
             break;
 
+        case 'get_all_requests':
+            getAllFundRequests($conn, $request);
+            break;
+
         case 'get_fund_request':
             getFundRequestById($conn, $request);
             break;
@@ -73,6 +77,10 @@ try {
 
         case 'get_statistics':
             getStatistics($conn, $request);
+            break;
+
+        case 'get_admin_statistics':
+            getAdminStatistics($conn, $request);
             break;
 
         default:
@@ -157,6 +165,37 @@ function getFundRequests($conn, $request) {
         $requests = $stmt->fetchAll();
 
         sendResponse(true, 'Fund requests retrieved successfully', $requests);
+
+    } catch (PDOException $e) {
+        sendResponse(false, 'Database error: ' . $e->getMessage(), null, 500);
+    }
+}
+
+/**
+ * Get all fund requests (Admin function)
+ */
+function getAllFundRequests($conn, $request) {
+    try {
+        $status = $request['status'] ?? $_GET['status'] ?? null;
+
+        $sql = "SELECT fr.REQUEST_ID, fr.User_ID, u.User_Username as Username, fr.Type, fr.Amount, fr.Status, fr.Proof_Image, fr.Admin_Remark,
+                       fr.Created_AT, fr.Processed_AT
+                FROM Fund_Requests fr
+                LEFT JOIN User u ON fr.User_ID = u.User_ID";
+
+        $params = [];
+        if ($status) {
+            $sql .= " WHERE fr.Status = :status";
+            $params[':status'] = $status;
+        }
+
+        $sql .= " ORDER BY fr.Created_AT DESC";
+
+        $stmt = $conn->prepare($sql);
+        $stmt->execute($params);
+        $requests = $stmt->fetchAll();
+
+        sendResponse(true, 'All fund requests retrieved successfully', $requests);
 
     } catch (PDOException $e) {
         sendResponse(false, 'Database error: ' . $e->getMessage(), null, 500);
@@ -377,6 +416,61 @@ function getStatistics($conn, $request) {
             'balance' => $balance,
             'pending_requests' => $pendingRequests,
             'completed_requests' => $completedRequests
+        ]);
+
+    } catch (PDOException $e) {
+        sendResponse(false, 'Database error: ' . $e->getMessage(), null, 500);
+    }
+}
+
+/**
+ * Get admin statistics for deposit management dashboard
+ */
+function getAdminStatistics($conn, $request) {
+    try {
+        // Get total deposit requests
+        $sql = "SELECT COUNT(*) as total FROM Fund_Requests WHERE Type = 'deposit'";
+        $stmt = $conn->prepare($sql);
+        $stmt->execute();
+        $totalRequests = $stmt->fetch()['total'];
+
+        // Get pending requests
+        $sql = "SELECT COUNT(*) as total FROM Fund_Requests WHERE Type = 'deposit' AND Status = 'pending'";
+        $stmt = $conn->prepare($sql);
+        $stmt->execute();
+        $pendingRequests = $stmt->fetch()['total'];
+
+        // Get processed requests (approved + rejected + completed)
+        $sql = "SELECT COUNT(*) as total FROM Fund_Requests WHERE Type = 'deposit' AND Status IN ('approved', 'rejected', 'completed')";
+        $stmt = $conn->prepare($sql);
+        $stmt->execute();
+        $processedRequests = $stmt->fetch()['total'];
+
+        // Get approved requests
+        $sql = "SELECT COUNT(*) as total FROM Fund_Requests WHERE Type = 'deposit' AND Status IN ('approved', 'completed')";
+        $stmt = $conn->prepare($sql);
+        $stmt->execute();
+        $approvedRequests = $stmt->fetch()['total'];
+
+        // Get rejected requests
+        $sql = "SELECT COUNT(*) as total FROM Fund_Requests WHERE Type = 'deposit' AND Status = 'rejected'";
+        $stmt = $conn->prepare($sql);
+        $stmt->execute();
+        $rejectedRequests = $stmt->fetch()['total'];
+
+        // Get total amount approved
+        $sql = "SELECT COALESCE(SUM(Amount), 0) as total FROM Fund_Requests WHERE Type = 'deposit' AND Status IN ('approved', 'completed')";
+        $stmt = $conn->prepare($sql);
+        $stmt->execute();
+        $totalAmountApproved = $stmt->fetch()['total'];
+
+        sendResponse(true, 'Admin statistics retrieved successfully', [
+            'total_requests' => $totalRequests,
+            'pending_requests' => $pendingRequests,
+            'processed_requests' => $processedRequests,
+            'approved_requests' => $approvedRequests,
+            'rejected_requests' => $rejectedRequests,
+            'total_amount_approved' => $totalAmountApproved
         ]);
 
     } catch (PDOException $e) {

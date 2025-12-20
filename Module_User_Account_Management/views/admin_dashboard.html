@@ -296,7 +296,7 @@
 
         <div class="menu-title" style="margin-top: 20px;">Other Modules</div>
 
-        <a href="#" class="menu-item" onclick="alert('This feature is managed by other team members')">
+        <a href="../../Module_Transaction_Fund/pages/Admin_Deposit.html" class="menu-item">
             <i class="ri-money-dollar-circle-line"></i> Fund Requests
         </a>
         <a href="#" class="menu-item" onclick="alert('This feature is managed by other team members')">
@@ -327,6 +327,33 @@
 
         <!-- View 1: Overview -->
         <div id="view-overview" class="view-section active">
+            <!-- 充值管理仪表板 -->
+            <div class="settings-card" style="margin-bottom: 25px; cursor: pointer; transition: all 0.3s;" onclick="window.location.href='../../Module_Transaction_Fund/pages/Admin_Deposit.html'" onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 15px 40px rgba(79,70,229,0.15)';" onmouseout="this.style.transform=''; this.style.boxShadow='';">
+                <div class="settings-header" style="border-bottom: none; margin-bottom: 15px;">
+                    <h2><i class="ri-money-dollar-circle-line" style="color: #F59E0B;"></i> Deposit Requests Dashboard</h2>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 15px;">
+                    <div style="text-align: center; padding: 15px; background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%); border-radius: 16px;">
+                        <div style="font-size: 1.8rem; margin-bottom: 5px;">📋</div>
+                        <div style="font-size: 1.5rem; font-weight: 800; color: #4F46E5;" id="deposit-total">-</div>
+                        <div style="font-size: 0.8rem; color: #6B7280;">Total</div>
+                    </div>
+                    <div style="text-align: center; padding: 15px; background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%); border-radius: 16px;">
+                        <div style="font-size: 1.8rem; margin-bottom: 5px;">⏳</div>
+                        <div style="font-size: 1.5rem; font-weight: 800; color: #D97706;" id="deposit-pending">-</div>
+                        <div style="font-size: 0.8rem; color: #6B7280;">Pending</div>
+                    </div>
+                    <div style="text-align: center; padding: 15px; background: linear-gradient(135deg, #D1FAE5 0%, #A7F3D0 100%); border-radius: 16px;">
+                        <div style="font-size: 1.8rem; margin-bottom: 5px;">✅</div>
+                        <div style="font-size: 1.5rem; font-weight: 800; color: #059669;" id="deposit-processed">-</div>
+                        <div style="font-size: 0.8rem; color: #6B7280;">Processed</div>
+                    </div>
+                </div>
+                <div style="margin-top: 12px; text-align: center; color: #6B7280; font-size: 0.85rem;">
+                    <i class="ri-arrow-right-circle-line"></i> Click to manage deposit requests
+                </div>
+            </div>
+
             <!-- 统计卡片网格 -->
             <div class="stats-grid">
                 <div class="stat-card">
@@ -468,7 +495,7 @@
         <a href="../../Module_Product_Ecosystem/pages/Publish_Page.html" class="action-btn btn-primary-action">
             <i class="ri-add-circle-line"></i> Publish Item
         </a>
-        <a href="#" class="action-btn" onclick="alert('This feature is managed by other team members')">
+        <a href="../../Module_Transaction_Fund/pages/Admin_Deposit.html" class="action-btn">
             <i class="ri-money-dollar-circle-line"></i> Fund Requests
         </a>
         <a href="#" class="action-btn" onclick="alert('This feature is managed by other team members')">
@@ -493,6 +520,7 @@
     document.addEventListener('DOMContentLoaded', async () => {
         await loadAdminData();
         await loadUsers();
+        await loadDepositStats();
 
         // 搜索和筛选事件
         document.getElementById('user-search').addEventListener('input', filterUsers);
@@ -849,6 +877,21 @@
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    }
+
+    async function loadDepositStats() {
+        try {
+            const res = await fetch('../../Module_Transaction_Fund/api/Fund_Request.php?action=get_admin_statistics');
+            const json = await res.json();
+            if (json.success) {
+                const data = json.data;
+                document.getElementById('deposit-total').textContent = data.total_requests || 0;
+                document.getElementById('deposit-pending').textContent = data.pending_requests || 0;
+                document.getElementById('deposit-processed').textContent = data.processed_requests || 0;
+            }
+        } catch (err) {
+            console.error("Failed to load deposit stats:", err);
+        }
     }
 
     async function handleLogout() {

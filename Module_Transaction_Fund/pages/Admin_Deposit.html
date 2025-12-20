@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TreasureGO - Admin Deposit Management</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        /* ========================================= */
+        /* 核心样式 & 变量 (Core Styles)        */
+        /* ========================================= */
+        :root {
+            --bg-color: #F3F6F9;
+            --primary: #4F46E5;
+            --primary-hover: #4338CA;
+            --text-dark: #1F2937;
+            --text-gray: #6B7280;
+            --glass-bg: rgba(255, 255, 255, 0.95);
+            --sidebar-radius: 50px;
+            --card-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.05);
+            --success: #10B981;
+            --danger: #EF4444;
+            --warning: #F59E0B;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+            background-image:
+                    radial-gradient(circle at 10% 20%, rgba(79, 70, 229, 0.05) 0%, transparent 40%),
+                    radial-gradient(circle at 90% 80%, rgba(245, 158, 11, 0.05) 0%, transparent 40%);
+        }
+
+        /* --- 背景浮动动画 --- */
+        #floating-container {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .floating-item {
+            position: absolute;
+            font-size: 4rem;
+            opacity: 0.6;
+            filter: drop-shadow(0 10px 10px rgba(0,0,0,0.1));
+            animation: floatUp 15s linear infinite;
+        }
+
+        @keyframes floatUp {
+            0% { transform: translateY(110vh) rotate(0deg); opacity: 0; }
+            10% { opacity: 0.8; }
+            90% { opacity: 0.8; }
+            100% { transform: translateY(-10vh) rotate(20deg); opacity: 0; }
+        }
+
+        /* ========================================= */
+        /* 顶部导航栏 (Navbar)           */
+        /* ========================================= */
+        .navbar {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            padding: 1rem 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 1px solid rgba(255,255,255,0.5);
+        }
+
+        .logo {
+            font-weight: 800; font-size: 1.5rem; color: var(--primary);
+            display: flex; align-items: center; gap: 10px; text-decoration: none;
+        }
+        .logo span { color: var(--text-dark); }
+
+        .logo-img {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            object-fit: cover;
+            animation: glowAnimation 3s infinite alternate;
+        }
+
+        @keyframes glowAnimation {
+            0% {
+                box-shadow: 0 0 5px rgba(245, 158, 11, 0.2),
+                0 0 10px rgba(245, 158, 11, 0.1);
+            }
+            100% {
+                box-shadow: 0 0 15px rgba(245, 158, 11, 0.8),
+                0 0 25px rgba(245, 158, 11, 0.5);
+            }
+        }
+
+        .nav-actions { display: flex; align-items: center; gap: 20px; }
+
+        .nav-btn {
+            border: none; background: transparent; font-weight: 600; color: var(--text-gray);
+            padding: 0.6rem 0.5rem; cursor: pointer; transition: color 0.2s; font-size: 1rem;
+        }
+        .nav-btn:hover { color: var(--text-dark); }
+
+        .btn-primary {
+            border: none; background-color: var(--text-dark); color: white;
+            font-weight: 600; padding: 0.7rem 1.8rem; border-radius: 12px;
+            cursor: pointer; transition: all 0.2s; font-size: 1rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .btn-primary:hover { transform: translateY(-2px); background-color: #000; }
+
+        /* --- 下拉菜单 --- */
+        .menu-container { position: relative; display: inline-block; }
+
+        .dots-btn {
+            width: 40px; height: 40px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px; cursor: pointer; color: var(--text-dark);
+            font-weight: bold; transition: 0.2s; background: #f3f4f6;
+        }
+        .dots-btn:hover { background: #eee; }
+
+        .dropdown-content {
+            display: none; position: absolute; right: 0;
+            top: 100%; margin-top: 10px;
+            background-color: white; min-width: 160px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+            border-radius: 16px; z-index: 1001; padding: 8px;
+            animation: fadeIn 0.2s ease;
+        }
+        .dropdown-content::before {
+            content: ""; position: absolute; top: -20px; left: 0;
+            width: 100%; height: 20px; background: transparent;
+        }
+
+        .menu-container:hover .dropdown-content { display: block; }
+        .dropdown-item {
+            color: var(--text-dark); padding: 12px 16px; text-decoration: none;
+            display: block; font-size: 14px; font-weight: 500; border-radius: 10px;
+        }
+        .dropdown-item:hover { background-color: #f3f4f6; color: var(--primary); }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* ========================================= */
+        /* 主内容区域 (Main Content)             */
+        /* ========================================= */
+        .page-header {
+            text-align: center;
+            padding: 60px 20px 40px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .page-title {
+            font-size: 2.5rem;
+            line-height: 1.1;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(to right, #1F2937 0%, #4F46E5 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .page-subtitle {
+            color: var(--text-gray);
+            font-size: 1.1rem;
+        }
+
+        /* ========================================= */
+        /* 统计卡片 (Statistics Cards)            */
+        /* ========================================= */
+        .stats-container {
+            max-width: 1200px;
+            margin: 0 auto 40px;
+            padding: 0 20px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            text-align: center;
+            box-shadow: var(--card-shadow);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+
+        .stat-icon {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--text-dark);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--text-gray);
+            margin-top: 5px;
+        }
+
+        .stat-card.total { border-top: 4px solid var(--primary); }
+        .stat-card.pending { border-top: 4px solid var(--warning); }
+        .stat-card.processed { border-top: 4px solid #3B82F6; }
+        .stat-card.approved { border-top: 4px solid var(--success); }
+        .stat-card.rejected { border-top: 4px solid var(--danger); }
+        .stat-card.amount { border-top: 4px solid #8B5CF6; }
+
+        /* ========================================= */
+        /* 请求列表 (Request List)              */
+        /* ========================================= */
+        .requests-container {
+            max-width: 1200px;
+            margin: 0 auto 100px;
+            padding: 0 20px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .filter-tabs {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .filter-tab {
+            padding: 8px 20px;
+            border-radius: 20px;
+            border: none;
+            background: white;
+            color: var(--text-gray);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .filter-tab:hover {
+            background: #f3f4f6;
+        }
+
+        .filter-tab.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .requests-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .request-card {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: var(--card-shadow);
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            gap: 20px;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .request-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+        }
+
+        .request-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .request-info {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .request-user {
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .request-details {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            color: var(--text-gray);
+            font-size: 0.9rem;
+        }
+
+        .request-amount {
+            font-weight: 800;
+            font-size: 1.3rem;
+            color: var(--success);
+        }
+
+        .request-status {
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .status-pending {
+            background: #FEF3C7;
+            color: #D97706;
+        }
+
+        .status-approved, .status-completed {
+            background: #D1FAE5;
+            color: #059669;
+        }
+
+        .status-rejected {
+            background: #FEE2E2;
+            color: #DC2626;
+        }
+
+        .request-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: flex-end;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-approve {
+            padding: 10px 25px;
+            border-radius: 12px;
+            border: none;
+            background: var(--success);
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-approve:hover {
+            background: #059669;
+            transform: translateY(-2px);
+        }
+
+        .btn-reject {
+            padding: 10px 25px;
+            border-radius: 12px;
+            border: none;
+            background: var(--danger);
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-reject:hover {
+            background: #DC2626;
+            transform: translateY(-2px);
+        }
+
+        .btn-view-proof {
+            padding: 8px 15px;
+            border-radius: 10px;
+            border: 1px solid #E5E7EB;
+            background: white;
+            color: var(--text-gray);
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.85rem;
+        }
+
+        .btn-view-proof:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: var(--card-shadow);
+        }
+
+        .empty-icon {
+            font-size: 4rem;
+            margin-bottom: 15px;
+        }
+
+        .empty-text {
+            color: var(--text-gray);
+            font-size: 1.1rem;
+        }
+
+        /* Loading state */
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f4f6;
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* ========================================= */
+        /* 弹窗 (Modal)                           */
+        /* ========================================= */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 24px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+        }
+
+        .modal-close {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: none;
+            background: #f3f4f6;
+            cursor: pointer;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .modal-close:hover {
+            background: #e5e7eb;
+        }
+
+        .proof-image {
+            width: 100%;
+            border-radius: 16px;
+            margin-bottom: 20px;
+        }
+
+        .modal-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-label {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--text-dark);
+        }
+
+        .form-input, .form-textarea {
+            padding: 12px 15px;
+            border: 1px solid #E5E7EB;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+
+        .form-input:focus, .form-textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 10px;
+        }
+
+        .btn-cancel {
+            padding: 12px 25px;
+            border-radius: 12px;
+            border: 1px solid #E5E7EB;
+            background: white;
+            color: var(--text-gray);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-cancel:hover {
+            background: #f3f4f6;
+        }
+
+        .btn-confirm {
+            padding: 12px 25px;
+            border-radius: 12px;
+            border: none;
+            background: var(--primary);
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-confirm:hover {
+            background: var(--primary-hover);
+        }
+
+        .btn-confirm.approve {
+            background: var(--success);
+        }
+
+        .btn-confirm.approve:hover {
+            background: #059669;
+        }
+
+        .btn-confirm.reject {
+            background: var(--danger);
+        }
+
+        .btn-confirm.reject:hover {
+            background: #DC2626;
+        }
+
+        /* Toast notification */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--text-dark);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 12px;
+            font-weight: 500;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease;
+            z-index: 3000;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .toast.success {
+            background: var(--success);
+        }
+
+        .toast.error {
+            background: var(--danger);
+        }
+
+        /* ========================================= */
+        /* 手机端适配 (Mobile Responsive)     */
+        /* ========================================= */
+        @media (max-width: 768px) {
+            .navbar { padding: 15px; }
+            .nav-actions { gap: 10px; }
+            .nav-btn { display: none; }
+
+            .page-title { font-size: 1.8rem; }
+            .page-header { padding: 40px 20px 30px; }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 12px;
+            }
+
+            .stat-card {
+                padding: 15px;
+            }
+
+            .stat-icon {
+                font-size: 2rem;
+            }
+
+            .stat-value {
+                font-size: 1.5rem;
+            }
+
+            .request-card {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+
+            .request-avatar {
+                margin: 0 auto;
+            }
+
+            .request-actions {
+                align-items: center;
+                width: 100%;
+            }
+
+            .action-buttons {
+                width: 100%;
+                justify-content: center;
+            }
+
+            #floating-container { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="floating-container"></div>
+
+<nav class="navbar">
+    <a href="../../index.html" class="logo">
+        <img src="../../Public_Assets/images/TreasureGo_Logo.png" alt="Logo" class="logo-img">
+        Treasure<span>Go</span>
+    </a>
+
+    <div class="nav-actions">
+        <button class="nav-btn" onclick="window.location.href='../../Module_User_Account_Management/pages/admin_dashboard.php'">Admin Dashboard</button>
+        <button class="nav-btn" onclick="window.location.href='../../index.html'">Home</button>
+
+        <div id="nav-user-menu" class="menu-container">
+            <div id="nav-avatar" class="dots-btn">
+                👤
+            </div>
+            <div class="dropdown-content">
+                <a href="../../Module_User_Account_Management/pages/profile.php" class="dropdown-item">My Profile</a>
+                <a href="../../Module_User_Account_Management/pages/admin_dashboard.php" class="dropdown-item">Admin Dashboard</a>
+                <a href="../../Module_User_Account_Management/api/logout.php" class="dropdown-item" style="color: #ef4444;">Log Out</a>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<section class="page-header">
+    <h1 class="page-title">💰 Deposit Management</h1>
+    <p class="page-subtitle">Review and process user deposit requests</p>
+</section>
+
+<!-- 统计卡片 -->
+<section class="stats-container">
+    <div class="stats-grid">
+        <div class="stat-card total">
+            <div class="stat-icon">📋</div>
+            <div class="stat-value" id="stat-total">--</div>
+            <div class="stat-label">Total Requests</div>
+        </div>
+        <div class="stat-card pending">
+            <div class="stat-icon">⏳</div>
+            <div class="stat-value" id="stat-pending">--</div>
+            <div class="stat-label">Pending</div>
+        </div>
+        <div class="stat-card processed">
+            <div class="stat-icon">✅</div>
+            <div class="stat-value" id="stat-processed">--</div>
+            <div class="stat-label">Processed</div>
+        </div>
+        <div class="stat-card approved">
+            <div class="stat-icon">👍</div>
+            <div class="stat-value" id="stat-approved">--</div>
+            <div class="stat-label">Approved</div>
+        </div>
+        <div class="stat-card rejected">
+            <div class="stat-icon">👎</div>
+            <div class="stat-value" id="stat-rejected">--</div>
+            <div class="stat-label">Rejected</div>
+        </div>
+    </div>
+</section>
+
+<!-- 请求列表 -->
+<section class="requests-container">
+    <div class="section-header">
+        <h2 class="section-title">
+            <span>📝</span> Deposit Requests
+        </h2>
+        <div class="filter-tabs">
+            <button class="filter-tab active" data-filter="all">All</button>
+            <button class="filter-tab" data-filter="pending">Pending</button>
+            <button class="filter-tab" data-filter="approved">Approved</button>
+            <button class="filter-tab" data-filter="rejected">Rejected</button>
+        </div>
+    </div>
+
+    <div id="requests-list" class="requests-list">
+        <div class="loading">
+            <div class="spinner"></div>
+            <p>Loading requests...</p>
+        </div>
+    </div>
+</section>
+
+<!-- 查看凭证弹窗 -->
+<div id="proof-modal" class="modal-overlay">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 class="modal-title">Payment Proof</h3>
+            <button class="modal-close" onclick="closeProofModal()">×</button>
+        </div>
+        <img id="proof-image" class="proof-image" src="" alt="Payment Proof">
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="closeProofModal()">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- 处理请求弹窗 -->
+<div id="action-modal" class="modal-overlay">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 class="modal-title" id="action-modal-title">Process Request</h3>
+            <button class="modal-close" onclick="closeActionModal()">×</button>
+        </div>
+        <div class="modal-form">
+            <div class="form-group">
+                <label class="form-label">User</label>
+                <input type="text" class="form-input" id="action-user" readonly>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Amount</label>
+                <input type="text" class="form-input" id="action-amount" readonly>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Admin Remark (Optional)</label>
+                <textarea class="form-textarea" id="action-remark" placeholder="Enter any notes or remarks..."></textarea>
+            </div>
+        </div>
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="closeActionModal()">Cancel</button>
+            <button class="btn-confirm" id="action-confirm-btn">Confirm</button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast 通知 -->
+<div id="toast" class="toast"></div>
+
+<script>
+    // API 配置
+    const API_BASE = '../api/Fund_Request.php';
+
+    // 全局变量
+    let allRequests = [];
+    let currentFilter = 'all';
+    let currentRequestId = null;
+    let currentAction = null;
+
+    // 页面初始化
+    document.addEventListener('DOMContentLoaded', () => {
+        initFloatingItems();
+        loadStatistics();
+        loadRequests();
+        initFilterTabs();
+        checkAdminAuth();
+    });
+
+    // 检查管理员权限
+    async function checkAdminAuth() {
+        try {
+            const res = await fetch('../../Module_User_Account_Management/api/session_status.php');
+            const data = await res.json();
+
+            if (!data.is_logged_in || data.user?.role !== 'admin') {
+                // 替换自动跳转为全屏提示，防止"闪退"感
+                document.body.innerHTML = `
+                    <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; text-align:center; font-family:'Poppins', sans-serif; background:#F3F6F9;">
+                        <div style="font-size:4rem; margin-bottom:20px;">🚫</div>
+                        <h1 style="margin-bottom:10px; color:#1F2937;">Access Denied</h1>
+                        <p style="color:#6B7280; margin-bottom:30px;">You must be an administrator to view this page.</p>
+                        <button onclick="window.location.href='../../index.html'" style="padding:12px 25px; background:#4F46E5; color:white; border:none; border-radius:12px; cursor:pointer; font-weight:600; box-shadow:0 4px 12px rgba(79, 70, 229, 0.2);">
+                            Return to Home
+                        </button>
+                        <div style="margin-top:30px; padding:15px; background:white; border-radius:8px; border:1px solid #E5E7EB; text-align:left;">
+                            <p style="font-weight:bold; margin-bottom:5px; color:#374151;">Debug Info:</p>
+                            <p style="font-size:0.85rem; color:#6B7280; margin:2px 0;">Logged In: <span style="color:${data.is_logged_in ? '#059669' : '#DC2626'}">${data.is_logged_in}</span></p>
+                            <p style="font-size:0.85rem; color:#6B7280; margin:2px 0;">Role: <span style="color:#4F46E5">${data.user?.role || 'N/A'}</span></p>
+                        </div>
+                    </div>
+                `;
+            }
+        } catch (err) {
+            console.error('Auth check failed:', err);
+            document.body.innerHTML = `
+                <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; text-align:center; font-family:'Poppins', sans-serif; background:#F3F6F9;">
+                    <div style="font-size:4rem; margin-bottom:20px;">⚠️</div>
+                    <h1 style="margin-bottom:10px; color:#1F2937;">Connection Error</h1>
+                    <p style="color:#6B7280; margin-bottom:30px;">Failed to verify permissions.</p>
+                    <p style="color:#EF4444; font-size:0.9rem; margin-bottom:30px; background:#FEF2F2; padding:10px; border-radius:8px;">${err.message}</p>
+                    <button onclick="window.location.href='../../index.html'" style="padding:12px 25px; background:#4F46E5; color:white; border:none; border-radius:12px; cursor:pointer; font-weight:600;">
+                        Return to Home
+                    </button>
+                </div>
+            `;
+        }
+    }
+
+    // 初始化浮动背景
+    function initFloatingItems() {
+        const container = document.getElementById('floating-container');
+        const items = ['💰', '💵', '💳', '🏦', '📊', '✨', '💎', '🪙'];
+        for (let i = 0; i < 10; i++) {
+            const el = document.createElement('div');
+            el.classList.add('floating-item');
+            el.innerText = items[Math.floor(Math.random() * items.length)];
+            el.style.left = Math.random() * 100 + 'vw';
+            el.style.fontSize = (Math.random() * 3 + 3) + 'rem';
+            el.style.animationDuration = (Math.random() * 10 + 20) + 's';
+            el.style.animationDelay = '-' + (Math.random() * 20) + 's';
+            container.appendChild(el);
+        }
+    }
+
+    // 加载统计数据
+    async function loadStatistics() {
+        try {
+            const res = await fetch(`${API_BASE}?action=get_admin_statistics`);
+            const data = await res.json();
+
+            if (data.success) {
+                document.getElementById('stat-total').textContent = data.data.total_requests;
+                document.getElementById('stat-pending').textContent = data.data.pending_requests;
+                document.getElementById('stat-processed').textContent = data.data.processed_requests;
+                document.getElementById('stat-approved').textContent = data.data.approved_requests;
+                document.getElementById('stat-rejected').textContent = data.data.rejected_requests;
+            }
+        } catch (err) {
+            console.error('Failed to load statistics:', err);
+        }
+    }
+
+    // 加载请求列表
+    async function loadRequests() {
+        const container = document.getElementById('requests-list');
+
+        try {
+            const res = await fetch(`${API_BASE}?action=get_all_requests`);
+            const data = await res.json();
+
+            if (data.success) {
+                // 只筛选充值请求
+                allRequests = data.data.filter(r => r.Type === 'deposit');
+                renderRequests();
+            } else {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">⚠️</div>
+                        <p class="empty-text">Failed to load requests</p>
+                    </div>
+                `;
+            }
+        } catch (err) {
+            console.error('Failed to load requests:', err);
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">⚠️</div>
+                    <p class="empty-text">Network error. Please try again.</p>
+                </div>
+            `;
+        }
+    }
+
+    // 渲染请求列表
+    function renderRequests() {
+        const container = document.getElementById('requests-list');
+        let filteredRequests = allRequests;
+
+        // 应用筛选
+        if (currentFilter !== 'all') {
+            filteredRequests = allRequests.filter(r => {
+                if (currentFilter === 'approved') {
+                    return r.Status === 'approved' || r.Status === 'completed';
+                }
+                return r.Status === currentFilter;
+            });
+        }
+
+        if (filteredRequests.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">📭</div>
+                    <p class="empty-text">No ${currentFilter === 'all' ? '' : currentFilter + ' '}deposit requests found</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = filteredRequests.map(request => `
+            <div class="request-card" data-id="${request.REQUEST_ID}">
+                <div class="request-avatar">
+                    ${request.Username ? request.Username.charAt(0).toUpperCase() : '?'}
+                </div>
+                <div class="request-info">
+                    <div class="request-user">${request.Username || 'User #' + request.User_ID}</div>
+                    <div class="request-details">
+                        <span>📅 ${formatDate(request.Created_AT)}</span>
+                        <span>🆔 #${request.REQUEST_ID}</span>
+                    </div>
+                    <div class="request-amount">+ $${parseFloat(request.Amount).toFixed(2)}</div>
+                </div>
+                <div class="request-actions">
+                    <span class="request-status ${getStatusClass(request.Status)}">
+                        ${formatStatus(request.Status)}
+                    </span>
+                    ${request.Proof_Image ? `
+                        <button class="btn-view-proof" onclick="viewProof('${request.Proof_Image}')">
+                            🖼️ View Proof
+                        </button>
+                    ` : ''}
+                    ${request.Status === 'pending' ? `
+                        <div class="action-buttons">
+                            <button class="btn-approve" onclick="openActionModal(${request.REQUEST_ID}, 'approve', '${request.Username || 'User #' + request.User_ID}', ${request.Amount})">
+                                ✓ Approve
+                            </button>
+                            <button class="btn-reject" onclick="openActionModal(${request.REQUEST_ID}, 'reject', '${request.Username || 'User #' + request.User_ID}', ${request.Amount})">
+                                ✗ Reject
+                            </button>
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // 初始化筛选标签
+    function initFilterTabs() {
+        document.querySelectorAll('.filter-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                currentFilter = tab.dataset.filter;
+                renderRequests();
+            });
+        });
+    }
+
+    // 查看凭证
+    function viewProof(imageUrl) {
+        const modal = document.getElementById('proof-modal');
+        const img = document.getElementById('proof-image');
+        img.src = imageUrl;
+        modal.classList.add('active');
+    }
+
+    function closeProofModal() {
+        document.getElementById('proof-modal').classList.remove('active');
+    }
+
+    // 打开操作弹窗
+    function openActionModal(requestId, action, username, amount) {
+        currentRequestId = requestId;
+        currentAction = action;
+
+        const modal = document.getElementById('action-modal');
+        const title = document.getElementById('action-modal-title');
+        const confirmBtn = document.getElementById('action-confirm-btn');
+
+        document.getElementById('action-user').value = username;
+        document.getElementById('action-amount').value = '$' + parseFloat(amount).toFixed(2);
+        document.getElementById('action-remark').value = '';
+
+        if (action === 'approve') {
+            title.textContent = '✅ Approve Deposit Request';
+            confirmBtn.textContent = 'Approve';
+            confirmBtn.className = 'btn-confirm approve';
+        } else {
+            title.textContent = '❌ Reject Deposit Request';
+            confirmBtn.textContent = 'Reject';
+            confirmBtn.className = 'btn-confirm reject';
+        }
+
+        confirmBtn.onclick = () => processRequest();
+        modal.classList.add('active');
+    }
+
+    function closeActionModal() {
+        document.getElementById('action-modal').classList.remove('active');
+        currentRequestId = null;
+        currentAction = null;
+    }
+
+    // 处理请求
+    async function processRequest() {
+        if (!currentRequestId || !currentAction) return;
+
+        const newRemark = document.getElementById('action-remark').value;
+        const status = currentAction === 'approve' ? 'approved' : 'rejected';
+
+        // Get existing remark to preserve Transaction ID
+        const request = allRequests.find(r => r.REQUEST_ID === currentRequestId);
+        let finalRemark = request ? request.Admin_Remark : '';
+
+        if (newRemark.trim()) {
+            finalRemark += `\n\n[Admin ${new Date().toLocaleDateString()}]: ${newRemark}`;
+        }
+
+        try {
+            const res = await fetch(`${API_BASE}?action=update_fund_request_status`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    request_id: currentRequestId,
+                    status: status,
+                    admin_remark: finalRemark
+                })
+            });
+
+            const data = await res.json();
+
+            if (data.success) {
+                showToast(
+                    currentAction === 'approve'
+                        ? '✅ Deposit approved! User balance updated.'
+                        : '❌ Deposit rejected.',
+                    currentAction === 'approve' ? 'success' : 'error'
+                );
+                closeActionModal();
+                loadStatistics();
+                loadRequests();
+            } else {
+                showToast('Failed to process request: ' + data.message, 'error');
+            }
+        } catch (err) {
+            console.error('Failed to process request:', err);
+            showToast('Network error. Please try again.', 'error');
+        }
+    }
+
+    // 工具函数
+    function formatDate(dateStr) {
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    }
+
+    function getStatusClass(status) {
+        switch (status) {
+            case 'pending': return 'status-pending';
+            case 'approved':
+            case 'completed': return 'status-approved';
+            case 'rejected': return 'status-rejected';
+            default: return '';
+        }
+    }
+
+    function formatStatus(status) {
+        return status.charAt(0).toUpperCase() + status.slice(1);
+    }
+
+    function showToast(message, type = '') {
+        const toast = document.getElementById('toast');
+        toast.textContent = message;
+        toast.className = 'toast ' + type + ' show';
+
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, 3000);
+    }
+
+    // 点击弹窗外部关闭
+    document.querySelectorAll('.modal-overlay').forEach(modal => {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.classList.remove('active');
+            }
+        });
+    });
+</script>
+
+</body>
+</html>
+
+
+

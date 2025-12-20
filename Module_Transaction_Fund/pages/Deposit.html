@@ -736,7 +736,7 @@
                     </button>
                 </div>
                 <div class="qr-code-wrapper">
-                    <img src="../../Public_Assets/images/85bf20750be06c3c5e145ef7dff83fb.jpg" alt="Payment QR Code" class="qr-code-img">
+                    <img src="../../Public_Assets/images/TNG_QR%20CODE.jpg" alt="Payment QR Code" class="qr-code-img">
                 </div>
                 <p class="qr-hint">Scan with any of your banking apps or<br>eWallets to transfer money or pay.</p>
             </div>
@@ -892,6 +892,9 @@
 
             if (data.is_logged_in) {
                 isUserLoggedIn = true;
+                if (data.user && data.user.user_id) {
+                    currentUserId = data.user.user_id;
+                }
 
                 // Update navbar UI
                 if (loginBtn) loginBtn.style.display = 'none';
@@ -911,6 +914,9 @@
                         avatarBtn.style.border = '2px solid #fff';
                     }
                 }
+
+                // Load history
+                loadDepositHistory();
             } else {
                 isUserLoggedIn = false;
                 if (loginBtn) loginBtn.style.display = 'inline-block';
@@ -929,7 +935,7 @@
 
     // ==================== API CONFIGURATION ====================
     const API_BASE_URL = '../api/Fund_Request.php';
-    const CURRENT_USER_ID = 12345678; // TODO: Get from session/login
+    let currentUserId = null;
 
     // API Helper Functions
     async function apiCall(action, data = {}, method = 'POST') {
@@ -1015,7 +1021,7 @@
         formData.append('file', file);
 
         try {
-            const response = await fetch('../api/upload_proof.php', {
+            const response = await fetch('../api/Photo_upload_proof.php', {
                 method: 'POST',
                 body: formData
             });
@@ -1087,9 +1093,13 @@
         const finalRemark = `Transaction ID: ${transactionId}\n\nUser Notes: ${adminRemarkInput}`;
 
         try {
+            if (!currentUserId) {
+                throw new Error('User not logged in. Please log in to continue.');
+            }
+
             // Submit to API
             const result = await apiCall('create_fund_request', {
-                user_id: CURRENT_USER_ID,
+                user_id: currentUserId,
                 type: type,
                 amount: parseFloat(amount),
                 proof_image: proofImage,
@@ -1105,6 +1115,58 @@
             alert('❌ Failed to submit deposit: ' + error.message);
         }
     });
+
+    // ==================== HISTORY LOGIC ====================
+    async function loadDepositHistory() {
+        if (!currentUserId) return;
+
+        try {
+            const result = await apiCall('get_fund_requests', { user_id: currentUserId }, 'GET');
+            const tbody = document.getElementById('historyTableBody');
+            tbody.innerHTML = '';
+
+            // Filter for deposits only
+            const deposits = result.data.filter(req => req.Type === 'deposit');
+
+            if (deposits.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" style="text-align: center; padding: 30px; color: var(--text-gray);">
+                            No deposit history found.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            deposits.forEach(req => {
+                const date = new Date(req.Created_AT).toLocaleDateString();
+                const statusClass = `status-${req.Status.toLowerCase()}`;
+                const remark = req.Admin_Remark ? req.Admin_Remark.split('\n')[0] : '-'; // Show first line only
+
+                const row = `
+                    <tr>
+                        <td>#${req.REQUEST_ID}</td>
+                        <td>${date}</td>
+                        <td>$${parseFloat(req.Amount).toFixed(2)}</td>
+                        <td><span class="status-badge ${statusClass}">${req.Status}</span></td>
+                        <td title="${req.Admin_Remark || ''}">${remark}</td>
+                    </tr>
+                `;
+                tbody.insertAdjacentHTML('beforeend', row);
+            });
+
+        } catch (error) {
+            console.error('Error loading history:', error);
+            document.getElementById('historyTableBody').innerHTML = `
+                <tr>
+                    <td colspan="5" style="text-align: center; color: var(--danger);">
+                        Failed to load history.
+                    </td>
+                </tr>
+            `;
+        }
+    }
 </script>
 
 </body>

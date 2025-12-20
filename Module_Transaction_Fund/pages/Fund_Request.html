@@ -654,59 +654,9 @@
                 </tr>
             </thead>
             <tbody id="fundRequestsBody">
-                <!-- Sample Data -->
                 <tr>
-                    <td><strong>#FR001</strong></td>
-                    <td>
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <span style="font-size: 1.2rem;">💸</span>
-                            <span style="color: #EF4444; font-weight: 600;">Fund Withdrawal</span>
-                        </div>
-                    </td>
-                    <td><strong>$150.00</strong></td>
-                    <td><span class="status-badge status-pending">Pending</span></td>
-                    <td>2025-12-12 10:30</td>
-                    <td>-</td>
-                    <td>
-                        <div class="action-btns">
-                            <button class="btn-small btn-view" onclick="viewFundRequest('FR001')">View</button>
-                        </div>
-                    </td>
-                </tr>
-                <tr>
-                    <td><strong>#FR002</strong></td>
-                    <td>
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <span style="font-size: 1.2rem;">💰</span>
-                            <span style="color: #F59E0B; font-weight: 600;">Fund Deposit</span>
-                        </div>
-                    </td>
-                    <td><strong>$500.00</strong></td>
-                    <td><span class="status-badge status-approved">Approved</span></td>
-                    <td>2025-12-11 14:20</td>
-                    <td>2025-12-11 15:45</td>
-                    <td>
-                        <div class="action-btns">
-                            <button class="btn-small btn-view" onclick="viewFundRequest('FR002')">View</button>
-                        </div>
-                    </td>
-                </tr>
-                <tr>
-                    <td><strong>#FR003</strong></td>
-                    <td>
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <span style="font-size: 1.2rem;">💸</span>
-                            <span style="color: #EF4444; font-weight: 600;">Fund Withdrawal</span>
-                        </div>
-                    </td>
-                    <td><strong>$45.50</strong></td>
-                    <td><span class="status-badge status-processing">Processing</span></td>
-                    <td>2025-12-10 09:15</td>
-                    <td>-</td>
-                    <td>
-                        <div class="action-btns">
-                            <button class="btn-small btn-view" onclick="viewFundRequest('FR003')">View</button>
-                        </div>
+                    <td colspan="7" style="text-align: center; padding: 2rem; color: var(--text-gray);">
+                        Loading fund requests...
                     </td>
                 </tr>
             </tbody>
@@ -778,6 +728,10 @@
         }
     };
 
+    // ==================== API CONFIGURATION ====================
+    const API_BASE_URL = '../api/Fund_Request.php';
+    let CURRENT_USER_ID = null;
+
     // Check login status on page load
     let isUserLoggedIn = false;
 
@@ -792,6 +746,9 @@
 
             if (data.is_logged_in) {
                 isUserLoggedIn = true;
+                if (data.user && data.user.user_id) {
+                    CURRENT_USER_ID = data.user.user_id;
+                }
 
                 // Update navbar UI
                 if (loginBtn) loginBtn.style.display = 'none';
@@ -811,6 +768,11 @@
                         avatarBtn.style.border = '2px solid #fff';
                     }
                 }
+
+                // Load data after login is confirmed
+                loadStatistics();
+                loadFundRequests();
+
             } else {
                 isUserLoggedIn = false;
                 if (loginBtn) loginBtn.style.display = 'inline-block';
@@ -827,9 +789,6 @@
         }
     });
 
-    // ==================== API CONFIGURATION ====================
-    const API_BASE_URL = '../api/Fund_Request.php';
-    const CURRENT_USER_ID = 12345678; // TODO: Get from session/login
 
     // API Helper Functions
     async function apiCall(action, data = {}, method = 'POST') {
@@ -867,11 +826,6 @@
         }
     }
 
-    // Load initial data on page load
-    document.addEventListener('DOMContentLoaded', function() {
-        loadStatistics();
-        loadFundRequests();
-    });
 
     // ==================== DATA LOADING FUNCTIONS ====================
 
