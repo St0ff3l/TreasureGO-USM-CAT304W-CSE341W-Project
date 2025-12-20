@@ -14,10 +14,7 @@ try {
     $conn = getDatabaseConnection();
     if (!$conn) throw new Exception("DB Connection failed");
 
-    // 模拟登录 (防止 session 丢失导致无数据)
-    if (!isset($_SESSION['user_id'])) {
-        $_SESSION['user_id'] = 1;
-    }
+
     $user_id = $_SESSION['user_id'];
 
     // 🔥 SQL 修正：使用正确的 Image_URL 字段 🔥

@@ -95,8 +95,8 @@
       desc.innerHTML = `Welcome to the club!<br>Your ${planName} benefits are active immediately.`;
 
       btn.innerText = "View My Profile";
-      // 假设个人中心在上一级目录
-      btn.href = "../My_Profile.html"; // 请根据您的实际目录结构调整
+      // --- 关键修改：跳转路径指向 Module_User_Account_Management ---
+      btn.href = "../../Module_User_Account_Management/views/profile.html";
 
     } else if (type === 'order') {
       title.innerText = "Order Placed! 📦";

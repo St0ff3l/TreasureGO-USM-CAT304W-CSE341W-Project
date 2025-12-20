@@ -17,9 +17,7 @@ try {
     if (!$conn) throw new Exception("Database connection failed");
 
     // 2. 模拟登录 (如果 Session 为空，强制使用 ID=1，防止报错)
-    if (!isset($_SESSION['user_id'])) {
-        $_SESSION['user_id'] = 1;
-    }
+
     $user_id = $_SESSION['user_id'];
 
     // 3. 获取商品 ID

@@ -374,6 +374,12 @@
         // 🔥🔥🔥 【新增代码】更新 Buy Now 按钮的跳转链接，带上 ID 🔥🔥🔥
         const buyBtn = document.querySelector('.btn-buy');
         buyBtn.href = `Order_Confirmation.html?id=${item.Product_ID}`;
+        
+        // 拦截点击事件，检查登录状态
+        buyBtn.onclick = function(event) {
+            event.preventDefault();
+            checkLoginAndProceed(this.href);
+        };
 
         // ============================================
         // 🔥 图片处理逻辑 (Gallery Logic) - 支持左右切换 🔥
@@ -560,6 +566,33 @@
         x.className = "toast show";
         setTimeout(function(){ x.className = x.className.replace("show", ""); }, 3000);
     }
+
+    // 🔥 新增：购买前检查登录状态 🔥
+    async function checkLoginAndProceed(targetUrl) {
+        try {
+            const response = await fetch('../api/Session_Status.php');
+            const result = await response.json();
+
+            if (result.is_logged_in) {
+                window.location.href = targetUrl;
+            } else {
+                // 未登录，显示全局登录弹窗
+                if (typeof AuthModal !== 'undefined') {
+                    AuthModal.show();
+                } else {
+                    // 降级处理：如果 AuthModal 未加载
+                    if(confirm("Please login to continue. Go to login page?")) {
+                        window.location.href = '../../Module_User_Account_Management/pages/login.php';
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Session check failed:', error);
+            // 网络错误等情况，安全起见提示用户
+            alert("Network error. Please check your connection.");
+        }
+    }
 </script>
+<script src="../../Public_Assets/js/auth_modal.js"></script>
 </body>
 </html>
