@@ -83,6 +83,10 @@ try {
             getAdminStatistics($conn, $request);
             break;
 
+        case 'get_wallet_balance':
+            getWalletBalance($conn, $request);
+            break;
+
         default:
             sendResponse(false, 'Invalid action', null, 400);
     }
@@ -116,6 +120,22 @@ function createFundRequest($conn, $request) {
         $validTypes = ['deposit', 'withdrawal'];
         if (!in_array($type, $validTypes)) {
             sendResponse(false, 'Invalid type. Must be: deposit or withdrawal', null, 400);
+        }
+
+        // Check balance for withdrawal
+        if ($type === 'withdrawal') {
+            $currentBalance = getUserBalanceInternal($conn, $userId);
+            if ($amount > $currentBalance) {
+                sendResponse(false, 'Insufficient wallet balance. You have $' . number_format($currentBalance, 2) . ' but requested $' . number_format($amount, 2), null, 400);
+            }
+
+            // Calculate fee (3%)
+            $fee = $amount * 0.03;
+            $netAmount = $amount - $fee;
+
+            // Append fee info to admin remark
+            $feeNote = sprintf("\n[System] Fee (3%%): $%.2f | Net Pay: $%.2f", $fee, $netAmount);
+            $adminRemark .= $feeNote;
         }
 
         // Insert fund request
@@ -302,7 +322,7 @@ function createWalletLog($conn, $data) {
     $referenceType = $data['reference_type'] ?? '';
 
     // Get current balance
-    $sql = "SELECT Balance_After FROM Wallet_Logs WHERE User_id = :user_id ORDER BY Created_AT DESC LIMIT 1";
+    $sql = "SELECT Balance_After FROM Wallet_Logs WHERE User_ID = :user_id ORDER BY Created_AT DESC LIMIT 1";
     $stmt = $conn->prepare($sql);
     $stmt->execute([':user_id' => $userId]);
     $result = $stmt->fetch();
@@ -316,7 +336,7 @@ function createWalletLog($conn, $data) {
     $description = ucfirst($type) . ' of $' . abs($amount);
 
     // Insert log
-    $sql = "INSERT INTO Wallet_Logs (User_id, Amount, Balance_After, Description, Reference_Type, Reference_ID, Created_AT)
+    $sql = "INSERT INTO Wallet_Logs (User_ID, Amount, Balance_After, Description, Reference_Type, Reference_ID, Created_AT)
             VALUES (:user_id, :amount, :balance_after, :description, :reference_type, :reference_id, NOW())";
 
     $stmt = $conn->prepare($sql);
@@ -343,7 +363,7 @@ function getWalletLogs($conn, $request) {
             sendResponse(false, 'Missing required field: user_id', null, 400);
         }
 
-        $sql = "SELECT * FROM Wallet_Logs WHERE User_id = :user_id ORDER BY Created_AT DESC";
+        $sql = "SELECT * FROM Wallet_Logs WHERE User_ID = :user_id ORDER BY Created_AT DESC";
 
         $stmt = $conn->prepare($sql);
         $stmt->execute([':user_id' => $userId]);
@@ -367,7 +387,7 @@ function getWalletBalance($conn, $request) {
             sendResponse(false, 'Missing required field: user_id', null, 400);
         }
 
-        $sql = "SELECT Balance_After FROM Wallet_Logs WHERE User_id = :user_id ORDER BY Created_AT DESC LIMIT 1";
+        $sql = "SELECT Balance_After FROM Wallet_Logs WHERE User_ID = :user_id ORDER BY Created_AT DESC LIMIT 1";
         $stmt = $conn->prepare($sql);
         $stmt->execute([':user_id' => $userId]);
         $result = $stmt->fetch();
@@ -394,7 +414,7 @@ function getStatistics($conn, $request) {
         }
 
         // Get wallet balance
-        $sql = "SELECT Balance_After FROM Wallet_Logs WHERE User_id = :user_id ORDER BY Created_AT DESC LIMIT 1";
+        $sql = "SELECT Balance_After FROM Wallet_Logs WHERE User_ID = :user_id ORDER BY Created_AT DESC LIMIT 1";
         $stmt = $conn->prepare($sql);
         $stmt->execute([':user_id' => $userId]);
         $result = $stmt->fetch();
@@ -424,44 +444,46 @@ function getStatistics($conn, $request) {
 }
 
 /**
- * Get admin statistics for deposit management dashboard
+ * Get admin statistics for deposit/withdrawal management dashboard
  */
 function getAdminStatistics($conn, $request) {
     try {
-        // Get total deposit requests
-        $sql = "SELECT COUNT(*) as total FROM Fund_Requests WHERE Type = 'deposit'";
+        $type = $request['type'] ?? $_GET['type'] ?? 'deposit';
+
+        // Get total requests
+        $sql = "SELECT COUNT(*) as total FROM Fund_Requests WHERE Type = :type";
         $stmt = $conn->prepare($sql);
-        $stmt->execute();
+        $stmt->execute([':type' => $type]);
         $totalRequests = $stmt->fetch()['total'];
 
         // Get pending requests
-        $sql = "SELECT COUNT(*) as total FROM Fund_Requests WHERE Type = 'deposit' AND Status = 'pending'";
+        $sql = "SELECT COUNT(*) as total FROM Fund_Requests WHERE Type = :type AND Status = 'pending'";
         $stmt = $conn->prepare($sql);
-        $stmt->execute();
+        $stmt->execute([':type' => $type]);
         $pendingRequests = $stmt->fetch()['total'];
 
         // Get processed requests (approved + rejected + completed)
-        $sql = "SELECT COUNT(*) as total FROM Fund_Requests WHERE Type = 'deposit' AND Status IN ('approved', 'rejected', 'completed')";
+        $sql = "SELECT COUNT(*) as total FROM Fund_Requests WHERE Type = :type AND Status IN ('approved', 'rejected', 'completed')";
         $stmt = $conn->prepare($sql);
-        $stmt->execute();
+        $stmt->execute([':type' => $type]);
         $processedRequests = $stmt->fetch()['total'];
 
         // Get approved requests
-        $sql = "SELECT COUNT(*) as total FROM Fund_Requests WHERE Type = 'deposit' AND Status IN ('approved', 'completed')";
+        $sql = "SELECT COUNT(*) as total FROM Fund_Requests WHERE Type = :type AND Status IN ('approved', 'completed')";
         $stmt = $conn->prepare($sql);
-        $stmt->execute();
+        $stmt->execute([':type' => $type]);
         $approvedRequests = $stmt->fetch()['total'];
 
         // Get rejected requests
-        $sql = "SELECT COUNT(*) as total FROM Fund_Requests WHERE Type = 'deposit' AND Status = 'rejected'";
+        $sql = "SELECT COUNT(*) as total FROM Fund_Requests WHERE Type = :type AND Status = 'rejected'";
         $stmt = $conn->prepare($sql);
-        $stmt->execute();
+        $stmt->execute([':type' => $type]);
         $rejectedRequests = $stmt->fetch()['total'];
 
         // Get total amount approved
-        $sql = "SELECT COALESCE(SUM(Amount), 0) as total FROM Fund_Requests WHERE Type = 'deposit' AND Status IN ('approved', 'completed')";
+        $sql = "SELECT COALESCE(SUM(Amount), 0) as total FROM Fund_Requests WHERE Type = :type AND Status IN ('approved', 'completed')";
         $stmt = $conn->prepare($sql);
-        $stmt->execute();
+        $stmt->execute([':type' => $type]);
         $totalAmountApproved = $stmt->fetch()['total'];
 
         sendResponse(true, 'Admin statistics retrieved successfully', [
@@ -478,5 +500,13 @@ function getAdminStatistics($conn, $request) {
     }
 }
 
-?>
-
+/**
+ * Helper: Get internal user balance
+ */
+function getUserBalanceInternal($conn, $userId) {
+    $sql = "SELECT Balance_After FROM Wallet_Logs WHERE User_ID = :user_id ORDER BY Created_AT DESC LIMIT 1";
+    $stmt = $conn->prepare($sql);
+    $stmt->execute([':user_id' => $userId]);
+    $result = $stmt->fetch();
+    return $result ? (float)$result['Balance_After'] : 0.00;
+}

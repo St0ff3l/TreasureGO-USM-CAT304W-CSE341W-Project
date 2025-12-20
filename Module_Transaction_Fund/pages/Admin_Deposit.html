@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TreasureGO - Admin Deposit Management</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+    <script src="../../Public_Assets/js/admin_guard.js"></script>
     <style>
         /* ========================================= */
         /* 核心样式 & 变量 (Core Styles)        */
@@ -862,48 +863,7 @@
         loadStatistics();
         loadRequests();
         initFilterTabs();
-        checkAdminAuth();
     });
-
-    // 检查管理员权限
-    async function checkAdminAuth() {
-        try {
-            const res = await fetch('../../Module_User_Account_Management/api/session_status.php');
-            const data = await res.json();
-
-            if (!data.is_logged_in || data.user?.role !== 'admin') {
-                // 替换自动跳转为全屏提示，防止"闪退"感
-                document.body.innerHTML = `
-                    <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; text-align:center; font-family:'Poppins', sans-serif; background:#F3F6F9;">
-                        <div style="font-size:4rem; margin-bottom:20px;">🚫</div>
-                        <h1 style="margin-bottom:10px; color:#1F2937;">Access Denied</h1>
-                        <p style="color:#6B7280; margin-bottom:30px;">You must be an administrator to view this page.</p>
-                        <button onclick="window.location.href='../../index.html'" style="padding:12px 25px; background:#4F46E5; color:white; border:none; border-radius:12px; cursor:pointer; font-weight:600; box-shadow:0 4px 12px rgba(79, 70, 229, 0.2);">
-                            Return to Home
-                        </button>
-                        <div style="margin-top:30px; padding:15px; background:white; border-radius:8px; border:1px solid #E5E7EB; text-align:left;">
-                            <p style="font-weight:bold; margin-bottom:5px; color:#374151;">Debug Info:</p>
-                            <p style="font-size:0.85rem; color:#6B7280; margin:2px 0;">Logged In: <span style="color:${data.is_logged_in ? '#059669' : '#DC2626'}">${data.is_logged_in}</span></p>
-                            <p style="font-size:0.85rem; color:#6B7280; margin:2px 0;">Role: <span style="color:#4F46E5">${data.user?.role || 'N/A'}</span></p>
-                        </div>
-                    </div>
-                `;
-            }
-        } catch (err) {
-            console.error('Auth check failed:', err);
-            document.body.innerHTML = `
-                <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; text-align:center; font-family:'Poppins', sans-serif; background:#F3F6F9;">
-                    <div style="font-size:4rem; margin-bottom:20px;">⚠️</div>
-                    <h1 style="margin-bottom:10px; color:#1F2937;">Connection Error</h1>
-                    <p style="color:#6B7280; margin-bottom:30px;">Failed to verify permissions.</p>
-                    <p style="color:#EF4444; font-size:0.9rem; margin-bottom:30px; background:#FEF2F2; padding:10px; border-radius:8px;">${err.message}</p>
-                    <button onclick="window.location.href='../../index.html'" style="padding:12px 25px; background:#4F46E5; color:white; border:none; border-radius:12px; cursor:pointer; font-weight:600;">
-                        Return to Home
-                    </button>
-                </div>
-            `;
-        }
-    }
 
     // 初始化浮动背景
     function initFloatingItems() {
@@ -995,7 +955,10 @@
             return;
         }
 
-        container.innerHTML = filteredRequests.map(request => `
+        container.innerHTML = filteredRequests.map(request => {
+            const processedAt = request.Processed_AT ? formatDate(request.Processed_AT) : '-';
+
+            return `
             <div class="request-card" data-id="${request.REQUEST_ID}">
                 <div class="request-avatar">
                     ${request.Username ? request.Username.charAt(0).toUpperCase() : '?'}
@@ -1029,7 +992,7 @@
                     ` : ''}
                 </div>
             </div>
-        `).join('');
+        `}).join('');
     }
 
     // 初始化筛选标签

@@ -455,7 +455,11 @@
             const avatarBtn = document.getElementById('nav-avatar');
 
             if (data.is_logged_in) {
+
                 isUserLoggedIn = true;
+                if (data.user && data.user.user_id) {
+                    CURRENT_USER_ID = data.user.user_id;
+                }
 
                 // Update navbar UI
                 if (loginBtn) loginBtn.style.display = 'none';
@@ -493,7 +497,7 @@
 
     // ==================== API CONFIGURATION ====================
     const API_BASE_URL = '../api/Fund_Request.php';
-    const CURRENT_USER_ID = 12345678; // TODO: Get from session/login
+    let CURRENT_USER_ID = null;
 
     // API Helper Functions
     async function apiCall(action, data = {}, method = 'POST') {
