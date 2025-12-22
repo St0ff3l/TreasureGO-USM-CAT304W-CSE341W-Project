@@ -6,7 +6,7 @@ ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
 // 🔥🔥🔥 关键修改：根据你的截图，config 文件夹就在 api 目录下 🔥🔥🔥
-require_once 'config/treasurego_db_config.php';
+require_once __DIR__ . '/config/treasurego_db_config.php';
 
 session_start();
 header('Content-Type: application/json');

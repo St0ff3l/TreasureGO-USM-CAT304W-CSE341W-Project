@@ -1,6 +1,6 @@
 <?php
 // 1. 引入你提供的数据库配置文件
-require_once 'config/treasurego_db_config.php';
+require_once __DIR__ . '/config/treasurego_db_config.php';
 
 // 设置返回内容为 JSON 格式
 header('Content-Type: application/json');

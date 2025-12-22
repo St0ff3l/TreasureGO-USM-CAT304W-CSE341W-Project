@@ -330,7 +330,7 @@
 <script>
     // 全局变量
     let currentProductPrice = 0;
-    let currentShippingCost = 15.00; // 默认快递 (Shipping)
+    let currentShippingCost = 8.00; // 默认快递 (Shipping)
     let userCurrentBalance = 0.00;   // 全局存储用户真实余额
 
     // 1. 获取 URL 中的商品 ID
@@ -405,26 +405,40 @@
             imgBox.innerText = '📷';
         }
 
-        // ================== 核心判断配送方式 ==================
+        // ================== 核心判断配送方式 (已修复) ==================
+        const meetOpt = document.getElementById('opt-meet');
+        const shipOpt = document.getElementById('opt-ship');
+
         if (item.Delivery_Method === 'shipping') {
+            // 情况 A: 卖家只支持快递 -> 禁用面交
             selectDelivery('ship');
-            const meetOpt = document.getElementById('opt-meet');
             meetOpt.classList.add('disabled');
             meetOpt.innerHTML += '<div style="font-size:0.7rem; margin-top:5px; color:#ef4444; font-weight:600;">(Unavailable)</div>';
+
+        } else if (item.Delivery_Method === 'meetup') {
+            // 情况 B: 卖家只支持面交 -> 禁用快递 (这是你要修复的部分)
+            selectDelivery('meet');
+            shipOpt.classList.add('disabled');
+            shipOpt.innerHTML += '<div style="font-size:0.7rem; margin-top:5px; color:#ef4444; font-weight:600;">(Unavailable)</div>';
+
+        } else {
+            // 情况 C: 两者都支持 -> 默认选中快递 (或者你可以改为默认面交)
+            selectDelivery('ship');
         }
-        // ====================================================
+        // ==========================================================
 
         calculateTotals();
     }
 
     // 5. 切换配送方式
     function selectDelivery(type) {
-        if (type === 'meet' && document.getElementById('opt-meet').classList.contains('disabled')) {
-            return;
-        }
-
         const meetOpt = document.getElementById('opt-meet');
         const shipOpt = document.getElementById('opt-ship');
+
+        // 安全检查：如果按钮被禁用了，禁止点击
+        if (type === 'meet' && meetOpt.classList.contains('disabled')) return;
+        if (type === 'ship' && shipOpt.classList.contains('disabled')) return;
+
         const meetInfo = document.getElementById('meet-info');
         const shipForm = document.getElementById('shipping-form');
 

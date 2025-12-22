@@ -5,7 +5,7 @@ ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
 // 引用路径 (根据你之前的成功反馈，config 在同级目录)
-require_once 'config/treasurego_db_config.php';
+require_once __DIR__ . '/config/treasurego_db_config.php';
 
 session_start();
 header('Content-Type: application/json');

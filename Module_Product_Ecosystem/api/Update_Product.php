@@ -1,7 +1,7 @@
 <?php
 // 文件路径: Module_Product_Ecosystem/api/Update_Product.php
 
-require_once 'config/treasurego_db_config.php';
+require_once __DIR__ . '/config/treasurego_db_config.php';
 session_start();
 
 header('Content-Type: application/json');

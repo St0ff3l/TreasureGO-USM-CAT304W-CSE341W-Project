@@ -1,7 +1,7 @@
 <?php
 // 文件路径: Module_Product_Ecosystem/api/Get_User_Listings.php
 
-require_once 'config/treasurego_db_config.php';
+require_once __DIR__ . '/config/treasurego_db_config.php';
 session_start();
 
 header('Content-Type: application/json');

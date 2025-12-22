@@ -1,6 +1,6 @@
 <?php
 // 1. 引入数据库配置 (请确保路径正确，根据你的截图调整)
-require_once 'config/treasurego_db_config.php';
+require_once __DIR__ . '/config/treasurego_db_config.php';
 
 header('Content-Type: application/json');
 

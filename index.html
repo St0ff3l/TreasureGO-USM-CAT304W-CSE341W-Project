@@ -236,8 +236,14 @@
         }
         .search-btn:hover { background-color: var(--primary-hover); }
 
-        .market-container { max-width: 1200px; margin: 0 auto 100px; padding: 0 20px; position: relative; z-index: 10; }
-        .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 30px; }
+        .market-container { max-width: 1200px; margin: 0 auto 50px; padding: 0 20px; position: relative; z-index: 10; }
+
+        /* 🔥 核心网格布局：一行 4 列 */
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 30px;
+        }
 
         .product-card {
             background: white; border-radius: 24px; overflow: hidden;
@@ -281,6 +287,7 @@
             .sidebar.right .sidebar-item:nth-child(1) { transform: scale(1); }
             #floating-container { display: none !important; }
 
+            /* 手机端保持一行 2 列 */
             .product-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 15px !important; }
             .card-img-container { height: 160px; }
             .card-emoji { font-size: 4rem; }
@@ -289,7 +296,7 @@
 
             .navbar { padding: 15px; }
             .nav-actions { gap: 10px; }
-            .nav-btn { display: none; } /* 手机端隐藏文字按钮 */
+            .nav-btn { display: none; }
             .main-title { font-size: 2.2rem; }
             .search-section { padding-top: 60px; padding-bottom: 40px; }
             .search-input { padding: 12px 20px; font-size: 1rem; }
@@ -365,7 +372,6 @@
         <button id="nav-login-btn" class="btn-primary" onclick="window.location.href='Module_User_Account_Management/pages/login.php'">Login</button>
 
         <div id="nav-user-menu" class="menu-container" style="display: none;">
-
             <div id="nav-avatar" class="dots-btn" onclick="window.location.href='Module_User_Account_Management/pages/profile.php'">
                 👤
             </div>
@@ -393,36 +399,21 @@
         <span style="background: #ecfdf5; color: #059669; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600;">🔥 Hot</span>
     </div>
 
-    <div class="product-grid">
-        <div class="product-card">
-            <div class="card-img-container"><div class="card-emoji">📸</div></div>
-            <div class="card-info">
-                <h4>Polaroid Camera</h4>
-                <div class="card-footer">
-                    <span class="category-tag">Digital</span>
-                    <span class="price-tag">$45</span>
-                </div>
-            </div>
+    <div class="product-grid" id="fresh-arrivals-container">
+        <div style="text-align:center; width:100%; grid-column: 1/-1; padding: 40px; color: #999;">
+            Loading fresh treasures... ⏳
         </div>
-        <div class="product-card">
-            <div class="card-img-container"><div class="card-emoji">🎮</div></div>
-            <div class="card-info">
-                <h4>Switch Lite</h4>
-                <div class="card-footer">
-                    <span class="category-tag">Gaming</span>
-                    <span class="price-tag">$120</span>
-                </div>
-            </div>
-        </div>
-        <div class="product-card">
-            <div class="card-img-container"><div class="card-emoji">🎧</div></div>
-            <div class="card-info">
-                <h4>Sony Headphones</h4>
-                <div class="card-footer">
-                    <span class="category-tag">Audio</span>
-                    <span class="price-tag">$80</span>
-                </div>
-            </div>
+    </div>
+</section>
+
+<section class="market-container" style="margin-top: 20px; margin-bottom: 100px;">
+    <div style="margin-bottom: 30px; display: flex; align-items: center; justify-content: center;">
+        <h3 style="font-size: 1.5rem; font-weight: 700;">Market</h3>
+    </div>
+
+    <div class="product-grid" id="market-container">
+        <div style="text-align:center; width:100%; grid-column: 1/-1; padding: 40px; color: #999;">
+            Loading market... ⏳
         </div>
     </div>
 </section>
@@ -443,7 +434,7 @@
 </script>
 
 <script>
-    // 1. AuthModal 逻辑 (集成自 auth_modal.js)
+    // 1. AuthModal 逻辑
     const AuthModal = {
         htmlContent: `
             <dialog id="globalLoginDialog" class="tg-auth-modal">
@@ -491,19 +482,17 @@
         }
     };
 
-    // 2. 全局登录状态变量
+    // 🔥 全局变量：存储当前登录用户的ID
     let isUserLoggedIn = false;
+    let currentUserId = null;
 
-    // 3. 点击 Publish 时的拦截函数
     function handlePublishClick(event) {
         if (!isUserLoggedIn) {
-            event.preventDefault(); // 阻止链接跳转
-            AuthModal.show();       // 显示登录弹窗
+            event.preventDefault();
+            AuthModal.show();
         }
-        // 如果已登录，不做任何操作，让 <a href> 正常跳转
     }
 
-    // 4. 搜索功能
     function goToSearch() {
         const inputVal = document.getElementById('homeSearchInput').value;
         const targetUrl = 'Module_Product_Ecosystem/pages/Search_Results_Page.html';
@@ -515,35 +504,34 @@
         }
     });
 
-    // 5. 页面加载时检查 Session 状态
-    // 5. 页面加载时检查 Session 状态（12/17）
-    // 5. 页面加载时检查 Session 状态
     document.addEventListener('DOMContentLoaded', async () => {
+        // --- 任务 A: 加载商品数据 ---
+        loadAllData();
+
+        // --- 任务 B: 检查 Session ---
         const loginBtn = document.getElementById('nav-login-btn');
         const userMenu = document.getElementById('nav-user-menu');
         const avatarBtn = document.getElementById('nav-avatar');
         const adminBtn = document.getElementById('nav-admin-btn');
 
-        // 安全检查：确保所有元素都存在
-        if (!loginBtn || !userMenu || !avatarBtn) {
-            console.error('Navigation elements not found');
-            return;
-        }
+        if (!loginBtn || !userMenu || !avatarBtn) return;
 
         try {
             const res = await fetch('Module_User_Account_Management/api/session_status.php');
             const data = await res.json();
 
             if (data.is_logged_in) {
-                // 更新全局变量
                 isUserLoggedIn = true;
 
-                // UI 更新
+                // 🔥 获取当前登录用户的 ID
+                if (data.user) {
+                    currentUserId = data.user.user_id || data.user.id;
+                }
+
                 loginBtn.style.display = 'none';
                 userMenu.style.display = 'inline-block';
 
                 if (data.user) {
-                    // 设置头像
                     if (data.user.avatar_url) {
                         avatarBtn.innerHTML = `<img src="${data.user.avatar_url}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
                         avatarBtn.style.background = 'transparent';
@@ -556,7 +544,6 @@
                         avatarBtn.style.border = '2px solid #fff';
                     }
 
-                    // 如果是管理员，显示 Admin Dashboard 按钮
                     if (adminBtn && data.user.role === 'admin') {
                         adminBtn.style.display = 'inline-block';
                     } else if (adminBtn) {
@@ -564,25 +551,104 @@
                     }
                 }
             } else {
-                // 未登录
                 isUserLoggedIn = false;
+                currentUserId = null;
                 loginBtn.style.display = 'inline-block';
                 userMenu.style.display = 'none';
-                if (adminBtn) {
-                    adminBtn.style.display = 'none';
-                }
+                if (adminBtn) adminBtn.style.display = 'none';
             }
         } catch (err) {
             console.error("Session check failed:", err);
             isUserLoggedIn = false;
+            currentUserId = null;
             loginBtn.style.display = 'inline-block';
             userMenu.style.display = 'none';
-            if (adminBtn) {
-                adminBtn.style.display = 'none';
-            }
+            if (adminBtn) adminBtn.style.display = 'none';
         }
     });
 
+    // 🔥 核心跳转逻辑：判断是买家还是卖家
+    function handleProductClick(productId, sellerId) {
+        if (currentUserId && parseInt(currentUserId) === parseInt(sellerId)) {
+            // 是卖家本人 -> 跳转到商品管理页
+            window.location.href = `Module_Product_Ecosystem/pages/Seller_Product_Management.html?id=${productId}`;
+        } else {
+            // 是买家或未登录 -> 跳转到商品详情页
+            window.location.href = `Module_Product_Ecosystem/pages/Product_Detail.html?id=${productId}`;
+        }
+    }
+
+    // 核心函数：请求一次 API，填充两个区域
+    async function loadAllData() {
+        const freshContainer = document.getElementById('fresh-arrivals-container');
+        const marketContainer = document.getElementById('market-container');
+
+        try {
+            const response = await fetch('Module_Product_Ecosystem/api/Get_Products.php');
+            const result = await response.json();
+
+            if (result.success && result.data.length > 0) {
+                freshContainer.innerHTML = '';
+                marketContainer.innerHTML = '';
+
+                // 1. 获取所有数据
+                const allItems = result.data;
+
+                // 2. Fresh Arrivals: 取前 4 个
+                const freshItems = allItems.slice(0, 4);
+
+                // 🔥 3. Market: 取剩下的所有 (从第5个开始)
+                const marketItems = allItems.slice(4);
+
+                // 4. 渲染 Fresh Arrivals
+                renderProductsToContainer(freshItems, freshContainer);
+
+                // 5. 渲染 Market (如果还有剩下的)
+                if (marketItems.length > 0) {
+                    renderProductsToContainer(marketItems, marketContainer);
+                } else {
+                    marketContainer.innerHTML = '<p style="text-align:center; width:100%; color:#999; grid-column:1/-1;">No more products.</p>';
+                }
+
+            } else {
+                freshContainer.innerHTML = '<p style="text-align:center; width:100%; color:#666;">No products found yet.</p>';
+                marketContainer.innerHTML = '<p style="text-align:center; width:100%; color:#666;">No products found yet.</p>';
+            }
+        } catch (error) {
+            console.error("Error loading products:", error);
+            freshContainer.innerHTML = '<p style="text-align:center; color:red;">Failed to load products.</p>';
+            marketContainer.innerHTML = '<p style="text-align:center; color:red;">Failed to load products.</p>';
+        }
+    }
+
+    // 辅助渲染函数
+    function renderProductsToContainer(items, containerElement) {
+        items.forEach(item => {
+            let imgHtml = '';
+            if (item.Main_Image) {
+                const cleanPath = item.Main_Image.replace(/^\.\.\//, '');
+                imgHtml = `<img src="${cleanPath}" alt="${item.Product_Title}" style="width:100%; height:100%; object-fit:cover;">`;
+            } else {
+                imgHtml = `<div class="card-emoji">📦</div>`;
+            }
+
+            const cardHtml = `
+                <div class="product-card" onclick="handleProductClick(${item.Product_ID}, ${item.User_ID})">
+                    <div class="card-img-container">
+                        ${imgHtml}
+                    </div>
+                    <div class="card-info">
+                        <h4 style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.Product_Title}</h4>
+                        <div class="card-footer">
+                            <span class="category-tag">New</span>
+                            <span class="price-tag">$${parseFloat(item.Product_Price).toFixed(2)}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            containerElement.innerHTML += cardHtml;
+        });
+    }
 </script>
 
 </body>
