@@ -6,6 +6,7 @@
   <title>TreasureGO - Report</title>
 
   <script src="../../Public_Assets/js/headerbar.js"></script>
+  <script src="../../Public_Assets/js/status_dialog.js"></script>
 
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
   <style>
@@ -28,12 +29,10 @@
       background-image:
               radial-gradient(circle at 10% 20%, rgba(79, 70, 229, 0.05) 0%, transparent 40%),
               radial-gradient(circle at 90% 80%, rgba(245, 158, 11, 0.05) 0%, transparent 40%);
-      /* ❌ 删除了这里的 flex 居中，改用 wrapper 控制布局 */
     }
 
-    /* ✅ 新增：页面布局容器，用于避开顶部导航栏并居中内容 */
     .page-wrapper {
-      padding-top: 30px; /* 给 Navbar 留出空间 */
+      padding-top: 30px;
       padding-bottom: 40px;
       display: flex;
       justify-content: center;
@@ -52,7 +51,6 @@
       border: 1px solid rgba(255,255,255,0.8);
       position: relative;
       animation: slideUp 0.5s ease-out;
-      /* 确保在小屏幕上有左右边距 */
       margin: 0 20px;
     }
 
@@ -68,112 +66,51 @@
 
     .form-group { margin-bottom: 18px; }
 
-    label {
-      display: block;
-      margin-bottom: 8px;
-      font-weight: 600;
-      font-size: 0.9rem;
-      color: #374151;
-    }
+    label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 0.9rem; color: #374151; }
 
     input, select, textarea {
-      width: 100%;
-      padding: 12px 16px;
-      border: 2px solid #E5E7EB;
-      border-radius: 12px;
-      font-family: inherit;
-      font-size: 0.95rem;
-      transition: all 0.3s;
-      background: #F9FAFB;
-      outline: none;
+      width: 100%; padding: 12px 16px; border: 2px solid #E5E7EB; border-radius: 12px;
+      font-family: inherit; font-size: 0.95rem; transition: all 0.3s; background: #F9FAFB; outline: none;
     }
 
     input:focus, select:focus, textarea:focus {
-      border-color: var(--primary);
-      background: #fff;
-      box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+      border-color: var(--primary); background: #fff; box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
     }
 
     textarea { resize: vertical; min-height: 110px; }
 
     .submit-btn {
-      width: 100%;
-      padding: 14px;
-      background: var(--primary);
-      color: white;
-      border: none;
-      border-radius: 12px;
-      font-weight: 600;
-      font-size: 1rem;
-      cursor: pointer;
-      transition: all 0.2s;
-      margin-top: 6px;
+      width: 100%; padding: 14px; background: var(--primary); color: white;
+      border: none; border-radius: 12px; font-weight: 600; font-size: 1rem;
+      cursor: pointer; transition: all 0.2s; margin-top: 6px;
     }
 
     .submit-btn:hover {
-      background: var(--primary-hover);
-      transform: translateY(-2px);
+      background: var(--primary-hover); transform: translateY(-2px);
       box-shadow: 0 10px 20px -10px rgba(79, 70, 229, 0.4);
     }
 
     .back-link {
-      display: block;
-      text-align: center;
-      margin-top: 18px;
-      color: #6B7280;
-      text-decoration: none;
-      font-size: 0.9rem;
-      font-weight: 500;
+      display: block; text-align: center; margin-top: 18px; color: #6B7280;
+      text-decoration: none; font-size: 0.9rem; font-weight: 500;
     }
     .back-link:hover { color: var(--primary); }
 
-    .hint {
-      margin-top: 6px;
-      font-size: 0.82rem;
-      color: #6B7280;
-      line-height: 1.35;
-    }
+    .hint { margin-top: 6px; font-size: 0.82rem; color: #6B7280; line-height: 1.35; }
 
     .badge {
-      display: inline-block;
-      padding: 4px 10px;
-      border-radius: 999px;
-      background: rgba(79, 70, 229, 0.10);
-      color: #3730a3;
-      font-weight: 600;
-      font-size: 0.82rem;
+      display: inline-block; padding: 4px 10px; border-radius: 999px;
+      background: rgba(79, 70, 229, 0.10); color: #3730a3; font-weight: 600; font-size: 0.82rem;
     }
 
-    .row-2 {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-
-    @media (max-width: 520px) {
-      .row-2 { grid-template-columns: 1fr; }
-    }
-
+    .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 520px) { .row-2 { grid-template-columns: 1fr; } }
     .hidden { display: none; }
 
-    .msg {
-      margin-top: 10px;
-      font-size: 0.9rem;
-      color: #374151;
-    }
-
-    .msg.error { color: #b91c1c; }
-    .msg.success { color: #065f46; }
-
     .locked-note {
-      margin: 8px 0 18px;
-      padding: 12px 14px;
-      background: rgba(79, 70, 229, 0.08);
-      border: 1px solid rgba(79, 70, 229, 0.18);
-      border-radius: 14px;
-      color: #374151;
-      font-size: 0.88rem;
-      line-height: 1.45;
+      margin: 8px 0 18px; padding: 12px 14px; background: rgba(79, 70, 229, 0.08);
+      border: 1px solid rgba(79, 70, 229, 0.18); border-radius: 14px;
+      color: #374151; font-size: 0.88rem; line-height: 1.45;
     }
     .locked-note strong { color: #3730a3; }
   </style>
@@ -268,7 +205,6 @@
       </div>
 
       <button type="submit" class="submit-btn" id="submitBtn">Submit Report</button>
-      <div class="msg" id="formMsg" aria-live="polite"></div>
     </form>
 
     <a href="javascript:void(0)" onclick="handleGoBack()" class="back-link">← Back</a>
@@ -276,15 +212,6 @@
 </div>
 
 <script>
-  // Contract:
-  // - This page can be opened with URL params to prefill context.
-  // - Supported params:
-  //   type=user|product|chat
-  //   reportedUserId, reportedUserName
-  //   itemId (aka reported item/product id)
-  //   chatId
-  // - Only product reports require itemId.
-
   function normalizeType(t) {
     if (!t) return 'user';
     t = String(t).toLowerCase();
@@ -334,14 +261,9 @@
     setTypeBadge(type);
   }
 
-  function setMsg(text, variant) {
-    const el = document.getElementById('formMsg');
-    el.className = 'msg' + (variant ? (' ' + variant) : '');
-    el.textContent = text || '';
-  }
+  // 移除了 setMsg 函数，改用 StatusDialog
 
   async function ensureLoggedIn() {
-    // Reuse existing session API from the User module
     try {
       const res = await fetch('../../Module_User_Account_Management/api/session_status.php');
       const data = await res.json();
@@ -353,7 +275,6 @@
   }
 
   function isProductContextLocked(q) {
-    // If user comes from product detail, we expect type=product + itemId
     return q && q.type === 'product' && !!q.itemId;
   }
 
@@ -365,7 +286,6 @@
 
     if (note) note.classList.toggle('hidden', !isLocked);
 
-    // Hide scattered hints when locked; keep them in non-locked mode
     if (userHint) userHint.classList.toggle('hidden', isLocked);
     if (productIdHint) productIdHint.classList.toggle('hidden', isLocked);
     if (productNameHint) productNameHint.classList.toggle('hidden', isLocked);
@@ -375,7 +295,6 @@
     const reportTypeEl = document.getElementById('reportType');
     const hintEl = document.getElementById('reportTypeHint');
 
-    // Hide non-product options and disable selector
     Array.from(reportTypeEl.options).forEach(opt => {
       opt.hidden = opt.value !== type;
       opt.disabled = opt.value !== type;
@@ -387,15 +306,12 @@
     reportTypeEl.style.cursor = 'not-allowed';
 
     if (hintEl) {
-      // Keep this short; the full explanation is shown in the consolidated note block.
       hintEl.textContent = 'Report type is locked.';
     }
   }
 
   function lockInput(el) {
     if (!el) return;
-    // Prefer readonly so values still submit/show and can be copied.
-    // For select we already use disabled.
     el.readOnly = true;
     el.setAttribute('aria-readonly', 'true');
     el.style.opacity = '0.92';
@@ -431,13 +347,11 @@
     const submitBtn = document.getElementById('submitBtn');
     const form = document.getElementById('reportForm');
 
-    // Prefill from URL (minimal is OK; DB will overwrite in locked product context)
     reportTypeEl.value = q.type;
     setVisibleByType(q.type);
 
     if (q.itemId) reportedItemIdEl.value = q.itemId;
 
-    // 🔒 Lock type when opened from product context
     const productLocked = isProductContextLocked(q);
     setLockedProductHintsVisible(productLocked);
 
@@ -446,11 +360,9 @@
       setVisibleByType('product');
       lockProductContextFields();
 
-      // 🧠 Source of truth: DB
       try {
         const ctx = await fetchProductContext(q.itemId);
         if (ctx) {
-          // Prefer report-friendly names, fallback to legacy
           const title = ctx.reported_item_title || ctx.product_title || '';
           const sellerId = ctx.reported_user_id || ctx.seller_user_id || '';
           const sellerName = ctx.reported_user_name || ctx.seller_username || '';
@@ -462,10 +374,10 @@
           lockProductContextFields();
         }
       } catch (e) {
-        setMsg(e && e.message ? e.message : 'Failed to load product info.', 'error');
+        // 使用 StatusDialog 提示获取信息失败，但不阻塞
+        StatusDialog.fail('Error', 'Failed to load product details. You can still try to report.');
       }
     } else {
-      // Non-locked mode: keep legacy prefill behavior
       if (q.reportedUserId) reportedUserIdEl.value = q.reportedUserId;
       if (q.reportedUserName) reportedUserNameEl.value = q.reportedUserName;
       if (q.itemName && reportedItemNameEl) reportedItemNameEl.value = q.itemName;
@@ -475,7 +387,6 @@
     }
 
     reportTypeEl.addEventListener('change', () => {
-      // If locked, ignore any attempt to change (defense-in-depth)
       if (productLocked) {
         reportTypeEl.value = 'product';
         return;
@@ -485,17 +396,16 @@
       reportTypeEl.value = t;
       setVisibleByType(t);
 
-      // Avoid accidental submission of irrelevant fields
       if (t !== 'product') reportedItemIdEl.value = '';
       if (t !== 'chat') chatIdEl.value = '';
-
-      setMsg('');
     });
 
-    // Gentle UX: check login once
     const session = await ensureLoggedIn();
     if (!session.ok) {
-      setMsg('You need to be logged in to submit a report. Please log in first.', 'error');
+      // 未登录提示
+      StatusDialog.fail('Login Required', 'You need to be logged in to submit a report.', 'Login Now', () => {
+        window.location.href = '../../Module_User_Account_Management/views/login.html';
+      });
       submitBtn.disabled = true;
       submitBtn.style.opacity = '0.65';
       submitBtn.style.cursor = 'not-allowed';
@@ -503,7 +413,6 @@
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      setMsg('');
 
       const type = normalizeType(reportTypeEl.value);
 
@@ -511,8 +420,6 @@
         type,
         reportReason: reasonEl.value,
         details: detailsEl.value || '',
-        // For product reports, backend derives reported user from DB.
-        // Still send these for display/debug (they will be ignored/overridden server-side).
         reportedUserId: reportedUserIdEl.value ? Number(reportedUserIdEl.value) : null,
         reportedUserName: reportedUserNameEl.value ? reportedUserNameEl.value.trim() : null,
         reportedItemId: null,
@@ -521,31 +428,30 @@
       };
 
       if (!payload.reportReason) {
-        setMsg('Please select a reason.', 'error');
+        StatusDialog.fail('Missing Info', 'Please select a reason.');
         return;
       }
 
       if (!payload.details.trim()) {
-        setMsg('Please provide details.', 'error');
+        StatusDialog.fail('Missing Info', 'Please provide detailed description.');
         return;
       }
 
       if (type === 'product') {
         payload.reportedItemId = reportedItemIdEl.value ? Number(reportedItemIdEl.value) : null;
         if (!payload.reportedItemId) {
-          setMsg('Product ID is required for product reports.', 'error');
+          StatusDialog.fail('Missing Info', 'Product ID is required for product reports.');
           return;
         }
       }
 
-      // Only require a target user in pure user-report mode
       if (type === 'user' && !payload.reportedUserId && !payload.reportedUserName) {
-        setMsg('For user reports, please provide the reported user ID or name.', 'error');
+        StatusDialog.fail('Missing Info', 'For user reports, please provide the reported user ID or name.');
         return;
       }
 
       if (!session.ok) {
-        setMsg('You need to be logged in to submit a report.', 'error');
+        StatusDialog.fail('Login Required', 'You need to be logged in to submit a report.');
         return;
       }
 
@@ -553,8 +459,6 @@
       submitBtn.textContent = 'Submitting...';
 
       try {
-        // NOTE: This endpoint needs to be implemented server-side.
-        // It should read session user id as Reporting_User_ID and write to Report table.
         const res = await fetch('../api/report_submit.php', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -566,12 +470,18 @@
           throw new Error(data.message || `Request failed (HTTP ${res.status})`);
         }
 
-        setMsg('Submitted successfully! We\'ll process it as soon as possible.', 'success');
+        // 成功弹窗，点击后返回上一页
+        StatusDialog.success(
+                'Report Submitted',
+                'Thank you for helping us keep TreasureGO safe.',
+                'Close',
+                () => { handleGoBack(); }
+        );
+
         form.reset();
-        reportTypeEl.value = type;
-        setVisibleByType(type);
+
       } catch (err) {
-        setMsg(err && err.message ? err.message : 'Failed to submit report.', 'error');
+        StatusDialog.fail('Submission Error', err && err.message ? err.message : 'Failed to submit report. Please try again.');
       } finally {
         submitBtn.disabled = false;
         submitBtn.textContent = 'Submit Report';

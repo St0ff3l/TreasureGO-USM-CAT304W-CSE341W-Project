@@ -1,6 +1,6 @@
 /*
  * TreasureGO Headerbar Component (Navbar Only)
- * 修复版：添加 display: contents 以解决 Sticky 吸顶失效问题
+ * 更新说明：已同步 Profile 页面的头像样式，并精简了下拉菜单（只保留 Log Out）
  */
 
 (function (global) {
@@ -10,7 +10,7 @@
     const TG_HEADERBAR_STYLE_ID = 'tg-headerbar-style';
     const TG_HEADERBAR_FONTS_LINK_ID = 'tg-headerbar-fonts';
 
-    // --- 2. 样式定义 (保持不变) ---
+    // --- 2. 样式定义 ---
     const EMBEDDED_HEADERBAR_CSS = `
     /* ================= CSS Variables ================= */
     :root {
@@ -70,16 +70,27 @@
     }
     .btn-primary:hover { transform: translateY(-2px); background-color: #000; }
 
-    /* ================= Dropdown Menu ================= */
+    /* ================= Dropdown Menu & Avatar Styles ================= */
     .menu-container { position: relative; display: inline-block; }
     
+    /* 头像按钮样式 (Profile 页面风格) */
     .dots-btn {
-        width: 40px; height: 40px; border-radius: 50%;
+        width: 40px; height: 40px; 
+        background: #EEF2FF;      
+        color: var(--primary);    
+        border-radius: 50%;
         display: flex; align-items: center; justify-content: center;
-        font-size: 20px; cursor: pointer; color: var(--text-dark);
-        font-weight: bold; transition: 0.2s; background: #f3f4f6;
+        font-size: 1rem; 
+        font-weight: bold; 
+        cursor: pointer; 
+        border: 2px solid white;  
+        box-shadow: 0 4px 10px rgba(79, 70, 229, 0.2); 
+        transition: 0.2s; 
     }
-    .dots-btn:hover { background: #eee; }
+    
+    .dots-btn:hover { 
+        transform: scale(1.05); 
+    }
     
     .dropdown-content {
         display: none; position: absolute; right: 0;
@@ -131,7 +142,7 @@
         return basePath ? (basePath + '/') : '';
     }
 
-    // --- 4. HTML 构建 ---
+    // --- 4. HTML 构建 (已修改) ---
     function getNavbarHtml(p) {
         return `
     <nav class="navbar" data-component="tg-headerbar">
@@ -150,8 +161,6 @@
         <div id="nav-user-menu" class="menu-container" style="display: none;">
           <div id="nav-avatar" class="dots-btn" onclick="window.location.href='${p}Module_User_Account_Management/pages/profile.php'">👤</div>
           <div class="dropdown-content">
-            <a href="${p}Module_User_Account_Management/pages/profile.php" class="dropdown-item">My Profile</a>
-            <a href="#" class="dropdown-item">Settings</a>
             <a href="${p}Module_User_Account_Management/api/logout.php" class="dropdown-item" style="color: #ef4444;">Log Out</a>
           </div>
         </div>
@@ -183,13 +192,9 @@
                         if (data.user.avatar_url) {
                             avatarBtn.innerHTML = `<img src="${data.user.avatar_url}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
                             avatarBtn.style.background = 'transparent';
-                            avatarBtn.style.border = '2px solid #fff';
-                            avatarBtn.style.boxShadow = '0 4px 10px rgba(79, 70, 229, 0.2)';
-                        } else if (data.user.username) {
+                        }
+                        else if (data.user.username) {
                             avatarBtn.innerText = data.user.username.charAt(0).toUpperCase();
-                            avatarBtn.style.background = '#EEF2FF';
-                            avatarBtn.style.color = '#4F46E5';
-                            avatarBtn.style.border = '2px solid #fff';
                         }
                     }
 
@@ -211,19 +216,14 @@
         }
     }
 
-    // --- 6. 挂载函数 (核心修改处) ---
+    // --- 6. 挂载函数 ---
     function mount(options) {
         ensureAssets();
         const basePath = getBasePath(options);
 
-        // 创建容器
         const wrapper = document.createElement('div');
         wrapper.setAttribute('data-tg-headerbar-mount', '1');
         wrapper.innerHTML = getNavbarHtml(basePath);
-
-        // 🟢 修复：设置 display: contents
-        // 这样 wrapper div 在布局树中被“移除”，.navbar 直接作为 body 子元素
-        // 从而使 position: sticky 相对于 body/viewport 生效。
         wrapper.style.display = 'contents';
 
         if (document.body.firstChild) {

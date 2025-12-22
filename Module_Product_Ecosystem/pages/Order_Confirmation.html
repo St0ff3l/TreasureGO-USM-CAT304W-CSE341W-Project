@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Confirm Order - TreasureGO</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@400;700&display=swap" rel="stylesheet">
+
+    <script src="../../Public_Assets/js/status_dialog.js"></script>
+
     <style>
         /* --- Core Variables & Reset --- */
         :root {
@@ -49,17 +52,6 @@
             border-bottom: 1px solid rgba(255,255,255,0.3);
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
         }
-        .logo { font-weight: 800; font-size: 1.6rem; color: var(--primary); display: flex; align-items: center; gap: 12px; text-decoration: none; letter-spacing: -0.5px; }
-        .logo span { color: var(--text-dark); }
-        .logo-img { width: 44px; height: 44px; border-radius: 12px; object-fit: cover; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2); }
-        .nav-actions { display: flex; align-items: center; gap: 24px; }
-        .nav-btn { border: none; background: transparent; font-weight: 600; color: var(--text-gray); padding: 0.6rem 0.5rem; cursor: pointer; font-size: 1rem; transition: color 0.2s; }
-        .nav-btn:hover { color: var(--primary); }
-        .btn-primary { border: none; background-color: var(--text-dark); color: white; font-weight: 600; padding: 0.8rem 2rem; border-radius: 50px; cursor: pointer; font-size: 0.95rem; box-shadow: 0 4px 15px rgba(0,0,0,0.1); transition: transform 0.2s; }
-        .btn-primary:hover { transform: translateY(-2px); }
-        .menu-container { position: relative; display: inline-block; }
-        .dots-btn { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; cursor: pointer; font-weight: bold; transition: background 0.2s; }
-        .dots-btn:hover { background: rgba(0,0,0,0.05); }
 
         /* --- Layout --- */
         .container {
@@ -84,7 +76,6 @@
             animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
-        /* Staggered animation delays */
         .left-col .card:nth-child(1) { animation-delay: 0.1s; }
         .left-col .card:nth-child(2) { animation-delay: 0.2s; }
         .right-col .card { animation-delay: 0.3s; }
@@ -141,7 +132,6 @@
             box-shadow: 0 4px 12px rgba(79, 70, 229, 0.15);
         }
 
-        /* --- Disabled Style --- */
         .delivery-option.disabled {
             opacity: 0.5;
             pointer-events: none;
@@ -255,7 +245,6 @@
 </head>
 <body>
 
-<!-- Navbar replaced by headerbar.js -->
 <script src="../../Public_Assets/js/headerbar.js"></script>
 <script>TreasureGoHeaderbar.mount({ basePath: '../../' });</script>
 
@@ -316,7 +305,7 @@
             <div class="summary-row"><span>Delivery Fee</span><span id="shipping-fee-display">$0.00</span></div>
             <div class="total-row"><span>Total</span><span id="total-price-display" style="color:var(--primary);">$0.00</span></div>
 
-            <button class="btn-pay" onclick="processPayment()">Pay Now</button>
+            <button class="btn-pay" onclick="handlePayClick()">Pay Now</button>
 
             <a href="#" id="btn-cancel" class="btn-cancel">Cancel</a>
 
@@ -330,112 +319,88 @@
 <script>
     // 全局变量
     let currentProductPrice = 0;
-    let currentShippingCost = 8.00; // 默认快递 (Shipping)
-    let userCurrentBalance = 0.00;   // 全局存储用户真实余额
+    let currentShippingCost = 8.00;
+    let userCurrentBalance = 0.00;
 
-    // 1. 获取 URL 中的商品 ID
     const urlParams = new URLSearchParams(window.location.search);
     const productId = urlParams.get('id');
 
-    // 2. 初始化加载
     document.addEventListener('DOMContentLoaded', () => {
         if (!productId) {
-            alert("No product specified!");
-            window.location.href = '../../index.html';
+            StatusDialog.fail('Error', 'No product specified!', 'Go Home', () => {
+                window.location.href = '../../index.html';
+            });
             return;
         }
-
         document.getElementById('btn-cancel').href = `Product_Detail.html?id=${productId}`;
-
         fetchProductData(productId);
         fetchUserBalance();
     });
 
-    // 3. 请求 API 获取商品详情
     async function fetchProductData(id) {
         try {
             const response = await fetch(`../api/Get_Products.php?product_id=${id}`);
             const result = await response.json();
-
             if (result.success && result.data.length > 0) {
-                const product = result.data[0];
-                renderOrderPage(product);
+                renderOrderPage(result.data[0]);
             } else {
-                alert("Product details not found.");
+                StatusDialog.fail('Not Found', 'Product details not found.', 'Go Back', () => history.back());
             }
         } catch (error) {
             console.error("Error fetching product:", error);
         }
     }
 
-    // 新增：请求 API 获取用户钱包余额
     async function fetchUserBalance() {
         try {
             const response = await fetch('../api/Get_Wallet_Balance.php');
             const result = await response.json();
-
             if (result.success) {
                 userCurrentBalance = parseFloat(result.balance);
                 document.getElementById('user-balance-display').innerText = `$${userCurrentBalance.toFixed(2)}`;
             } else {
-                console.warn(result.msg);
                 document.getElementById('user-balance-display').innerText = "$0.00";
             }
         } catch (error) {
             console.error("Error fetching balance:", error);
-            document.getElementById('user-balance-display').innerText = "Error";
         }
     }
 
-    // 4. 渲染页面
     function renderOrderPage(item) {
         document.getElementById('order-title').innerText = item.Product_Title;
         document.getElementById('order-condition').innerText = `Condition: ${item.Product_Condition}`;
         document.getElementById('seller-location').innerText = item.Product_Location || 'Unknown';
-
         currentProductPrice = parseFloat(item.Product_Price);
         document.getElementById('order-price').innerText = `$${currentProductPrice.toFixed(2)}`;
 
         const imgBox = document.getElementById('order-img');
         if (item.Main_Image) {
             const cleanPath = item.Main_Image.replace(/^.*?Public_Product_Images\//, 'Public_Product_Images/');
-            const fullPath = `../${cleanPath}`;
-            imgBox.innerHTML = `<img src="${fullPath}" alt="Product Image">`;
+            imgBox.innerHTML = `<img src="../${cleanPath}" alt="Product Image">`;
         } else {
             imgBox.innerText = '📷';
         }
 
-        // ================== 核心判断配送方式 (已修复) ==================
         const meetOpt = document.getElementById('opt-meet');
         const shipOpt = document.getElementById('opt-ship');
 
         if (item.Delivery_Method === 'shipping') {
-            // 情况 A: 卖家只支持快递 -> 禁用面交
             selectDelivery('ship');
             meetOpt.classList.add('disabled');
             meetOpt.innerHTML += '<div style="font-size:0.7rem; margin-top:5px; color:#ef4444; font-weight:600;">(Unavailable)</div>';
-
         } else if (item.Delivery_Method === 'meetup') {
-            // 情况 B: 卖家只支持面交 -> 禁用快递 (这是你要修复的部分)
             selectDelivery('meet');
             shipOpt.classList.add('disabled');
             shipOpt.innerHTML += '<div style="font-size:0.7rem; margin-top:5px; color:#ef4444; font-weight:600;">(Unavailable)</div>';
-
         } else {
-            // 情况 C: 两者都支持 -> 默认选中快递 (或者你可以改为默认面交)
             selectDelivery('ship');
         }
-        // ==========================================================
-
         calculateTotals();
     }
 
-    // 5. 切换配送方式
     function selectDelivery(type) {
         const meetOpt = document.getElementById('opt-meet');
         const shipOpt = document.getElementById('opt-ship');
-
-        // 安全检查：如果按钮被禁用了，禁止点击
         if (type === 'meet' && meetOpt.classList.contains('disabled')) return;
         if (type === 'ship' && shipOpt.classList.contains('disabled')) return;
 
@@ -443,62 +408,70 @@
         const shipForm = document.getElementById('shipping-form');
 
         if (type === 'meet') {
-            meetOpt.classList.add('selected');
-            shipOpt.classList.remove('selected');
-            meetInfo.style.display = 'block';
-            shipForm.style.display = 'none';
+            meetOpt.classList.add('selected'); shipOpt.classList.remove('selected');
+            meetInfo.style.display = 'block'; shipForm.style.display = 'none';
             currentShippingCost = 0;
         } else {
-            shipOpt.classList.add('selected');
-            meetOpt.classList.remove('selected');
-            meetInfo.style.display = 'none';
-            shipForm.style.display = 'block';
+            shipOpt.classList.add('selected'); meetOpt.classList.remove('selected');
+            meetInfo.style.display = 'none'; shipForm.style.display = 'block';
             currentShippingCost = 8.00;
         }
-
         calculateTotals();
     }
 
-    // 6. 核心算价逻辑 (已删除服务费计算)
     function calculateTotals() {
-        // 买家只付：商品原价 + 运费
         const total = currentProductPrice + currentShippingCost;
-
         document.getElementById('summary-subtotal').innerText = `$${currentProductPrice.toFixed(2)}`;
         document.getElementById('shipping-fee-display').innerText = `$${currentShippingCost.toFixed(2)}`;
-        // document.getElementById('service-fee-display').innerText... (Deleted)
         document.getElementById('total-price-display').innerText = `$${total.toFixed(2)}`;
     }
 
-    // 7. 支付处理
-    async function processPayment() {
-        const payBtn = document.querySelector('.btn-pay');
 
+    // 🔥 第一步：点击 Pay Now 触发
+    function handlePayClick() {
+        // 1. 验证地址
         if (currentShippingCost > 0) {
             const addressInputs = document.querySelectorAll('#shipping-form .input-field');
             for (let input of addressInputs) {
                 if (input.value.trim() === "") {
-                    alert("Please fill in all shipping details before payment.");
-                    input.focus();
+                    StatusDialog.fail('Missing Info', 'Please fill in all shipping details.', 'OK');
                     return;
                 }
             }
         }
 
-        const totalText = document.getElementById('total-price-display').innerText.replace('$', '');
-        const totalAmount = parseFloat(totalText);
+        // 2. 验证余额 (保留这里的弹窗，因为提供了充值跳转的便利性)
+        const totalAmount = parseFloat(document.getElementById('total-price-display').innerText.replace('$', ''));
 
         if (totalAmount > userCurrentBalance) {
-            window.location.href = "Payment_Failure.html";
+            // 余额不足时，点击 "Top Up" 跳转
+            StatusDialog.fail('Insufficient Funds', 'Your balance is too low.', 'Top Up', () => {
+                // ✅ 修正路径：跳转到充值页面
+                window.location.href = '../../Module_Transaction_Fund/pages/Fund_Request.html';
+            });
             return;
         }
 
-        const shippingType = currentShippingCost > 0 ? 'shipping' : 'meetup';
+        // 3. 弹出二次确认
+        StatusDialog.confirm(
+            'Confirm Payment?',
+            `You are about to pay $${totalAmount.toFixed(2)} from your wallet.`,
+            'Yes, Pay Now',
+            function() {
+                // 用户点击 "Yes" 后，执行真正的支付
+                processPayment(totalAmount);
+            }
+        );
+    }
 
+
+    // 🔥 第二步：真正的支付逻辑 (API 请求)
+    async function processPayment(totalAmount) {
+        const payBtn = document.querySelector('.btn-pay');
         const payload = {
             product_id: productId,
             total_amount: totalAmount,
-            shipping_type: shippingType
+            shipping_type: currentShippingCost > 0 ? 'shipping' : 'meetup'
         };
 
         payBtn.disabled = true;
@@ -507,30 +480,26 @@
         try {
             const response = await fetch('../api/Process_Order_Payment.php', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
 
             const result = await response.json();
 
+            // 🔥🔥🔥 关键修改：恢复跳转到原始的 HTML 页面 🔥🔥🔥
             if (result.success) {
-                window.location.href = "Payment_Success.html";
+                // 成功 -> 跳转 Payment_Success.html (带上参数以防万一)
+                window.location.href = 'Payment_Success.html?type=order&id=' + productId;
             } else {
-                console.warn("Payment failed:", result.msg);
-
-                if (result.msg.includes('Insufficient balance')) {
-                    window.location.href = "Payment_Failure.html";
-                } else {
-                    alert("Payment Error: " + result.msg);
-                    payBtn.disabled = false;
-                    payBtn.innerText = "Pay Now";
-                }
+                // 失败 -> 跳转 Payment_Failure.html
+                window.location.href = 'Payment_Failure.html?type=order&msg=' + encodeURIComponent(result.msg);
             }
+
         } catch (error) {
             console.error("Network Error:", error);
-            alert("Network error. Please check your connection.");
+            // 网络错误作为特殊情况，还是用弹窗提示比较好，或者你也想跳转失败页？
+            // 这里保留弹窗提示网络错误，因为 API 还没通
+            StatusDialog.fail('Connection Error', 'Please check your internet connection.');
             payBtn.disabled = false;
             payBtn.innerText = "Pay Now";
         }

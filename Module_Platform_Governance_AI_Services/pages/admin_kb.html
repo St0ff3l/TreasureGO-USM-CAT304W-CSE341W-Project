@@ -6,6 +6,7 @@
   <title>TreasureGo - Knowledge Base Manager</title>
 
   <script src="../../Public_Assets/js/headerbar.js"></script>
+  <script src="../../Public_Assets/js/status_dialog.js"></script>
 
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
@@ -13,7 +14,6 @@
     body {
       font-family: 'Poppins', sans-serif;
       background-color: #F3F6F9;
-      /* padding: 30px; ❌ 删除这里的 padding，防止挤压 navbar */
       padding: 0;
       color: #1F2937;
       margin: 0;
@@ -21,8 +21,8 @@
 
     .container {
       max-width: 1000px;
-      width: 95%; /* ✅ 增加宽度限制，防止移动端贴边 */
-      margin: 30px auto; /* ✅ 核心修改：设置上下间距 30px，左右自动居中 */
+      width: 95%;
+      margin: 30px auto;
       background: white;
       padding: 40px;
       border-radius: 24px;
@@ -148,7 +148,7 @@
   document.addEventListener('DOMContentLoaded', loadKBList);
 
   // ===============================================
-  // 2. Load Data (GET) - Updated Logic
+  // 2. Load Data (GET)
   // ===============================================
   async function loadKBList() {
     const tbody = document.getElementById('kbList');
@@ -160,7 +160,6 @@
 
       tbody.innerHTML = '';
 
-      // 1. 定义默认分类
       const categories = new Set([
         "Transaction/Rights",
         "Account Management",
@@ -171,12 +170,8 @@
 
       if (json.success && json.data && json.data.length > 0) {
         json.data.forEach(item => {
-          // 2. 收集已有分类
-          if(item.KB_Category) {
-            categories.add(item.KB_Category);
-          }
+          if(item.KB_Category) categories.add(item.KB_Category);
 
-          // 3. 渲染表格
           const tr = document.createElement('tr');
           tr.innerHTML = `
             <td>#${item.KB_ID}</td>
@@ -190,7 +185,6 @@
           tbody.appendChild(tr);
         });
 
-        // 4. 更新下拉框
         dataList.innerHTML = '';
         categories.forEach(cat => {
           const option = document.createElement('option');
@@ -199,7 +193,6 @@
         });
 
       } else if (json.success && json.data.length === 0) {
-        // 无数据时也要渲染默认下拉
         dataList.innerHTML = '';
         categories.forEach(cat => {
           const option = document.createElement('option');
@@ -208,7 +201,7 @@
         });
         tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px;">No entries found. Start adding some!</td></tr>';
       } else {
-        alert('Failed to load data: ' + (json.error || 'Unknown error'));
+        StatusDialog.fail('Error', 'Failed to load data: ' + (json.error || 'Unknown error'));
       }
     } catch (e) {
       console.error(e);
@@ -217,7 +210,7 @@
   }
 
   // ===============================================
-  // 3. Save Data (POST)
+  // 3. Save Data (POST) - Updated with StatusDialog
   // ===============================================
   document.getElementById('kbForm').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -242,13 +235,21 @@
       const json = await res.json();
 
       if (json.success) {
-        document.getElementById('kbForm').reset();
-        loadKBList();
+        // 🔥 成功弹窗，只有一个 Close 按钮
+        StatusDialog.success(
+                'Saved Successfully',
+                'New entry has been added to the Knowledge Base.',
+                'Close',
+                () => {
+                  document.getElementById('kbForm').reset();
+                  loadKBList();
+                }
+        );
       } else {
-        alert('Save failed: ' + json.error);
+        StatusDialog.fail('Save Failed', json.error);
       }
     } catch (e) {
-      alert('System Error: Could not save data.');
+      StatusDialog.fail('System Error', 'Could not save data.');
     } finally {
       submitBtn.innerText = originalText;
       submitBtn.disabled = false;
@@ -256,27 +257,35 @@
   });
 
   // ===============================================
-  // 4. Delete Data (POST)
+  // 4. Delete Data (POST) - Updated with StatusDialog
   // ===============================================
   async function deleteKB(id) {
-    if(!confirm('Are you sure you want to delete this entry? The AI will no longer use it.')) return;
+    // 🔥 二次确认弹窗
+    StatusDialog.confirm(
+            'Delete Entry?',
+            'Are you sure you want to delete this? The AI will no longer use it.',
+            'Yes, Delete',
+            async () => {
+              try {
+                const res = await fetch(API_BASE + 'admin_kb_delete.php', {
+                  method: 'POST',
+                  headers: {'Content-Type': 'application/json'},
+                  body: JSON.stringify({id: id})
+                });
+                const json = await res.json();
 
-    try {
-      const res = await fetch(API_BASE + 'admin_kb_delete.php', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({id: id})
-      });
-      const json = await res.json();
-
-      if(json.success) {
-        loadKBList();
-      } else {
-        alert('Delete failed: ' + json.error);
-      }
-    } catch (e) {
-      alert('System Error: Could not delete data.');
-    }
+                if(json.success) {
+                  StatusDialog.success('Deleted', 'Entry removed successfully.', 'Close', () => {
+                    loadKBList();
+                  });
+                } else {
+                  StatusDialog.fail('Delete Failed', json.error);
+                }
+              } catch (e) {
+                StatusDialog.fail('System Error', 'Could not delete data.');
+              }
+            }
+    );
   }
 
   function escapeHtml(text) {

@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>My Profile - TreasureGo</title>
+
+  <script src="../../Public_Assets/js/headerbar.js"></script>
+
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
 
@@ -34,31 +37,11 @@
               radial-gradient(circle at 90% 80%, rgba(245, 158, 11, 0.05) 0%, transparent 40%);
     }
 
-    /* --- 2. 导航栏 --- */
-    .navbar {
-      background: var(--glass-bg);
-      backdrop-filter: blur(12px);
-      padding: 1rem 5%;
-      display: flex; justify-content: space-between; align-items: center;
-      position: sticky; top: 0; z-index: 1000;
-      border-bottom: 1px solid rgba(255,255,255,0.5);
-    }
-    .logo { font-weight: 800; font-size: 1.5rem; color: var(--primary); display: flex; align-items: center; gap: 10px; text-decoration: none; }
-    .logo span { color: var(--text-dark); }
-    .logo-img { width: 42px; height: 42px; border-radius: 10px; object-fit: cover; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+    /* 注意：原有的 .navbar, .logo, .nav-actions 等样式已删除
+       因为 headerbar.js 会注入它自己的样式
+    */
 
-    .nav-actions { display: flex; align-items: center; gap: 20px; }
-    .nav-btn { border: none; background: transparent; font-weight: 600; color: var(--text-gray); padding: 0.6rem 0.5rem; cursor: pointer; transition: color 0.2s; font-size: 1rem; }
-    .nav-btn:hover { color: var(--text-dark); }
-    .nav-avatar-small {
-      width: 40px; height: 40px; background: #EEF2FF; color: var(--primary);
-      border-radius: 50%; display: flex; align-items: center; justify-content: center;
-      font-weight: bold; cursor: pointer; border: 2px solid white;
-      box-shadow: 0 4px 10px rgba(79, 70, 229, 0.2); transition: 0.2s;
-    }
-    .nav-avatar-small:hover { transform: scale(1.05); }
-
-    /* --- 3. 布局系统 --- */
+    /* --- 2. 布局系统 --- */
     .layout-container {
       max-width: 1200px;
       margin: 30px auto;
@@ -174,18 +157,6 @@
   </style>
 </head>
 <body>
-
-<nav class="navbar">
-  <a href="../../index.html" class="logo">
-    <img src="../../Public_Assets/images/TreasureGo_Logo.png" alt="Logo" class="logo-img" onerror="this.style.display='none'">
-    Treasure<span>Go</span>
-  </a>
-  <div class="nav-actions">
-    <button class="nav-btn" onclick="location.href='../../index.html'">Home</button>
-    <button class="nav-btn">Orders</button>
-    <div class="nav-avatar-small" id="nav-avatar-top" onclick="location.reload()">👤</div>
-  </div>
-</nav>
 
 <div class="layout-container">
 
@@ -344,6 +315,15 @@
 
 <script>
   document.addEventListener('DOMContentLoaded', async () => {
+    // 1. 挂载 Headerbar 组件
+    if (typeof TreasureGoHeaderbar !== 'undefined') {
+      // basePath 指向根目录，因为当前文件在 Module/views/ 下，所以需回退两层
+      TreasureGoHeaderbar.mount({ basePath: '../../' });
+    } else {
+      console.error("TreasureGoHeaderbar script not loaded.");
+    }
+
+    // 2. 获取个人资料数据
     await fetchProfileData();
   });
 
@@ -363,6 +343,7 @@
   }
 
   function renderProfile(user) {
+    // 渲染中间的大卡片信息
     setText('u_name', user.User_Username);
     setText('u_email', user.User_Email);
     setText('u_role', user.User_Role);
@@ -370,23 +351,23 @@
     setText('s_sold', user.sold_count || 0);
     setText('s_membership', user.Memberships_tier || 'Free');
 
+    // 渲染表单中的信息
     const inputUser = document.getElementById('input_username');
     const inputEmail = document.getElementById('input_email');
     if(inputUser) inputUser.value = user.User_Username;
     if(inputEmail) inputEmail.value = user.User_Email;
 
+    // 渲染中间的大头像
     const avatarEl = document.getElementById('u_avatar');
-    const navAvatarEl = document.getElementById('nav-avatar-top');
-
     if (user.User_Profile_image) {
       const imgTag = `<img src="${user.User_Profile_image}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
       avatarEl.innerHTML = imgTag;
-      navAvatarEl.innerHTML = imgTag;
     } else if (user.User_Username) {
       const initial = user.User_Username.charAt(0).toUpperCase();
       avatarEl.innerText = initial;
-      navAvatarEl.innerText = initial;
     }
+
+    // 注意：不再需要渲染 header 上的小头像，headerbar.js 会自动处理
   }
 
   function switchView(viewName, btnElement) {
