@@ -56,14 +56,51 @@
     .container { max-width: 1000px; margin: 30px auto; padding: 0 20px; display: grid; grid-template-columns: 1.2fr 1fr; gap: 50px; align-items: start; }
 
     /* Left: Gallery */
-    .main-image-box { width: 100%; height: 400px; background: white; border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 8rem; box-shadow: 0 10px 30px rgba(0,0,0,0.05); margin-bottom: 15px; position: relative; }
-    .status-badge { position: absolute; top: 20px; left: 20px; padding: 8px 16px; border-radius: 50px; font-weight: 700; font-size: 0.9rem; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+    .main-image-box {
+      width: 100%; height: 400px; background: white; border-radius: 20px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 8rem; box-shadow: 0 10px 30px rgba(0,0,0,0.05); margin-bottom: 15px;
+      position: relative; overflow: hidden; /* 防止图片溢出圆角 */
+    }
+    .status-badge { position: absolute; top: 20px; left: 20px; padding: 8px 16px; border-radius: 50px; font-weight: 700; font-size: 0.9rem; box-shadow: 0 4px 10px rgba(0,0,0,0.1); z-index: 20; }
     .status-active { background: #ECFDF5; color: var(--success); }
     .status-inactive { background: #F3F4F6; color: var(--text-gray); }
 
-    .thumbnails { display: flex; gap: 10px; }
-    .thumb { width: 70px; height: 70px; background: white; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 2rem; border: 2px solid transparent; cursor: pointer; }
-    .thumb.active { border-color: var(--primary); }
+    /* 🔥 新增：切换箭头样式 */
+    .nav-arrow {
+      position: absolute; top: 50%; transform: translateY(-50%);
+      width: 44px; height: 44px;
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 50%; border: none;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem; color: var(--text-dark); z-index: 10;
+      transition: all 0.2s ease;
+      opacity: 0; /* 默认隐藏，鼠标放上去显示 */
+    }
+    .main-image-box:hover .nav-arrow { opacity: 1; } /* 悬停显示 */
+    .nav-arrow:hover { background: var(--primary); color: white; transform: translateY(-50%) scale(1.1); }
+    .prev-btn { left: 15px; }
+    .next-btn { right: 15px; }
+
+    /* 🔥 新增：图片淡入动画 */
+    .fade-anim {
+      animation: fadeScale 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+    @keyframes fadeScale {
+      from { opacity: 0.6; transform: scale(0.98); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .thumbnails { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 5px; }
+    .thumb {
+      width: 70px; height: 70px; background: white; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2rem; border: 2px solid transparent; cursor: pointer;
+      flex-shrink: 0; overflow: hidden; transition: all 0.2s;
+    }
+    .thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .thumb.active { border-color: var(--primary); transform: translateY(-2px); box-shadow: 0 4px 10px rgba(79, 70, 229, 0.2); }
 
     /* Right: Management Controls */
     .product-info { background: white; padding: 30px; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
@@ -100,33 +137,32 @@
 
     /* Mobile Adaptation */
     @media (max-width: 768px) {
-      .navbar { padding: 1rem 20px; } /* Mobile navbar padding */
-      .nav-actions { gap: 15px; } /* Reduce gap on mobile */
+      .navbar { padding: 1rem 20px; }
+      .nav-actions { gap: 15px; }
       .container { grid-template-columns: 1fr; gap: 30px; margin-top: 20px; }
       .product-info { padding: 20px; }
       .main-image-box { height: 300px; }
       .btn-manage { padding: 16px; }
+      /* 手机端箭头一直显示，因为没有 hover */
+      .nav-arrow { opacity: 1; width: 36px; height: 36px; }
     }
   </style>
 </head>
 <body>
 
-    <script src="../../Public_Assets/js/headerbar.js"></script>
-    <script>
-        TreasureGoHeaderbar.mount({ basePath: '../../' });
-    </script>
+<script src="../../Public_Assets/js/headerbar.js"></script>
+<script>
+  TreasureGoHeaderbar.mount({ basePath: '../../' });
+</script>
 
 <div class="container">
 
   <div class="preview-col">
     <div class="main-image-box" id="mainImage">
-      🎧
-      <div id="statusBadge" class="status-badge status-active">● On Sale</div>
+      <div id="statusBadge" class="status-badge status-active">Loading...</div>
     </div>
+
     <div class="thumbnails">
-      <div class="thumb active">🎧</div>
-      <div class="thumb">📦</div>
-      <div class="thumb">🧾</div>
     </div>
   </div>
 
@@ -138,28 +174,23 @@
       <div class="stat-item"><span class="stat-val">8</span><span class="stat-label">Chats</span></div>
     </div>
 
-    <h1 class="product-title">Sony WH-1000XM4</h1>
+    <h1 class="product-title">Loading...</h1>
 
     <div class="price-container">
-      <span class="product-price" id="displayPrice">$200.00</span>
-      <input type="number" id="inputPrice" class="price-input" value="200.00">
+      <span class="product-price" id="displayPrice">$0.00</span>
+      <input type="number" id="inputPrice" class="price-input" value="0.00">
     </div>
 
     <p class="description-box">
-      Selling my Sony XM4s because I upgraded to the XM5. Battery life is amazing. No scratches, ear pads are clean.
+      Loading description...
     </p>
 
     <div class="management-actions">
-
       <button class="btn-manage btn-edit" id="btnEdit" onclick="toggleEditMode()">✏️ Modify Price</button>
       <button class="btn-manage btn-save" id="btnSave" onclick="savePrice()">💾 Save New Price</button>
-
       <button class="btn-manage btn-unlist" id="btnUnlist" onclick="toggleStatus()">🔒 Pull Off Shelf (Unlist)</button>
-
       <button class="btn-manage btn-delete" onclick="confirmDelete()">🗑️ Delete Item</button>
-
       <button class="btn-manage btn-cancel" onclick="history.back()">Cancel / Return</button>
-
     </div>
 
     <div style="margin-top: 25px; background: #F0F9FF; padding: 15px; border-radius: 12px; font-size: 0.85rem; color: #0369A1; display:flex; gap:10px;">
@@ -170,10 +201,14 @@
 </div>
 
 <script>
-  // 1. 获取 URL 参数
+  // 1. 全局变量
   const urlParams = new URLSearchParams(window.location.search);
   const productId = urlParams.get('id');
   let currentProduct = {};
+
+  // 🔥 新增：图片管理变量
+  let productImages = [];
+  let currentImageIndex = 0;
 
   // 2. 初始化
   document.addEventListener('DOMContentLoaded', () => {
@@ -212,90 +247,131 @@
     document.getElementById('displayPrice').innerText = '$' + price;
     document.getElementById('inputPrice').value = price;
 
-    // 🔥 关键修复：根据数据库真实状态初始化按钮颜色 🔥
+    // 状态 Badge 设置
     const statusBadge = document.getElementById('statusBadge');
     const unlistBtn = document.getElementById('btnUnlist');
 
-    // 注意：请确保数据库 Get_Products.php 返回了 Product_Status 字段
     if (item.Product_Status === 'Active') {
-      // 当前是上架状态
       statusBadge.className = 'status-badge status-active';
       statusBadge.innerText = '● On Sale';
-
       unlistBtn.innerText = '🔒 Pull Off Shelf (Unlist)';
       unlistBtn.style.background = '#FFF7ED';
-      unlistBtn.style.color = '#F59E0B'; // 黄色警告色
+      unlistBtn.style.color = '#F59E0B';
       unlistBtn.style.border = '1px solid #FFEDD5';
     } else {
-      // 当前是下架状态
       statusBadge.className = 'status-badge status-inactive';
       statusBadge.innerText = '● Unlisted';
-
       unlistBtn.innerText = '📢 Re-list Item';
       unlistBtn.style.background = '#ECFDF5';
-      unlistBtn.style.color = '#059669'; // 绿色上架色
+      unlistBtn.style.color = '#059669';
       unlistBtn.style.border = '1px solid #A7F3D0';
     }
 
-    // 图片处理
-    const mainImgBox = document.getElementById('mainImage');
-    const thumbContainer = document.querySelector('.thumbnails');
-    thumbContainer.innerHTML = '';
-
-    // 重新把 badge 放回去 (因为 innerHTML='' 会把它清掉)
-    mainImgBox.innerHTML = '';
-    mainImgBox.appendChild(statusBadge);
-
-    let imageList = [];
-    if (item.All_Images) imageList = item.All_Images.split(',');
-    else if (item.Main_Image) imageList = [item.Main_Image];
-
-    if (imageList.length > 0) {
-      imageList.forEach((imgRawPath, index) => {
-        const cleanPath = imgRawPath.replace(/^.*?Public_Product_Images\//, 'Public_Product_Images/');
-        const fullPath = `../${cleanPath}`;
-
-        if(index === 0) {
-          const img = document.createElement('img');
-          img.src = fullPath;
-          img.style.width = '100%';
-          img.style.height = '100%';
-          img.style.objectFit = 'contain';
-          mainImgBox.appendChild(img);
-        }
-
-        const thumb = document.createElement('div');
-        thumb.className = index === 0 ? 'thumb active' : 'thumb';
-        thumb.innerHTML = `<img src="${fullPath}" style="width:100%;height:100%;object-fit:cover;border-radius:12px;">`;
-
-        thumb.onclick = () => {
-          // 切换大图时保留 Badge
-          const existingBadge = mainImgBox.querySelector('.status-badge');
-          mainImgBox.innerHTML = '';
-          mainImgBox.appendChild(existingBadge);
-
-          const newImg = document.createElement('img');
-          newImg.src = fullPath;
-          newImg.style.width = '100%';
-          newImg.style.height = '100%';
-          newImg.style.objectFit = 'contain';
-          mainImgBox.appendChild(newImg);
-
-          document.querySelectorAll('.thumb').forEach(t => t.classList.remove('active'));
-          thumb.classList.add('active');
-        };
-        thumbContainer.appendChild(thumb);
+    // 🔥🔥 图片处理核心逻辑 (多图 + 箭头 + 动画) 🔥🔥
+    productImages = []; // 重置
+    if (item.All_Images) {
+      // 分割并清理路径
+      productImages = item.All_Images.split(',').map(path => {
+        const cleanPath = path.replace(/^.*?Public_Product_Images\//, 'Public_Product_Images/');
+        return `../${cleanPath}`;
       });
-    } else {
-      // 无图情况
+    } else if (item.Main_Image) {
+      const cleanPath = item.Main_Image.replace(/^.*?Public_Product_Images\//, 'Public_Product_Images/');
+      productImages = [`../${cleanPath}`];
+    }
+
+    // 如果没有图片，放个占位符
+    if (productImages.length === 0) {
+      const mainImgBox = document.getElementById('mainImage');
+      mainImgBox.innerHTML = '';
+      mainImgBox.appendChild(statusBadge);
       const noImg = document.createElement('div');
       noImg.innerText = '📦';
       noImg.style.fontSize = '5rem';
       mainImgBox.appendChild(noImg);
+      return;
     }
+
+    // 渲染第一张图片和控件
+    updateMainImageDisplay();
+    renderThumbnails();
   }
 
-  // --- 交互功能 ---
+  // 🔥 核心函数：更新主图显示
+  function updateMainImageDisplay() {
+    const mainImgBox = document.getElementById('mainImage');
+    const statusBadge = document.getElementById('statusBadge'); // 保留 Badge 引用
+
+    // 清空主图区域（但我们稍后会把 Badge 加回去）
+    mainImgBox.innerHTML = '';
+    mainImgBox.appendChild(statusBadge);
+
+    // 1. 创建图片元素
+    const img = document.createElement('img');
+    img.src = productImages[currentImageIndex];
+    img.style.width = '100%';
+    img.style.height = '100%';
+    img.style.objectFit = 'contain';
+    img.className = 'fade-anim'; // 添加淡入动画类
+    mainImgBox.appendChild(img);
+
+    // 2. 如果有多张图，添加箭头
+    if (productImages.length > 1) {
+      const prevBtn = document.createElement('button');
+      prevBtn.className = 'nav-arrow prev-btn';
+      prevBtn.innerHTML = '❮';
+      prevBtn.onclick = () => changeImage(-1); // 上一张
+
+      const nextBtn = document.createElement('button');
+      nextBtn.className = 'nav-arrow next-btn';
+      nextBtn.innerHTML = '❯';
+      nextBtn.onclick = () => changeImage(1); // 下一张
+
+      mainImgBox.appendChild(prevBtn);
+      mainImgBox.appendChild(nextBtn);
+    }
+
+    // 3. 更新缩略图高亮
+    const thumbs = document.querySelectorAll('.thumb');
+    thumbs.forEach((t, idx) => {
+      if (idx === currentImageIndex) t.classList.add('active');
+      else t.classList.remove('active');
+    });
+  }
+
+  // 🔥 核心函数：渲染缩略图
+  function renderThumbnails() {
+    const thumbContainer = document.querySelector('.thumbnails');
+    thumbContainer.innerHTML = '';
+
+    productImages.forEach((imgSrc, index) => {
+      const thumb = document.createElement('div');
+      thumb.className = index === currentImageIndex ? 'thumb active' : 'thumb';
+      thumb.innerHTML = `<img src="${imgSrc}">`;
+
+      thumb.onclick = () => {
+        currentImageIndex = index;
+        updateMainImageDisplay();
+      };
+      thumbContainer.appendChild(thumb);
+    });
+  }
+
+  // 🔥 核心函数：切换上一张/下一张
+  function changeImage(direction) {
+    currentImageIndex += direction;
+
+    // 循环播放逻辑
+    if (currentImageIndex < 0) {
+      currentImageIndex = productImages.length - 1; // 到了第一张，跳到最后一张
+    } else if (currentImageIndex >= productImages.length) {
+      currentImageIndex = 0; // 到了最后一张，跳回第一张
+    }
+
+    updateMainImageDisplay();
+  }
+
+  // --- 交互功能 (保持不变) ---
 
   function toggleEditMode() {
     document.getElementById('displayPrice').style.display = 'none';
@@ -305,26 +381,16 @@
     document.getElementById('inputPrice').focus();
   }
 
-  // 🔥 修复：保存价格
   async function savePrice() {
     const newPrice = document.getElementById('inputPrice').value;
-
     try {
       const response = await fetch('../../Module_Product_Ecosystem/api/Update_Product.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          product_id: productId,
-          action: 'update_price',
-          value: newPrice
-        })
+        body: JSON.stringify({ product_id: productId, action: 'update_price', value: newPrice })
       });
-
       const result = await response.json();
-      console.log("Price Update Result:", result);
-
       if (result.success) {
-        // UI 更新
         document.getElementById('displayPrice').innerText = '$' + parseFloat(newPrice).toFixed(2);
         document.getElementById('displayPrice').style.display = 'block';
         document.getElementById('inputPrice').style.display = 'none';
@@ -340,28 +406,18 @@
     }
   }
 
-  // 🔥 修复：上下架切换
   async function toggleStatus() {
     const badge = document.getElementById('statusBadge');
     const btn = document.getElementById('btnUnlist');
-
     try {
       const response = await fetch('../../Module_Product_Ecosystem/api/Update_Product.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          product_id: productId,
-          action: 'toggle_status'
-        })
+        body: JSON.stringify({ product_id: productId, action: 'toggle_status' })
       });
-
       const result = await response.json();
-      console.log("Status Update Result:", result);
-
       if (result.success) {
-        // 根据后端返回的新状态更新 UI
         if (result.new_status === 'Unlisted') {
-          // 变成下架状态
           badge.className = 'status-badge status-inactive';
           badge.innerText = '● Unlisted';
           btn.innerText = '📢 Re-list Item';
@@ -370,7 +426,6 @@
           btn.style.border = '1px solid #A7F3D0';
           alert('Item is now Hidden (Unlisted).');
         } else {
-          // 变成上架状态
           badge.className = 'status-badge status-active';
           badge.innerText = '● On Sale';
           btn.innerText = '🔒 Pull Off Shelf (Unlist)';
@@ -388,24 +443,18 @@
     }
   }
 
-  // 🔥 修复：删除商品
   async function confirmDelete() {
     if (confirm("Are you sure you want to PERMANENTLY delete this item?\nThis action cannot be undone.")) {
       try {
         const response = await fetch('../../Module_Product_Ecosystem/api/Update_Product.php', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            product_id: productId,
-            action: 'delete'
-          })
+          body: JSON.stringify({ product_id: productId, action: 'delete' })
         });
-
         const result = await response.json();
-
         if (result.success) {
           alert('🗑️ Item deleted successfully.');
-          window.location.href = 'Search_Results_Page.html'; // 删完回列表页
+          window.location.href = 'Search_Results_Page.html';
         } else {
           alert('❌ Error: ' + result.message);
         }

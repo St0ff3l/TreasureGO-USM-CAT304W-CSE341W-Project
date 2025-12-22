@@ -68,81 +68,53 @@
 
         .product-container { max-width: 1100px; margin: 0 auto; padding: 0 20px; display: grid; grid-template-columns: 1.2fr 1fr; gap: 50px; align-items: start; }
 
-        /* --- Gallery Styles (已优化) --- */
+        /* --- Gallery Styles (Updated to Match Source) --- */
         .gallery-wrapper { position: sticky; top: 100px; }
 
         .main-image-box {
-            width: 100%;
-            height: 500px;
-            background: #f3f4f6; /* ✅ 改为浅灰色背景 */
-            border-radius: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 8rem;
-            box-shadow: var(--card-shadow);
-            margin-bottom: 20px;
+            width: 100%; height: 500px; background: white; border-radius: 20px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 8rem; box-shadow: var(--card-shadow); margin-bottom: 15px;
+            position: relative; overflow: hidden; /* 防止图片溢出圆角 */
             border: 1px solid rgba(0,0,0,0.05);
-            overflow: hidden; /* ✅ 防止图片溢出圆角 */
-            position: relative;
         }
-        /* 🔥 新增：左右切换箭头的样式 🔥 */
+
+        /* 🔥 Updated Arrow Styles */
         .nav-arrow {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%); /* 垂直居中 */
-            width: 44px;
-            height: 44px;
-            background: rgba(255, 255, 255, 0.9); /* 半透明白色背景 */
-            border-radius: 50%; /* 圆形 */
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            font-size: 1.5rem;
-            color: var(--text-dark);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            z-index: 10; /* 保证在图片上面 */
-            opacity: 0; /* 默认隐藏 */
-            transition: all 0.3s ease;
-            border: none; /* 移除按钮默认边框 */
-            outline: none;
+            position: absolute; top: 50%; transform: translateY(-50%);
+            width: 44px; height: 44px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 50%; border: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem; color: var(--text-dark); z-index: 10;
+            transition: all 0.2s ease;
+            opacity: 0; /* Default hidden */
+        }
+        .main-image-box:hover .nav-arrow { opacity: 1; } /* Show on hover */
+        .nav-arrow:hover { background: var(--primary); color: white; transform: translateY(-50%) scale(1.1); }
+
+        .prev-btn { left: 15px; }
+        .next-btn { right: 15px; }
+
+        /* 🔥 Added Fade Animation */
+        .fade-anim {
+            animation: fadeScale 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+        @keyframes fadeScale {
+            from { opacity: 0.6; transform: scale(0.98); }
+            to { opacity: 1; transform: scale(1); }
         }
 
-        /* 鼠标悬停在主图区域时，显示箭头 */
-        .main-image-box:hover .nav-arrow {
-            opacity: 1;
-        }
-
-        .nav-arrow:hover {
-            background: white;
-            color: var(--primary);
-            box-shadow: 0 6px 15px rgba(79, 70, 229, 0.3);
-        }
-
-        .arrow-prev { left: 15px; padding-right: 3px; } /* 左箭头位置，微调padding让图标视觉居中 */
-        .arrow-next { right: 15px; padding-left: 3px; } /* 右箭头位置 */
-
-        /* (以下是原有的缩略图样式，保持不变) */
-        .thumbnails { display: flex; gap: 15px; overflow-x: auto; padding-bottom: 5px; }
-
+        .thumbnails { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 5px; }
         .thumb {
-            width: 80px;
-            height: 80px;
-            background: white;
-            border-radius: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2rem;
-            cursor: pointer;
-            border: 2px solid transparent;
-            transition: 0.2s;
-            flex-shrink: 0; /* ✅ 防止缩略图被挤压 */
-            overflow: hidden; /* ✅ 确保缩略图填充 */
+            width: 80px; height: 80px; background: white; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 2rem; border: 2px solid transparent; cursor: pointer;
+            flex-shrink: 0; overflow: hidden; transition: all 0.2s;
         }
-
-        .thumb.active { border-color: var(--primary); transform: translateY(-2px); }
+        .thumb img { width: 100%; height: 100%; object-fit: cover; }
+        .thumb.active { border-color: var(--primary); transform: translateY(-2px); box-shadow: 0 4px 10px rgba(79, 70, 229, 0.2); }
 
         /* Info */
         .product-info { padding-top: 10px; }
@@ -229,24 +201,25 @@
             .gallery-wrapper { position: static; }
             .main-image-box { height: 350px; }
             .product-title { font-size: 1.8rem; }
+            .nav-arrow { opacity: 1; width: 36px; height: 36px; }
         }
     </style>
 </head>
 <body>
 
-<!-- Navbar replaced by headerbar.js -->
 <script src="../../Public_Assets/js/headerbar.js"></script>
 <script>TreasureGoHeaderbar.mount({ basePath: '../../' });</script>
 
 <div class="breadcrumb">
-    <a href="../../index.html">Home</a> &gt; <span>Digital</span> &gt; <span>Sony Headphones</span>
+    <a href="../../index.html">Home</a> &gt; <span>Digital</span> &gt; <span>Product Detail</span>
 </div>
 
 <div class="product-container">
     <div class="gallery-wrapper">
-        <div class="main-image-box" id="mainImage">🎧</div>
+        <div class="main-image-box" id="mainImage">
+            <div style="font-size:5rem;">📦</div>
+        </div>
         <div class="thumbnails">
-            <div class="thumb active">🎧</div>
         </div>
     </div>
 
@@ -305,6 +278,10 @@
     // 1. 获取 URL 中的商品 ID
     const urlParams = new URLSearchParams(window.location.search);
     const productId = urlParams.get('id');
+
+    // 全局变量 for Images
+    let globalImageList = [];
+    let currentImageIndex = 0;
 
     // 🔥新增：保存当前商品信息，给 Report 跳转用
     let currentProductForReport = null;
@@ -371,21 +348,37 @@
         const rating = item.User_Average_Rating ? `★ ${item.User_Average_Rating}` : 'New Seller';
         document.querySelector('.seller-rating').innerText = rating;
 
-        // 🔥🔥🔥 【新增代码】更新 Buy Now 按钮的跳转链接，带上 ID 🔥🔥🔥
         const buyBtn = document.querySelector('.btn-buy');
-        buyBtn.href = `Order_Confirmation.html?id=${item.Product_ID}`;
+        const conditionTag = document.querySelector('.product-tag'); // 获取标签以便修改颜色
 
-        // 拦截点击事件，检查登录状态
-        buyBtn.onclick = function(event) {
-            event.preventDefault();
-            checkLoginAndProceed(this.href);
-        };
+        // 核心判断：如果是 Sold (已售出)
+        if (item.Product_Status === 'Sold' || item.Product_Status === 'Inactive') {
+            // 1. 按钮变灰、改文字、禁用
+            buyBtn.innerText = "Sold Out";
+            buyBtn.style.background = "#9CA3AF"; // 灰色背景
+            buyBtn.style.cursor = "not-allowed"; // 禁止手势
+            buyBtn.style.boxShadow = "none";     // 去掉阴影
+            buyBtn.href = "javascript:void(0)";  // 移除链接
+            buyBtn.onclick = (e) => e.preventDefault(); // 彻底禁止点击
+
+            // 2. 顶部的标签也变红提示
+            conditionTag.innerText = "● SOLD OUT";
+            conditionTag.style.background = "#FEE2E2"; // 淡红色背景
+            conditionTag.style.color = "#EF4444";      // 红色文字
+        } else {
+            // 3. 正常状态 (Active)：保持原有购买逻辑
+            buyBtn.innerText = "Buy Now";
+            buyBtn.href = `Order_Confirmation.html?id=${item.Product_ID}`;
+
+            // 拦截点击事件，检查登录状态
+            buyBtn.onclick = function(event) {
+                event.preventDefault();
+                checkLoginAndProceed(this.href);
+            };
+        }
 
         // 🔥🔥🔥 【新增代码】Chat 按钮逻辑 （张峻12/22，14:11添加）🔥🔥🔥
         const chatBtn = document.querySelector('.chat-btn-small');
-        // 检查是否是自己的商品 (需要获取当前用户ID，这里先简单处理，点击后由 chat.php 或 checkLoginAndProceed 处理)
-        // 更好的做法是：如果当前用户是卖家，隐藏 Chat 按钮
-
         // 获取当前用户ID (异步)
         fetch('../../Module_User_Account_Management/api/session_status.php')
             .then(res => res.json())
@@ -401,77 +394,28 @@
                     };
                 }
             });
-        // 🔥 图片处理逻辑 (Gallery Logic) - 支持左右切换 🔥
-        // ============================================
-        const mainImgBox = document.getElementById('mainImage');
-        const thumbContainer = document.querySelector('.thumbnails');
 
-        // 清空旧内容
-        mainImgBox.innerHTML = '';
-        thumbContainer.innerHTML = '';
-
-        // 准备图片列表
-        globalImageList = []; // 重置全局列表
+        // 🔥🔥 图片处理核心逻辑 (多图 + 箭头 + 动画) - Updated to match Source 🔥🔥
+        globalImageList = []; // 重置
         if (item.All_Images) {
-            globalImageList = item.All_Images.split(',');
-        } else if (item.Main_Image) {
-            globalImageList = [item.Main_Image];
-        }
-
-        if (globalImageList.length > 0) {
-            // 1. 渲染缩略图和初始主图
-            globalImageList.forEach((imgRawPath, index) => {
-                const cleanPath = imgRawPath.replace(/^.*?Public_Product_Images\//, 'Public_Product_Images/');
-                const fullPath = `../${cleanPath}`;
-
-                // 创建缩略图元素
-                const thumbDiv = document.createElement('div');
-                thumbDiv.className = index === 0 ? 'thumb active' : 'thumb';
-                thumbDiv.dataset.index = index; // 存储索引方便调用
-                thumbDiv.innerHTML = `<img src="${fullPath}" style="width:100%;height:100%;object-fit:cover;">`;
-
-                // 点击缩略图切换
-                thumbDiv.onclick = function() {
-                    changeMainImage(index);
-                };
-                thumbContainer.appendChild(thumbDiv);
+            globalImageList = item.All_Images.split(',').map(path => {
+                const cleanPath = path.replace(/^.*?Public_Product_Images\//, 'Public_Product_Images/');
+                return `../${cleanPath}`;
             });
-
-            // 初始显示第一张图
-            changeMainImage(0);
-
-            // 🔥 2. 如果有多张图片，添加左右切换箭头
-            if (globalImageList.length > 1) {
-                // 插入左箭头
-                const prevBtn = document.createElement('button');
-                prevBtn.className = 'nav-arrow arrow-prev';
-                prevBtn.innerHTML = '&#10094;'; // 左箭头图标 (❮)
-                prevBtn.onclick = function() {
-                    let newIndex = currentImageIndex - 1;
-                    // 循环逻辑：如果是第一张，点左箭头跳到最后一张
-                    if (newIndex < 0) newIndex = globalImageList.length - 1;
-                    changeMainImage(newIndex);
-                };
-                mainImgBox.appendChild(prevBtn);
-
-                // 插入右箭头
-                const nextBtn = document.createElement('button');
-                nextBtn.className = 'nav-arrow arrow-next';
-                nextBtn.innerHTML = '&#10095;'; // 右箭头图标 (❯)
-                nextBtn.onclick = function() {
-                    let newIndex = currentImageIndex + 1;
-                    // 循环逻辑：如果是最后一张，点右箭头跳到第一张
-                    if (newIndex >= globalImageList.length) newIndex = 0;
-                    changeMainImage(newIndex);
-                };
-                mainImgBox.appendChild(nextBtn);
-            }
-
-        } else {
-            // 无图占位
-            mainImgBox.innerText = '📦';
-            thumbContainer.innerHTML = '<div class="thumb active" style="display:flex;align-items:center;justify-content:center;">📦</div>';
+        } else if (item.Main_Image) {
+            const cleanPath = item.Main_Image.replace(/^.*?Public_Product_Images\//, 'Public_Product_Images/');
+            globalImageList = [`../${cleanPath}`];
         }
+
+        // 如果没有图片
+        if (globalImageList.length === 0) {
+            document.getElementById('mainImage').innerHTML = '<div style="font-size:5rem;">📦</div>';
+            return;
+        }
+
+        // 渲染第一张图片和控件
+        updateMainImageDisplay();
+        renderThumbnails();
 
         // 🔥新增：保存举报要用到的信息
         currentProductForReport = {
@@ -488,6 +432,76 @@
                 goToReportPageFromProduct();
             }, { once: true });
         }
+    }
+
+    // 🔥 核心函数：更新主图显示 (From Source)
+    function updateMainImageDisplay() {
+        const mainImgBox = document.getElementById('mainImage');
+        mainImgBox.innerHTML = ''; // Clear container
+
+        // 1. 创建图片元素
+        const img = document.createElement('img');
+        img.src = globalImageList[currentImageIndex];
+        img.style.width = '100%';
+        img.style.height = '100%';
+        img.style.objectFit = 'contain';
+        img.className = 'fade-anim'; // 添加淡入动画类
+        mainImgBox.appendChild(img);
+
+        // 2. 如果有多张图，添加箭头
+        if (globalImageList.length > 1) {
+            const prevBtn = document.createElement('button');
+            prevBtn.className = 'nav-arrow prev-btn';
+            prevBtn.innerHTML = '❮';
+            prevBtn.onclick = () => changeImage(-1); // 上一张
+
+            const nextBtn = document.createElement('button');
+            nextBtn.className = 'nav-arrow next-btn';
+            nextBtn.innerHTML = '❯';
+            nextBtn.onclick = () => changeImage(1); // 下一张
+
+            mainImgBox.appendChild(prevBtn);
+            mainImgBox.appendChild(nextBtn);
+        }
+
+        // 3. 更新缩略图高亮
+        const thumbs = document.querySelectorAll('.thumb');
+        thumbs.forEach((t, idx) => {
+            if (idx === currentImageIndex) t.classList.add('active');
+            else t.classList.remove('active');
+        });
+    }
+
+    // 🔥 核心函数：渲染缩略图 (From Source)
+    function renderThumbnails() {
+        const thumbContainer = document.querySelector('.thumbnails');
+        thumbContainer.innerHTML = '';
+
+        globalImageList.forEach((imgSrc, index) => {
+            const thumb = document.createElement('div');
+            thumb.className = index === currentImageIndex ? 'thumb active' : 'thumb';
+            thumb.innerHTML = `<img src="${imgSrc}">`;
+
+            thumb.onclick = () => {
+                currentImageIndex = index;
+                updateMainImageDisplay();
+            };
+            thumbContainer.appendChild(thumb);
+        });
+    }
+
+    // 🔥 核心函数：切换上一张/下一张 (From Source)
+    function changeImage(direction) {
+        currentImageIndex += direction;
+
+        // 循环播放逻辑
+        if (currentImageIndex < 0) {
+            currentImageIndex = globalImageList.length - 1; // 到了第一张，跳到最后一张
+        } else if (currentImageIndex >= globalImageList.length) {
+            currentImageIndex = 0; // 到了最后一张，跳回第一张
+        }
+
+        updateMainImageDisplay();
     }
 
     // 🔥新增：从商品详情页跳到举报页，并自动带上商品ID + 对方用户ID/名称
@@ -512,36 +526,6 @@
         window.location.href = url.toString();
     }
 
-    // 🔥 新增：统一切换主图的函数
-    function changeMainImage(index) {
-        currentImageIndex = index; // 更新当前索引
-
-        const mainImgBox = document.getElementById('mainImage');
-        const imgRawPath = globalImageList[index];
-        const cleanPath = imgRawPath.replace(/^.*?Public_Product_Images\//, 'Public_Product_Images/');
-        const fullPath = `../${cleanPath}`;
-
-        // 1. 更新主图 (注意保留箭头按钮，所以这里不能用 innerHTML = '')
-        // 检查是否已经有图片元素，有则替换 src，没有则创建
-        let mainImgElement = mainImgBox.querySelector('img.main-pic');
-        if (!mainImgElement) {
-            mainImgElement = document.createElement('img');
-            mainImgElement.className = 'main-pic';
-            mainImgElement.style.width = '100%';
-            mainImgElement.style.height = '100%';
-            mainImgElement.style.objectFit = 'contain';
-            // 插入到最前面，确保在箭头下面
-            mainImgBox.insertBefore(mainImgElement, mainImgBox.firstChild);
-        }
-        mainImgElement.src = fullPath;
-
-
-        // 2. 更新缩略图选中状态
-        document.querySelectorAll('.thumb').forEach(t => {
-            t.classList.toggle('active', parseInt(t.dataset.index) === index);
-        });
-    }
-
     // 🔥 新增：检查收藏状态 (修复版) 🔥
     async function checkFavoriteStatus() {
         // 使用全局变量 productId
@@ -553,9 +537,9 @@
 
             if (result.success && Array.isArray(result.data)) {
 
-                // 🔍 调试信息：按 F12 看 Console，如果没变红，看看这里打印了什么
-                console.log("当前商品ID:", productId);
-                console.log("收藏列表:", result.data);
+                // 🔍 调试信息：按 F12 看 Console
+                // console.log("当前商品ID:", productId);
+                // console.log("收藏列表:", result.data);
 
                 // 🔥 关键修复：把两边都转成 String 再比较，防止类型不匹配 (1 vs "1")
                 const isFavorited = result.data.some(item => String(item.Product_ID) === String(productId));
@@ -564,10 +548,7 @@
                     const btn = document.getElementById('favBtn');
                     if (btn) {
                         btn.classList.add('active'); // 添加红色样式
-                        console.log("✅ 已匹配，点亮爱心");
                     }
-                } else {
-                    console.log("⚪ 未匹配，保持灰色");
                 }
             }
         } catch (error) {

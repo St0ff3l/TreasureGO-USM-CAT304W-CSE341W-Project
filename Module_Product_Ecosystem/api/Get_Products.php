@@ -25,6 +25,7 @@ try {
     $conditions = isset($_GET['conditions']) ? $_GET['conditions'] : [];
 
     // 2. 构建 SQL 查询
+    // 🔥 修改点 1：把 WHERE p.Product_Status = 'Active' 去掉，改为 WHERE 1=1
     $sql = "SELECT 
                 p.Product_ID, 
                 p.User_ID,
@@ -35,7 +36,7 @@ try {
                 p.Product_Condition, 
                 p.Product_Created_Time,
                 p.Product_Location,
-                p.Delivery_Method,  /* 🔥 修改点：新增了这一行，获取交易方式 */
+                p.Delivery_Method,
                 u.User_Username, 
                 u.User_Average_Rating,
                 /* 获取主图 */
@@ -45,16 +46,23 @@ try {
             FROM Product p
             JOIN User u ON p.User_ID = u.User_ID
             LEFT JOIN Categories c ON p.Category_ID = c.Category_ID 
-            WHERE p.Product_Status = 'Active'";
+            WHERE 1=1";
 
     $params = [];
 
-    // --- 动态添加筛选条件 ---
+    // --- 3. 动态添加筛选条件 ---
 
+    // 🔥 修改点 2：智能判断逻辑
     if ($product_id > 0) {
+        // 【情况A：详情页模式】如果指定了 ID，就不限制状态（允许查询 Sold、Active 甚至 Unlisted）
         $sql .= " AND p.Product_ID = ?";
         $params[] = $product_id;
+    } else {
+        // 【情况B：搜索/列表模式】如果没有指定 ID，强制只显示 Active (在售)
+        $sql .= " AND p.Product_Status = 'Active'";
     }
+
+    // --- 其他通用的筛选条件 (搜索、分类、价格) ---
 
     if (!empty($q)) {
         $sql .= " AND (p.Product_Title LIKE ? OR p.Product_Description LIKE ?)";
