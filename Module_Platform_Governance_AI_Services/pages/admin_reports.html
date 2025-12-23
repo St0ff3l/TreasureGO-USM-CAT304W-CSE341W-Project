@@ -407,72 +407,20 @@
 <div id="toast" class="toast"></div>
 
 <script>
-  // --- Mock Data & Config ---
-  // In a real scenario, this would come from fetch('../api/admin_get_reports.php')
-  let allReports = [
-    {
-      id: 105,
-      type: 'product',
-      targetName: 'iPhone 15 Pro Max',
-      reporter: 'Alice',
-      reporterId: 202,
-      reason: 'Scam',
-      details: 'Seller asks for direct bank transfer outside the platform.',
-      status: 'Pending',
-      date: '2025-12-23T10:30:00',
-      adminReply: null
-    },
-    {
-      id: 104,
-      type: 'user',
-      targetName: 'User_Spammer_007',
-      reporter: 'Bob',
-      reporterId: 305,
-      reason: 'Harassment',
-      details: 'Sending inappropriate messages repeatedly in chat.',
-      status: 'Pending',
-      date: '2025-12-22T14:15:00',
-      adminReply: null
-    },
-    {
-      id: 101,
-      type: 'product',
-      targetName: 'Sony Headphones',
-      reporter: 'Charlie',
-      reporterId: 401,
-      reason: 'Fake Item',
-      details: 'Item received is a plastic toy, not original.',
-      status: 'Resolved',
-      date: '2025-12-20T09:00:00',
-      adminReply: 'Seller banned and refund processed.'
-    },
-    {
-      id: 99,
-      type: 'user',
-      targetName: 'JohnDoe',
-      reporter: 'Dave',
-      reporterId: 402,
-      reason: 'Other',
-      details: 'He is rude.',
-      status: 'Dismissed',
-      date: '2025-12-19T11:20:00',
-      adminReply: 'Evidence insufficient for ban.'
-    }
-  ];
-
+  // --- 全局状态 ---
+  let allReports = []; // 存储从数据库获取的所有报告
   let currentFilter = 'All';
   let currentReportId = null;
-  let currentActionType = null; // 'Resolved' or 'Dismissed'
+  let currentActionType = null;
 
-  // --- Initialization ---
+  // --- 初始化 ---
   document.addEventListener('DOMContentLoaded', () => {
     initFloatingItems();
-    updateStatistics();
-    renderReports();
+    fetchReports(); // 页面加载时从数据库获取数据
     initFilterTabs();
   });
 
-  // --- Visual Effects ---
+  // --- 背景视觉效果 ---
   function initFloatingItems() {
     const container = document.getElementById('floating-container');
     const items = ['🚩', '🛡️', '⚠️', '🔨', '📢', '🚫', '🔍'];
@@ -488,14 +436,36 @@
     }
   }
 
-  // --- Logic ---
-  function updateStatistics() {
-    document.getElementById('stat-total').textContent = allReports.length;
-    document.getElementById('stat-pending').textContent = allReports.filter(r => r.status === 'Pending').length;
-    document.getElementById('stat-resolved').textContent = allReports.filter(r => r.status === 'Resolved').length;
-    document.getElementById('stat-dismissed').textContent = allReports.filter(r => r.status === 'Dismissed').length;
+  // --- 核心数据获取逻辑 (API 调用) ---
+  async function fetchReports() {
+    const listContainer = document.getElementById('requests-list');
+
+    try {
+      // 调用你刚刚创建的 PHP 接口
+      const response = await fetch('../api/admin_report_get.php');
+      const data = await response.json();
+
+      if (data.success) {
+        allReports = data.reports;
+
+        // 更新统计卡片数字
+        document.getElementById('stat-total').textContent = data.stats.total;
+        document.getElementById('stat-pending').textContent = data.stats.pending;
+        document.getElementById('stat-resolved').textContent = data.stats.resolved;
+        document.getElementById('stat-dismissed').textContent = data.stats.dismissed;
+
+        renderReports(); // 渲染列表
+      } else {
+        showToast('Error: ' + data.message, 'error');
+      }
+    } catch (error) {
+      console.error('Fetch error:', error);
+      showToast('Failed to load reports from server.', 'error');
+      listContainer.innerHTML = '<div class="empty-state">Failed to load data.</div>';
+    }
   }
 
+  // --- 列表渲染逻辑 ---
   function renderReports() {
     const container = document.getElementById('requests-list');
 
@@ -514,6 +484,7 @@
     }
 
     container.innerHTML = filtered.map(r => {
+      // 动态图标
       const icon = r.type === 'product' ? '📦' : (r.type === 'user' ? '👤' : '💬');
       const typeClass = r.type === 'product' ? 'type-product' : (r.type === 'user' ? 'type-user' : 'type-chat');
 
@@ -526,7 +497,7 @@
                     <div class="target-title">${r.targetName} <span>(${r.type})</span></div>
                     <div class="request-meta">
                         <span>🆔 #${r.id}</span>
-                        <span>🗣️ By: ${r.reporter}</span>
+                        <span>🗣️ By: ${r.reporter || 'Unknown'}</span>
                         <span>📅 ${new Date(r.date).toLocaleDateString()}</span>
                     </div>
                     <div class="reason-badge">⚠️ ${r.reason}</div>
@@ -545,6 +516,7 @@
     }).join('');
   }
 
+  // --- 筛选逻辑 ---
   function initFilterTabs() {
     document.querySelectorAll('.filter-tab').forEach(tab => {
       tab.addEventListener('click', () => {
@@ -556,43 +528,68 @@
     });
   }
 
-  // --- Modal Logic ---
+  // --- 弹窗逻辑 ---
 
-  // 1. Details Modal
   function openDetailsModal(id) {
-    const r = allReports.find(x => x.id === id);
-    if(!r) return;
+    const r = allReports.find(x => x.id == id);
+    if (!r) return;
 
     const content = `
-            <div class="detail-row">
-                <div class="detail-label">Report ID</div>
-                <div class="detail-value">#${r.id}</div>
+        <div class="detail-row">
+            <div class="detail-label">Report ID</div>
+            <div class="detail-value">#${r.id}</div>
+        </div>
+
+        <div class="detail-row">
+            <div class="detail-label">Reporter (Who reported)</div>
+            <div class="detail-value">
+                <strong>${r.reporter || 'Unknown'}</strong> <span style="color:var(--text-gray)">(ID: ${r.reporterId})</span><br>
+                <p style="margin-top:5px; color: var(--primary); font-weight: 600;">
+                    <i class="fa-solid fa-paper-plane"></i> Contact Email: ${r.contactEmail || 'Not Provided'}
+                </p>
+                <small style="color:var(--text-gray)">Account Email: ${r.reporterAccountEmail || 'No Email'}</small><br>
+
+                <button class="btn-action-view" style="margin-top:8px; padding:4px 10px;"
+                    onclick="window.location.href='../../Module_User_Account_Management/pages/user_profile.php?id=${r.reporterId}'">
+                    <i class="fa-solid fa-user"></i> View Profile
+                </button>
             </div>
-            <div class="detail-row">
-                <div class="detail-label">Reporter</div>
-                <div class="detail-value">${r.reporter} (ID: ${r.reporterId})</div>
-            </div>
-            <div class="detail-row">
-                <div class="detail-label">Target Object</div>
-                <div class="detail-value">
-                    <strong>${r.targetName}</strong><br>
-                    <small style="color:#666">Type: ${r.type}</small>
+        </div>
+
+        <div class="detail-row">
+            <div class="detail-label">Target (Who/What being reported)</div>
+            <div class="detail-value">
+                <strong>${r.targetName}</strong><br>
+
+                <div style="margin: 8px 0; padding: 8px; background: #f9fafb; border-radius: 8px; font-size: 0.9rem;">
+                    <p>👤 User: <strong>${r.reportedUserName}</strong> (ID: ${r.reportedUserId})</p>
+                    <p>📧 Email: ${r.reportedUserEmail || 'No Email'}</p>
+                </div>
+
+                <div style="margin-top:8px; display:flex; gap:10px; flex-wrap: wrap;">
+                    <button class="btn-action-view" style="padding:4px 10px;"
+                        onclick="window.location.href='../../Module_User_Account_Management/pages/user_profile.php?id=${r.reportedUserId}'">
+                        <i class="fa-solid fa-id-badge"></i> View Reported User
+                    </button>
+
+                    ${r.type === 'product' && r.reportedItemId ? `
+                        <button class="btn-action-view" style="padding:4px 10px; background:#EEF2FF; color:var(--primary);"
+                            onclick="window.location.href='../../Module_Product_Ecosystem/pages/Product_Detail.html?id=${r.reportedItemId}'">
+                            <i class="fa-solid fa-box-open"></i> Product Details
+                        </button>
+                    ` : ''}
                 </div>
             </div>
-            <div class="detail-row">
-                <div class="detail-label">Reason</div>
-                <div class="detail-value" style="color: #D97706; font-weight:600;">${r.reason}</div>
+        </div>
+
+        <div class="detail-row">
+            <div class="detail-label">Reason & Description</div>
+            <div class="detail-value">
+                <span class="reason-badge">⚠️ ${r.reason}</span><br>
+                <p style="margin-top:10px;">${r.details || 'No description provided.'}</p>
             </div>
-            <div class="detail-row">
-                <div class="detail-label">Full Description</div>
-                <div class="detail-value">${r.details}</div>
-            </div>
-            ${r.adminReply ? `
-            <div class="detail-row">
-                <div class="detail-label">Admin Action Note</div>
-                <div class="detail-value" style="border-left: 4px solid var(--primary);">${r.adminReply}</div>
-            </div>` : ''}
-        `;
+        </div>
+    `;
     document.getElementById('details-content').innerHTML = content;
     document.getElementById('details-modal').classList.add('active');
   }
@@ -601,7 +598,6 @@
     document.getElementById('details-modal').classList.remove('active');
   }
 
-  // 2. Action Modal
   function openActionModal(id, actionType) {
     currentReportId = id;
     currentActionType = actionType;
@@ -612,7 +608,7 @@
     const btn = document.getElementById('action-confirm-btn');
     const input = document.getElementById('admin-reply');
 
-    input.value = ''; // Reset input
+    input.value = '';
 
     if (actionType === 'Resolved') {
       title.textContent = '✅ Resolve Report';
@@ -637,28 +633,37 @@
     currentReportId = null;
   }
 
-  function submitAction() {
+  // --- 提交处理结果 (API 调用) ---
+  async function submitAction() {
     if(!currentReportId) return;
     const reply = document.getElementById('admin-reply').value;
 
-    // Mock API Call
-    // In real app: fetch('../api/admin_update_report.php', { method: 'POST', body: ... })
-    const reportIndex = allReports.findIndex(r => r.id === currentReportId);
-    if (reportIndex > -1) {
-      allReports[reportIndex].status = currentActionType;
-      allReports[reportIndex].adminReply = reply || (currentActionType === 'Resolved' ? 'Issue resolved.' : 'Report dismissed.');
+    try {
+      const response = await fetch('../api/admin_report_update.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: currentReportId,
+          status: currentActionType,
+          reply: reply
+        })
+      });
 
-      showToast(`Report #${currentReportId} has been ${currentActionType.toLowerCase()}.`, 'success');
+      const result = await response.json();
 
-      closeActionModal();
-      updateStatistics();
-      renderReports();
-    } else {
-      showToast('Error: Report not found.', 'error');
+      if (result.success) {
+        showToast(`Report #${currentReportId} has been ${currentActionType.toLowerCase()}.`, 'success');
+        closeActionModal();
+        fetchReports(); // 成功后刷新列表和统计
+      } else {
+        showToast('Error: ' + result.message, 'error');
+      }
+    } catch (error) {
+      showToast('Network error. Failed to update.', 'error');
     }
   }
 
-  // --- Utilities ---
+  // --- 工具函数 ---
   function showToast(message, type = 'success') {
     const toast = document.getElementById('toast');
     toast.textContent = message;
@@ -666,7 +671,7 @@
     setTimeout(() => toast.classList.remove('show'), 3000);
   }
 
-  // Close on click outside
+  // 点击遮罩层关闭弹窗
   document.querySelectorAll('.modal-overlay').forEach(overlay => {
     overlay.addEventListener('click', (e) => {
       if(e.target === overlay) {

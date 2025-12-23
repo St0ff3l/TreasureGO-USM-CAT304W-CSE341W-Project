@@ -24,8 +24,8 @@
         // --- 核心修改开始 ---
 
         // 定义两个任务：
-        // 1. 强制等待 500 毫秒 (0.5秒)
-        const delayPromise = new Promise(resolve => setTimeout(resolve, 500));
+        // 1. 强制等待 100 毫秒 (0.1秒)
+        const delayPromise = new Promise(resolve => setTimeout(resolve, 100));
 
         // 2. 发起实际的网络请求
         const fetchPromise = fetch('../../Module_User_Account_Management/api/session_status.php');

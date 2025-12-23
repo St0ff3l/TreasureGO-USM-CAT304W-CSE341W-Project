@@ -5,11 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TreasureGO - My Reports</title>
 
+  <script src="../../Public_Assets/js/status_dialog.js"></script>
   <script src="../../Public_Assets/js/headerbar.js"></script>
 
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
 
   <style>
+    /* ... 样式保持不变 ... */
     :root {
       --bg-color: #F3F6F9;
       --primary: #4F46E5;
@@ -35,16 +37,13 @@
 
     .header-section {
       margin-bottom: 30px;
-      /* 移除了 flex 和 button，仅保留标题 */
       text-align: left;
     }
     .header-section h1 { font-size: 1.8rem; color: #111827; margin-bottom: 5px; }
     .header-section p { color: #6B7280; font-size: 0.9rem; }
 
-    /* 卡片列表容器 */
     .report-list { display: flex; flex-direction: column; gap: 20px; }
 
-    /* 单个卡片 */
     .report-card {
       background: var(--glass-bg);
       backdrop-filter: blur(20px);
@@ -57,45 +56,51 @@
     }
     .report-card:hover { transform: translateY(-3px); box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.08); }
 
-    /* 状态条 */
-    .status-indicator {
-      position: absolute; left: 0; top: 0; bottom: 0; width: 6px;
+    /* Cancel 按钮样式 */
+    .btn-pill-cancel {
+      padding: 6px 14px;
+      border-radius: 99px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      display: inline-block;
+      transition: all 0.2s ease;
+      background: #FEE2E2;
+      color: #991B1B;
     }
-    .status-Pending .status-indicator { background: #F59E0B; } /* 黄 */
-    .status-Resolved .status-indicator { background: #10B981; } /* 绿 */
-    .status-Dismissed .status-indicator { background: #9CA3AF; } /* 灰 */
+
+    .btn-pill-cancel:hover {
+      background: #EF4444;
+      color: white;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.3);
+    }
+
+    /* 状态颜色 */
+    .status-Cancelled .status-indicator { background: #9CA3AF; }
+    .status-Cancelled .status-badge { background: #F3F4F6; color: #6B7280; }
+    .status-Pending .status-indicator { background: #F59E0B; }
+    .status-Resolved .status-indicator { background: #10B981; }
+    .status-Dismissed .status-indicator { background: #9CA3AF; }
+
+    .status-indicator { position: absolute; left: 0; top: 0; bottom: 0; width: 6px; }
 
     .card-top { display: flex; justify-content: space-between; margin-bottom: 8px; }
-    .type-badge {
-      font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
-      letter-spacing: 1px; color: #6B7280;
-    }
+    .type-badge { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #6B7280; }
     .date-text { font-size: 0.85rem; color: #9CA3AF; }
 
     .card-main h3 { font-size: 1.2rem; margin-bottom: 4px; color: #1F2937; }
-    .reason-tag {
-      display: inline-block; font-size: 0.8rem; background: #EEF2FF;
-      color: var(--primary); padding: 2px 8px; border-radius: 6px; margin-bottom: 12px; font-weight: 600;
-    }
+    .reason-tag { display: inline-block; font-size: 0.8rem; background: #EEF2FF; color: var(--primary); padding: 2px 8px; border-radius: 6px; margin-bottom: 12px; font-weight: 600; }
     .details-text { color: #4B5563; font-size: 0.95rem; line-height: 1.5; margin-bottom: 16px; }
 
-    /* 底部状态栏 */
-    .card-footer {
-      display: flex; justify-content: space-between; align-items: center;
-      border-top: 1px solid #F3F4F6; padding-top: 16px; margin-top: 10px;
-    }
-    .status-badge {
-      padding: 6px 14px; border-radius: 99px; font-size: 0.85rem; font-weight: 600;
-    }
+    .card-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #F3F4F6; padding-top: 16px; margin-top: 10px; }
+    .status-badge { padding: 6px 14px; border-radius: 99px; font-size: 0.85rem; font-weight: 600; }
     .status-Pending .status-badge { background: #FEF3C7; color: #92400E; }
     .status-Resolved .status-badge { background: #D1FAE5; color: #065F46; }
     .status-Dismissed .status-badge { background: #F3F4F6; color: #374151; }
 
-    /* 管理员回复气泡 */
-    .admin-reply-box {
-      margin-top: 15px; background: #F8FAFC; border-radius: 12px; padding: 14px;
-      border: 1px dashed #CBD5E1; display: flex; gap: 10px;
-    }
+    .admin-reply-box { margin-top: 15px; background: #F8FAFC; border-radius: 12px; padding: 14px; border: 1px dashed #CBD5E1; display: flex; gap: 10px; }
     .admin-avatar { font-size: 1.5rem; }
     .reply-content h4 { font-size: 0.9rem; color: #1F2937; margin-bottom: 2px; }
     .reply-content p { font-size: 0.9rem; color: #4B5563; line-height: 1.4; }
@@ -111,7 +116,6 @@
 </script>
 
 <div class="page-wrapper">
-
   <div class="header-section">
     <h1>My Reports</h1>
     <p>Track the status of your submitted reports.</p>
@@ -123,70 +127,69 @@
       Loading your reports...
     </div>
   </div>
-
 </div>
 
 <script>
-  // 模拟数据
-  const mockReports = [
-    {
-      id: 105,
-      type: 'product',
-      targetName: 'iPhone 15 Pro Max',
-      reason: 'Scam',
-      details: 'Seller asks for direct bank transfer outside the platform.',
-      status: 'Pending',
-      date: '2025-12-23',
-      adminReply: null
-    },
-    {
-      id: 98,
-      type: 'user',
-      targetName: 'User_Spammer_007',
-      reason: 'Harassment',
-      details: 'Sending inappropriate messages repeatedly.',
-      status: 'Resolved',
-      date: '2025-12-10',
-      adminReply: 'User has been suspended. Thanks for the report.'
-    }
-  ];
-
+  // 获取列表逻辑
   async function fetchReports() {
     const listContainer = document.getElementById('reportList');
-
     try {
-      // 🔥 关键修改开始：添加配置对象
-      const res = await fetch('../api/report_get_my_list.php', {
-        method: 'GET',          // 明确请求方法
-        credentials: 'include'  // 👈 核心修复：强制携带 Cookie (Session)，否则后端读不到登录状态
-      });
-      // 🔥 关键修改结束
-
+      const res = await fetch('../api/report_get_my_list.php', { method: 'GET', credentials: 'include' });
       const json = await res.json();
-
       if (json.success) {
         renderList(json.data);
       } else {
-        console.warn("API Error:", json.message);
-        // 显示未登录提示
-        listContainer.innerHTML = `
-          <div class="empty-state">
-              <span class="empty-icon">🔒</span>
-              <p>${json.message || 'Please log in to view reports.'}</p>
-              <a href="../../Module_User_Account_Management/pages/login.php" style="color:var(--primary); font-weight:600; margin-top:10px; display:inline-block;">Go to Login</a>
-          </div>`;
+        listContainer.innerHTML = `<div class="empty-state"><p>${json.message}</p></div>`;
       }
     } catch (e) {
-      console.error("Fetch error:", e);
-      listContainer.innerHTML = '<div class="empty-state">Network Error.</div>';
+      console.error(e);
+      listContainer.innerHTML = '<div class="empty-state">Network Error</div>';
     }
   }
 
+  // 🔥 2. ✅ 核心修改：使用 StatusDialog 进行确认
+  function handleCancel(reportId) {
+    if (typeof StatusDialog === 'undefined') {
+      console.error('StatusDialog not loaded');
+      return;
+    }
+
+    // 调用自定义弹窗
+    StatusDialog.confirm(
+            'Cancel Report?',
+            'Are you sure you want to cancel this report? This action cannot be undone.',
+            'Yes, Cancel',  // 确认按钮文案
+            'No, Keep it',  // 取消按钮文案
+            async () => {
+              // 确认后的回调函数
+              try {
+                const res = await fetch('../api/report_cancel.php', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ report_id: reportId }),
+                  credentials: 'include'
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                  // 成功提示，点击关闭后刷新列表
+                  StatusDialog.success('Cancelled', 'Report has been cancelled.', 'Okay', () => {
+                    fetchReports();
+                  });
+                } else {
+                  // 失败提示
+                  StatusDialog.fail('Error', data.message);
+                }
+              } catch (e) {
+                StatusDialog.fail('Error', 'Network error occurred.');
+              }
+            }
+    );
+  }
 
   function renderList(data) {
     const container = document.getElementById('reportList');
 
-    // 空状态逻辑修改
     if (!data || data.length === 0) {
       container.innerHTML = `
         <div class="empty-state">
@@ -195,18 +198,25 @@
           <p style="font-size:0.85rem; margin-top:5px; color:#D1D5DB;">
              Reports you submit from product or user pages will appear here.
           </p>
-        </div>
-      `;
+        </div>`;
       return;
     }
 
     container.innerHTML = data.map(r => {
       let statusLabel = 'Processing';
+      let statusClass = r.status;
+
       if(r.status === 'Resolved') statusLabel = 'Resolved';
-      if(r.status === 'Dismissed') statusLabel = 'Dismissed';
+      else if(r.status === 'Dismissed') statusLabel = 'Dismissed';
+      else if(r.status === 'Cancelled') statusLabel = 'Cancelled';
+      else statusLabel = 'Pending Review';
+
+      const cancelButton = r.status === 'Pending'
+              ? `<button onclick="handleCancel(${r.id})" class="btn-pill-cancel">Cancel Report</button>`
+              : '';
 
       return `
-        <div class="report-card status-${r.status}">
+        <div class="report-card status-${statusClass}">
           <div class="status-indicator"></div>
 
           <div class="card-top">
@@ -231,8 +241,11 @@
           ` : ''}
 
           <div class="card-footer">
-            <span style="font-size: 0.85rem; color:#9CA3AF;">Report ID: #${r.id}</span>
-            <div class="status-badge">${statusLabel}</div>
+            <div style="display:flex; align-items:center; gap:10px;">
+               <div class="status-badge">${statusLabel}</div>
+               <span style="font-size: 0.8rem; color:#9CA3AF;">Report ID: #${r.id}</span>
+            </div>
+            ${cancelButton}
           </div>
         </div>
       `;

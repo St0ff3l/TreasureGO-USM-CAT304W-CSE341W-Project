@@ -1,7 +1,7 @@
 /**
  * StatusDialog.js
- * TreasureGO 通用状态弹窗框架 v2.0
- * 新增：StatusDialog.confirm() 二次确认功能
+ * TreasureGO 通用状态弹窗框架 v2.1
+ * 升级点：confirm 支持自定义取消文字，支持危险模式 (红按钮)
  */
 
 const StatusDialog = {
@@ -13,11 +13,11 @@ const StatusDialog = {
             @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap');
             
             :root {
-                --sd-mask: rgba(0, 0, 0, 0.4); /*稍微深一点的遮罩*/
+                --sd-mask: rgba(0, 0, 0, 0.4);
                 --sd-shadow: 0 20px 60px rgba(0,0,0,0.15);
                 --sd-success: #10B981; --sd-success-bg: #D1FAE5;
                 --sd-error: #EF4444;   --sd-error-bg: #FEE2E2;
-                --sd-warning: #F59E0B; --sd-warning-bg: #FEF3C7; /* 新增警告色 */
+                --sd-warning: #F59E0B; --sd-warning-bg: #FEF3C7;
                 --sd-primary: #4F46E5; --sd-dark: #1F2937;
             }
 
@@ -35,11 +35,9 @@ const StatusDialog = {
                 width: 90%; max-width: 380px; border: 1px solid rgba(255,255,255,0.8);
             }
 
-            /* 动画 */
             .sd-pop { animation: sd-popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
             .sd-shake { animation: sd-shake 0.4s ease; }
 
-            /* 图标 */
             .sd-icon {
                 width: 64px; height: 64px; border-radius: 50%;
                 display: flex; align-items: center; justify-content: center;
@@ -47,16 +45,13 @@ const StatusDialog = {
             }
             .sd-icon.success { background: var(--sd-success-bg); color: var(--sd-success); }
             .sd-icon.error { background: var(--sd-error-bg); color: var(--sd-error); }
-            .sd-icon.warning { background: var(--sd-warning-bg); color: var(--sd-warning); } /* 新增警告图标样式 */
+            .sd-icon.warning { background: var(--sd-warning-bg); color: var(--sd-warning); }
 
-            /* 文字 */
             .sd-title { margin: 0 0 8px 0; font-size: 1.4rem; font-weight: 800; color: #111; }
             .sd-msg { color: #6B7280; margin-bottom: 25px; line-height: 1.5; font-size: 0.95rem; }
 
-            /* 按钮容器 */
             .sd-btn-group { display: flex; gap: 12px; justify-content: center; }
 
-            /* 按钮通用 */
             .sd-btn {
                 flex: 1; padding: 12px; border-radius: 12px; border: none;
                 font-weight: 600; font-size: 0.95rem; cursor: pointer;
@@ -64,11 +59,16 @@ const StatusDialog = {
             }
             .sd-btn:active { transform: scale(0.96); }
 
-            /* 按钮变体 */
+            /* 蓝色按钮 (常规操作) */
             .sd-btn-primary { background: var(--sd-primary); color: white; box-shadow: 0 4px 15px rgba(79, 70, 229, 0.2); }
             .sd-btn-primary:hover { opacity: 0.9; }
             
-            .sd-btn-danger { background: var(--sd-dark); color: white; }
+            /* 红色按钮 (危险操作) - 修改了这里，使用了红色变量 */
+            .sd-btn-danger { background: var(--sd-error); color: white; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.2); }
+            .sd-btn-danger:hover { opacity: 0.9; }
+
+            /* 黑色/灰色按钮 (用于错误提示的关闭) */
+            .sd-btn-dark { background: var(--sd-dark); color: white; }
             
             .sd-btn-outline { background: white; border: 1px solid #E5E7EB; color: #4B5563; }
             .sd-btn-outline:hover { background: #F9FAFB; border-color: #D1D5DB; color: #111; }
@@ -95,8 +95,8 @@ const StatusDialog = {
         }
     },
 
-    // --- 2. 核心渲染逻辑 ---
-    _render: function(type, title, message, btnText, callback, cancelText = 'Cancel') {
+    // --- 2. 核心渲染逻辑 (增加 isDanger 参数) ---
+    _render: function(type, title, message, btnText, callback, cancelText = 'Cancel', isDanger = false) {
         this._injectStyles();
         const existing = document.getElementById('sd-overlay');
         if (existing) existing.remove();
@@ -105,7 +105,6 @@ const StatusDialog = {
         overlay.id = 'sd-overlay';
         overlay.className = 'sd-overlay';
 
-        // 配置图标和动画
         let iconHtml = '';
         let iconClass = '';
         let animationClass = 'sd-pop';
@@ -119,16 +118,19 @@ const StatusDialog = {
             iconHtml = '✕';
             iconClass = 'error';
             animationClass = 'sd-shake';
-            buttonsHtml = `<button id="sd-confirm-btn" class="sd-btn sd-btn-danger">${btnText || 'Close'}</button>`;
+            // 错误弹窗通常用深色按钮关闭
+            buttonsHtml = `<button id="sd-confirm-btn" class="sd-btn sd-btn-dark">${btnText || 'Close'}</button>`;
         } else if (type === 'confirm') {
-            // 问号图标
             iconHtml = '?';
             iconClass = 'warning';
-            // 双按钮布局
+
+            // 🔥 根据 isDanger 决定确认按钮是 蓝色(primary) 还是 红色(danger)
+            const confirmBtnClass = isDanger ? 'sd-btn-danger' : 'sd-btn-primary';
+
             buttonsHtml = `
                 <div class="sd-btn-group">
                     <button id="sd-cancel-btn" class="sd-btn sd-btn-outline">${cancelText}</button>
-                    <button id="sd-confirm-btn" class="sd-btn sd-btn-primary">${btnText || 'Confirm'}</button>
+                    <button id="sd-confirm-btn" class="sd-btn ${confirmBtnClass}">${btnText || 'Confirm'}</button>
                 </div>
             `;
         }
@@ -144,12 +146,11 @@ const StatusDialog = {
 
         document.body.appendChild(overlay);
 
-        // 绑定事件
         const confirmBtn = document.getElementById('sd-confirm-btn');
         if (confirmBtn) {
             confirmBtn.onclick = () => {
                 this._close();
-                if (callback) callback(); // 执行确认回调
+                if (callback) callback();
             };
         }
 
@@ -157,34 +158,36 @@ const StatusDialog = {
         if (cancelBtn) {
             cancelBtn.onclick = () => {
                 this._close();
-                // 可以在这里加 cancel callback，如果需要的话
             };
         }
     },
 
-    /**
-     * [1] 成功弹窗
-     */
     success: function(title, message, btnText, callback) {
         this._render('success', title, message, btnText, callback);
     },
 
-    /**
-     * [2] 失败弹窗
-     */
     fail: function(title, message, btnText, callback) {
         this._render('error', title, message, btnText, callback);
     },
 
     /**
-     * [3] 二次确认弹窗 (新增)
-     * @param {string} title - 标题
-     * @param {string} message - 内容
-     * @param {string} confirmText - 确认按钮文字 (如 "Confirm")
-     * @param {Function} onConfirm - 点击确认后的回调函数
+     * [3] 二次确认弹窗 (升级版)
+     * @param {string} title 标题
+     * @param {string} message 内容
+     * @param {string} confirmText 确认按钮文字
+     * @param {string} cancelText 取消按钮文字 (新增)
+     * @param {Function} onConfirm 回调函数
+     * @param {boolean} isDanger 是否为危险操作 (true则显示红色按钮) (新增)
      */
-    confirm: function(title, message, confirmText, onConfirm) {
-        this._render('confirm', title, message, confirmText, onConfirm);
+    confirm: function(title, message, confirmText, cancelText, onConfirm, isDanger = false) {
+        // 参数兼容处理：如果用户只传了4个参数，把 cancelText 当作默认值
+        if (typeof cancelText === 'function') {
+            isDanger = onConfirm || false;
+            onConfirm = cancelText;
+            cancelText = 'Cancel';
+        }
+
+        this._render('confirm', title, message, confirmText, onConfirm, cancelText, isDanger);
     }
 };
 

@@ -130,21 +130,29 @@ try {
         $reportedUserId = $dbSellerUserId;
     }
 
+    $contactEmail = isset($input['contactEmail']) ? trim((string)$input['contactEmail']) : null;
+
     // 5) Insert report
     $sql = "INSERT INTO Report (
+                Report_Type,
                 Report_Reason,
+                Report_Description,
                 Report_Status,
                 Report_Creation_Date,
                 Admin_Action_ID,
                 Reporting_User_ID,
+                Report_Contact_Email,
                 Reported_User_ID,
                 Reported_Item_ID
-            ) VALUES (?, 'Pending', NOW(), NULL, ?, ?, ?)";
+            ) VALUES (?, ?, ?, 'Pending', NOW(), NULL, ?, ?, ?, ?)";
 
     $stmt = $conn->prepare($sql);
     $ok = $stmt->execute([
+        $type,
         $reportReason,
+        $details,
         $reportingUserId,
+        $contactEmail,
         $reportedUserId,
         $reportedItemId
     ]);
