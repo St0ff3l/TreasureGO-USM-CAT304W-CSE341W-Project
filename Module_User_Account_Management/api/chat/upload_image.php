@@ -46,7 +46,7 @@ if ($file['size'] > $max_size) {
 }
 
 // Create directory if not exists
-$upload_dir = '../../../Public_Assets/chat_images/';
+$upload_dir = '../../assets/images/';
 if (!is_dir($upload_dir)) {
     mkdir($upload_dir, 0755, true);
 }
@@ -55,16 +55,9 @@ if (!is_dir($upload_dir)) {
 $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
 $filename = uniqid('chat_', true) . '.' . $ext;
 $filepath = $upload_dir . $filename;
-$db_path = '../../Public_Assets/chat_images/' . $filename; // Path stored in DB (relative to page or absolute? Let's stick to relative to project root or consistent with other images)
+$db_path = '../assets/images/' . $filename; // Path stored in DB (relative to chat.php in pages/)
 
-// Actually, let's store relative to project root if possible, or relative to the chat.php location.
-// In chat.php, we are in Module_User_Account_Management/pages/
-// The image is in Public_Assets/chat_images/
-// So from chat.php, it is ../../Public_Assets/chat_images/
-// Let's store the path that is easy to use.
-// Let's store: "Public_Assets/chat_images/filename" and handle the relative part in frontend or store "../../Public_Assets/chat_images/filename"
-// The product images seem to be stored as "Module_Product_Ecosystem/Public_Product_Images/..."
-// Let's store "../../Public_Assets/chat_images/" . $filename to be safe for now as it works with the current structure.
+
 
 if (move_uploaded_file($file['tmp_name'], $filepath)) {
     try {
