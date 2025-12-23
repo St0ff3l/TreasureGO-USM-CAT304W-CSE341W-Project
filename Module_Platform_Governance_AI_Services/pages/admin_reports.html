@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TreasureGO - Admin Report Center</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+  <script src="../../Public_Assets/js/headerbar.js"></script>
+  <script src="../../Public_Assets/js/status_dialog.js"></script>
+  <script src="../../Public_Assets/js/auth_modal.js"></script>
+
+  <script src="../../Public_Assets/js/admin_guard.js"></script>
+
+  <style>
+    /* ========================================= */
+    /* 核心变量 (Core Variables)             */
+    /* ========================================= */
+    :root {
+      --bg-color: #F3F6F9;
+      --primary: #4F46E5;
+      --primary-hover: #4338CA;
+      --text-dark: #1F2937;
+      --text-gray: #6B7280;
+      --glass-bg: rgba(255, 255, 255, 0.95);
+      --card-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.05);
+      --success: #10B981;
+      --danger: #EF4444;
+      --warning: #F59E0B;
+      --neutral: #9CA3AF;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-dark);
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+
+      /* 🔥 修正点：移除了 padding-top，防止 HeaderBar 被挤下来 */
+      margin: 0;
+
+      background-image:
+              radial-gradient(circle at 10% 20%, rgba(79, 70, 229, 0.05) 0%, transparent 40%),
+              radial-gradient(circle at 90% 80%, rgba(245, 158, 11, 0.05) 0%, transparent 40%);
+    }
+
+    /* --- 背景浮动动画 --- */
+    #floating-container {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      z-index: -1; /* 确保背景在最底层 */
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .floating-item {
+      position: absolute;
+      font-size: 4rem;
+      opacity: 0.6;
+      filter: drop-shadow(0 10px 10px rgba(0,0,0,0.1));
+      animation: floatUp 15s linear infinite;
+    }
+
+    @keyframes floatUp {
+      0% { transform: translateY(110vh) rotate(0deg); opacity: 0; }
+      10% { opacity: 0.8; }
+      90% { opacity: 0.8; }
+      100% { transform: translateY(-10vh) rotate(20deg); opacity: 0; }
+    }
+
+    /* ========================================= */
+    /* 页面头部 (Page Header)                */
+    /* ========================================= */
+    .page-header {
+      text-align: center;
+      /* 🔥 修正点：增加顶部边距，让标题与 HeaderBar 保持适当距离 */
+      padding: 60px 20px 30px;
+      position: relative;
+      z-index: 10;
+    }
+    .page-title {
+      font-size: 2.5rem; line-height: 1.1; margin-bottom: 0.5rem;
+      background: linear-gradient(to right, #1F2937 0%, #4F46E5 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .page-subtitle { color: var(--text-gray); font-size: 1.1rem; }
+
+    /* ========================================= */
+    /* 统计卡片 (Statistics Cards)            */
+    /* ========================================= */
+    .stats-container { max-width: 1200px; margin: 0 auto 40px; padding: 0 20px; position: relative; z-index: 10; }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
+
+    .stat-card {
+      background: white; border-radius: 20px; padding: 25px; text-align: center;
+      box-shadow: var(--card-shadow); transition: all 0.3s ease;
+    }
+    .stat-card:hover { transform: translateY(-5px); box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
+    .stat-icon { font-size: 2.5rem; margin-bottom: 10px; }
+    .stat-value { font-size: 2rem; font-weight: 800; color: var(--text-dark); }
+    .stat-label { font-size: 0.9rem; color: var(--text-gray); margin-top: 5px; }
+
+    .stat-card.total { border-top: 4px solid var(--primary); }
+    .stat-card.pending { border-top: 4px solid var(--warning); }
+    .stat-card.resolved { border-top: 4px solid var(--success); }
+    .stat-card.dismissed { border-top: 4px solid var(--neutral); }
+
+    /* ========================================= */
+    /* 举报列表 (Report List)               */
+    /* ========================================= */
+    .requests-container { max-width: 1200px; margin: 0 auto 100px; padding: 0 20px; position: relative; z-index: 10; }
+    .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px; }
+    .section-title { font-size: 1.5rem; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+
+    .filter-tabs { display: flex; gap: 10px; flex-wrap: wrap; }
+    .filter-tab {
+      padding: 8px 20px; border-radius: 20px; border: none; background: white; color: var(--text-gray);
+      font-weight: 600; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    .filter-tab:hover { background: #f3f4f6; }
+    .filter-tab.active { background: var(--primary); color: white; }
+
+    .requests-list { display: flex; flex-direction: column; gap: 15px; }
+
+    .request-card {
+      background: white; border-radius: 20px; padding: 20px 25px; box-shadow: var(--card-shadow);
+      display: flex; align-items: center; gap: 20px; transition: all 0.3s ease;
+    }
+    .request-card:hover { transform: translateY(-3px); box-shadow: 0 15px 35px rgba(0,0,0,0.1); }
+
+    .report-icon-box {
+      width: 50px; height: 50px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.5rem; flex-shrink: 0;
+    }
+    .type-product { background: #EEF2FF; color: var(--primary); }
+    .type-user { background: #FEF3C7; color: #D97706; }
+    .type-chat { background: #E0E7FF; color: #4338CA; }
+
+    .request-info { flex: 1; min-width: 0; }
+    .target-title { font-weight: 700; font-size: 1rem; color: var(--text-dark); margin-bottom: 4px; }
+    .target-title span { font-weight: 400; color: #6B7280; font-size: 0.9rem; margin-left: 5px; }
+
+    .request-meta { display: flex; gap: 15px; flex-wrap: wrap; color: var(--text-gray); font-size: 0.85rem; }
+    .request-meta span { display: flex; align-items: center; gap: 5px; }
+
+    .reason-badge {
+      display: inline-block; font-size: 0.75rem; font-weight: 700;
+      padding: 4px 10px; border-radius: 6px; background: #F3F4F6; color: #374151; margin-top: 6px;
+    }
+
+    .request-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
+    .action-buttons { display: flex; gap: 8px; }
+
+    .btn-action-view {
+      padding: 8px 16px; background: #F3F4F6; color: #374151; border-radius: 8px;
+      font-weight: 600; font-size: 0.85rem; border: none; cursor: pointer; transition: all 0.2s;
+    }
+    .btn-action-view:hover { background: #E5E7EB; }
+
+    .btn-resolve {
+      padding: 8px 16px; border-radius: 8px; border: none; background: var(--success);
+      color: white; font-weight: 600; cursor: pointer; transition: all 0.2s; font-size: 0.85rem;
+    }
+    .btn-resolve:hover { background: #059669; transform: translateY(-2px); }
+
+    .btn-dismiss {
+      padding: 8px 16px; border-radius: 8px; border: none; background: var(--neutral);
+      color: white; font-weight: 600; cursor: pointer; transition: all 0.2s; font-size: 0.85rem;
+    }
+    .btn-dismiss:hover { background: #6B7280; transform: translateY(-2px); }
+
+    .status-badge { padding: 6px 15px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; }
+    .status-Pending { background: #FEF3C7; color: #D97706; }
+    .status-Resolved { background: #D1FAE5; color: #059669; }
+    .status-Dismissed { background: #F3F4F6; color: #6B7280; }
+
+    .empty-state { text-align: center; padding: 60px 20px; background: white; border-radius: 20px; box-shadow: var(--card-shadow); }
+    .empty-icon { font-size: 4rem; margin-bottom: 15px; opacity: 0.5; }
+    .empty-text { color: var(--text-gray); font-size: 1.1rem; }
+    .loading { text-align: center; padding: 60px 20px; }
+    .spinner {
+      width: 50px; height: 50px; border: 4px solid #f3f4f6; border-top-color: var(--primary);
+      border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 15px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ========================================= */
+    /* 弹窗样式 (Modal Styles)               */
+    /* ========================================= */
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(4px);
+      display: none; align-items: center; justify-content: center; z-index: 2000;
+    }
+    .modal-overlay.active { display: flex; }
+
+    .modal {
+      background: white; border-radius: 24px; padding: 30px; max-width: 550px; width: 90%;
+      max-height: 90vh; overflow-y: auto; animation: slideUp 0.3s ease;
+    }
+    @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .modal-title { font-size: 1.3rem; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+    .modal-close {
+      width: 36px; height: 36px; border-radius: 50%; border: none; background: #f3f4f6;
+      cursor: pointer; font-size: 1.2rem; display: flex; align-items: center; justify-content: center;
+    }
+    .modal-close:hover { background: #e5e7eb; }
+
+    .detail-row { margin-bottom: 15px; }
+    .detail-label { font-size: 0.85rem; color: #6B7280; font-weight: 600; text-transform: uppercase; margin-bottom: 5px; }
+    .detail-value { font-size: 1rem; color: #1F2937; background: #F9FAFB; padding: 12px; border-radius: 12px; line-height: 1.5; }
+
+    .modal-form { display: flex; flex-direction: column; gap: 15px; margin-top: 15px; border-top: 1px solid #E5E7EB; padding-top: 20px; }
+    .form-textarea {
+      padding: 12px 15px; border: 1px solid #E5E7EB; border-radius: 12px; font-size: 1rem;
+      font-family: inherit; transition: all 0.2s; resize: vertical; min-height: 100px; width: 100%;
+    }
+    .form-textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); }
+
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+    .btn-cancel { padding: 12px 25px; border-radius: 12px; border: 1px solid #E5E7EB; background: white; color: var(--text-gray); font-weight: 600; cursor: pointer; }
+    .btn-confirm { padding: 12px 25px; border-radius: 12px; border: none; background: var(--primary); color: white; font-weight: 600; cursor: pointer; }
+
+    .btn-confirm.resolve { background: var(--success); }
+    .btn-confirm.dismiss { background: var(--neutral); }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .page-title { font-size: 1.8rem; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+      .stat-card { padding: 15px; }
+      .request-card { flex-direction: column; align-items: flex-start; gap: 15px; }
+      .request-actions { width: 100%; flex-direction: row; justify-content: space-between; align-items: center; }
+      #floating-container { display: none !important; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="floating-container"></div>
+
+<script>
+  // 挂载公共导航栏，设置 basePath 确保链接正确
+  TreasureGoHeaderbar.mount({ basePath: '../../' });
+</script>
+
+<section class="page-header">
+  <h1 class="page-title">🛡️ Report Center</h1>
+  <p class="page-subtitle">Review, investigate, and resolve community reports</p>
+</section>
+
+<section class="stats-container">
+  <div class="stats-grid">
+    <div class="stat-card total">
+      <div class="stat-icon">📢</div>
+      <div class="stat-value" id="stat-total">--</div>
+      <div class="stat-label">Total Reports</div>
+    </div>
+    <div class="stat-card pending">
+      <div class="stat-icon">⏳</div>
+      <div class="stat-value" id="stat-pending">--</div>
+      <div class="stat-label">Pending Review</div>
+    </div>
+    <div class="stat-card resolved">
+      <div class="stat-icon">✅</div>
+      <div class="stat-value" id="stat-resolved">--</div>
+      <div class="stat-label">Resolved</div>
+    </div>
+    <div class="stat-card dismissed">
+      <div class="stat-icon">🗑️</div>
+      <div class="stat-value" id="stat-dismissed">--</div>
+      <div class="stat-label">Dismissed</div>
+    </div>
+  </div>
+</section>
+
+<section class="requests-container">
+  <div class="section-header">
+    <h2 class="section-title">
+      <span>🚩</span> Reports List
+    </h2>
+    <div class="filter-tabs">
+      <button class="filter-tab active" data-filter="All">All</button>
+      <button class="filter-tab" data-filter="Pending">Pending</button>
+      <button class="filter-tab" data-filter="Resolved">Resolved</button>
+      <button class="filter-tab" data-filter="Dismissed">Dismissed</button>
+    </div>
+  </div>
+
+  <div id="requests-list" class="requests-list">
+    <div class="loading">
+      <div class="spinner"></div>
+      <p>Loading reports...</p>
+    </div>
+  </div>
+</section>
+
+<div id="details-modal" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title">📄 Report Details</h3>
+      <button class="modal-close" onclick="closeDetailsModal()">×</button>
+    </div>
+    <div id="details-content">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeDetailsModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<div id="action-modal" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title" id="action-title">Process Report</h3>
+      <button class="modal-close" onclick="closeActionModal()">×</button>
+    </div>
+    <div style="margin-bottom: 15px; color: #6B7280; font-size: 0.95rem;">
+      You are about to <strong id="action-type-text"></strong> this report. The user will be able to see your reply in their history.
+    </div>
+    <div class="modal-form">
+      <div class="form-group">
+        <label class="detail-label">Admin Reply / Action Note</label>
+        <textarea class="form-textarea" id="admin-reply" placeholder="e.g., User has been banned. / No violation found."></textarea>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeActionModal()">Cancel</button>
+      <button class="btn-confirm" id="action-confirm-btn">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // --- Mock Data & Config ---
+  let allReports = [
+    {
+      id: 105,
+      type: 'product',
+      targetName: 'iPhone 15 Pro Max',
+      reporter: 'Alice',
+      reporterId: 202,
+      reason: 'Scam',
+      details: 'Seller asks for direct bank transfer outside the platform.',
+      status: 'Pending',
+      date: '2025-12-23T10:30:00',
+      adminReply: null
+    },
+    {
+      id: 104,
+      type: 'user',
+      targetName: 'User_Spammer_007',
+      reporter: 'Bob',
+      reporterId: 305,
+      reason: 'Harassment',
+      details: 'Sending inappropriate messages repeatedly in chat.',
+      status: 'Pending',
+      date: '2025-12-22T14:15:00',
+      adminReply: null
+    },
+    {
+      id: 101,
+      type: 'product',
+      targetName: 'Sony Headphones',
+      reporter: 'Charlie',
+      reporterId: 401,
+      reason: 'Fake Item',
+      details: 'Item received is a plastic toy, not original.',
+      status: 'Resolved',
+      date: '2025-12-20T09:00:00',
+      adminReply: 'Seller banned and refund processed.'
+    },
+    {
+      id: 99,
+      type: 'user',
+      targetName: 'JohnDoe',
+      reporter: 'Dave',
+      reporterId: 402,
+      reason: 'Other',
+      details: 'He is rude.',
+      status: 'Dismissed',
+      date: '2025-12-19T11:20:00',
+      adminReply: 'Evidence insufficient for ban.'
+    }
+  ];
+
+  let currentFilter = 'All';
+  let currentReportId = null;
+  let currentActionType = null;
+
+  // --- Initialization ---
+  document.addEventListener('DOMContentLoaded', () => {
+    initFloatingItems();
+    updateStatistics();
+    renderReports();
+    initFilterTabs();
+  });
+
+  // --- Visual Effects ---
+  function initFloatingItems() {
+    const container = document.getElementById('floating-container');
+    const items = ['🚩', '🛡️', '⚠️', '🔨', '📢', '🚫', '🔍'];
+    for (let i = 0; i < 12; i++) {
+      const el = document.createElement('div');
+      el.classList.add('floating-item');
+      el.innerText = items[Math.floor(Math.random() * items.length)];
+      el.style.left = Math.random() * 100 + 'vw';
+      el.style.fontSize = (Math.random() * 3 + 3) + 'rem';
+      el.style.animationDuration = (Math.random() * 10 + 20) + 's';
+      el.style.animationDelay = '-' + (Math.random() * 20) + 's';
+      container.appendChild(el);
+    }
+  }
+
+  // --- Logic ---
+  function updateStatistics() {
+    document.getElementById('stat-total').textContent = allReports.length;
+    document.getElementById('stat-pending').textContent = allReports.filter(r => r.status === 'Pending').length;
+    document.getElementById('stat-resolved').textContent = allReports.filter(r => r.status === 'Resolved').length;
+    document.getElementById('stat-dismissed').textContent = allReports.filter(r => r.status === 'Dismissed').length;
+  }
+
+  function renderReports() {
+    const container = document.getElementById('requests-list');
+
+    let filtered = allReports;
+    if(currentFilter !== 'All') {
+      filtered = allReports.filter(r => r.status === currentFilter);
+    }
+
+    if (filtered.length === 0) {
+      container.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">📂</div>
+                    <p class="empty-text">No ${currentFilter === 'All' ? '' : currentFilter} reports found.</p>
+                </div>`;
+      return;
+    }
+
+    container.innerHTML = filtered.map(r => {
+      const icon = r.type === 'product' ? '📦' : (r.type === 'user' ? '👤' : '💬');
+      const typeClass = r.type === 'product' ? 'type-product' : (r.type === 'user' ? 'type-user' : 'type-chat');
+
+      return `
+            <div class="request-card">
+                <div class="report-icon-box ${typeClass}">
+                    ${icon}
+                </div>
+                <div class="request-info">
+                    <div class="target-title">${r.targetName} <span>(${r.type})</span></div>
+                    <div class="request-meta">
+                        <span>🆔 #${r.id}</span>
+                        <span>🗣️ By: ${r.reporter}</span>
+                        <span>📅 ${new Date(r.date).toLocaleDateString()}</span>
+                    </div>
+                    <div class="reason-badge">⚠️ ${r.reason}</div>
+                </div>
+                <div class="request-actions">
+                    <span class="status-badge status-${r.status}">${r.status}</span>
+                    <div class="action-buttons">
+                        <button class="btn-action-view" onclick="openDetailsModal(${r.id})">👁️ View</button>
+                        ${r.status === 'Pending' ? `
+                            <button class="btn-resolve" onclick="openActionModal(${r.id}, 'Resolved')">✓ Resolve</button>
+                            <button class="btn-dismiss" onclick="openActionModal(${r.id}, 'Dismissed')">✗ Dismiss</button>
+                        ` : ''}
+                    </div>
+                </div>
+            </div>`;
+    }).join('');
+  }
+
+  function initFilterTabs() {
+    document.querySelectorAll('.filter-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        currentFilter = tab.dataset.filter;
+        renderReports();
+      });
+    });
+  }
+
+  // --- Modal Logic ---
+
+  // 1. Details Modal
+  function openDetailsModal(id) {
+    const r = allReports.find(x => x.id === id);
+    if(!r) return;
+
+    const content = `
+            <div class="detail-row">
+                <div class="detail-label">Report ID</div>
+                <div class="detail-value">#${r.id}</div>
+            </div>
+            <div class="detail-row">
+                <div class="detail-label">Reporter</div>
+                <div class="detail-value">${r.reporter} (ID: ${r.reporterId})</div>
+            </div>
+            <div class="detail-row">
+                <div class="detail-label">Target Object</div>
+                <div class="detail-value">
+                    <strong>${r.targetName}</strong><br>
+                    <small style="color:#666">Type: ${r.type}</small>
+                </div>
+            </div>
+            <div class="detail-row">
+                <div class="detail-label">Reason</div>
+                <div class="detail-value" style="color: #D97706; font-weight:600;">${r.reason}</div>
+            </div>
+            <div class="detail-row">
+                <div class="detail-label">Full Description</div>
+                <div class="detail-value">${r.details}</div>
+            </div>
+            ${r.adminReply ? `
+            <div class="detail-row">
+                <div class="detail-label">Admin Action Note</div>
+                <div class="detail-value" style="border-left: 4px solid var(--primary);">${r.adminReply}</div>
+            </div>` : ''}
+        `;
+    document.getElementById('details-content').innerHTML = content;
+    document.getElementById('details-modal').classList.add('active');
+  }
+
+  function closeDetailsModal() {
+    document.getElementById('details-modal').classList.remove('active');
+  }
+
+  // 2. Action Modal
+  function openActionModal(id, actionType) {
+    currentReportId = id;
+    currentActionType = actionType;
+
+    const modal = document.getElementById('action-modal');
+    const title = document.getElementById('action-title');
+    const textSpan = document.getElementById('action-type-text');
+    const btn = document.getElementById('action-confirm-btn');
+    const input = document.getElementById('admin-reply');
+
+    input.value = ''; // Reset input
+
+    if (actionType === 'Resolved') {
+      title.textContent = '✅ Resolve Report';
+      title.style.color = 'var(--success)';
+      textSpan.textContent = 'MARK AS RESOLVED';
+      btn.textContent = 'Confirm Resolution';
+      btn.className = 'btn-confirm resolve';
+    } else {
+      title.textContent = '🗑️ Dismiss Report';
+      title.style.color = 'var(--text-gray)';
+      textSpan.textContent = 'DISMISS (Reject)';
+      btn.textContent = 'Dismiss Report';
+      btn.className = 'btn-confirm dismiss';
+    }
+
+    btn.onclick = submitAction;
+    modal.classList.add('active');
+  }
+
+  function closeActionModal() {
+    document.getElementById('action-modal').classList.remove('active');
+    currentReportId = null;
+  }
+
+  function submitAction() {
+    if(!currentReportId) return;
+    const reply = document.getElementById('admin-reply').value;
+
+    // Mock Logic
+    const reportIndex = allReports.findIndex(r => r.id === currentReportId);
+    if (reportIndex > -1) {
+      allReports[reportIndex].status = currentActionType;
+      allReports[reportIndex].adminReply = reply || (currentActionType === 'Resolved' ? 'Issue resolved.' : 'Report dismissed.');
+
+      closeActionModal();
+      updateStatistics();
+      renderReports();
+
+      // 🔥 2. 使用 StatusDialog 代替 Toast 显示结果
+      if(currentActionType === 'Resolved') {
+        StatusDialog.success('Success', `Report #${currentReportId} marked as resolved.`);
+      } else {
+        StatusDialog.success('Dismissed', `Report #${currentReportId} has been dismissed.`);
+      }
+
+    } else {
+      StatusDialog.fail('Error', 'Report not found.');
+    }
+  }
+
+  // Close Modals on click outside
+  document.querySelectorAll('.modal-overlay').forEach(overlay => {
+    overlay.addEventListener('click', (e) => {
+      if(e.target === overlay) {
+        overlay.classList.remove('active');
+      }
+    });
+  });
+
+</script>
+</body>
+</html>
