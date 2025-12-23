@@ -30,11 +30,10 @@
       background-color: var(--bg-color);
       color: var(--text-dark);
       min-height: 100vh;
-      /* 保持主页的背景风格，但去掉浮动动画干扰 */
       background-image:
               radial-gradient(circle at 10% 20%, rgba(79, 70, 229, 0.05) 0%, transparent 40%),
               radial-gradient(circle at 90% 80%, rgba(245, 158, 11, 0.05) 0%, transparent 40%);
-      padding-bottom: 60px;
+      padding-bottom: 80px; /* 底部留白增加 */
     }
 
     /* ========================================= */
@@ -42,38 +41,39 @@
     /* ========================================= */
     .container {
       max-width: 1200px;
-      margin: 40px auto;
-      padding: 0 20px;
+      margin: 60px auto; /* 顶部间距增加 */
+      padding: 0 30px;
     }
 
     .page-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 30px;
+      margin-bottom: 40px; /* 标题与列表间距增加 */
     }
 
     .page-title {
-      font-size: 2rem;
+      font-size: 2.2rem; /* 标题字号微调 */
       font-weight: 800;
       color: var(--text-dark);
       position: relative;
-      padding-left: 20px;
+      padding-left: 24px;
     }
     .page-title::before {
       content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
-      width: 6px; height: 30px; background: var(--primary); border-radius: 4px;
+      width: 6px; height: 36px; background: var(--primary); border-radius: 4px;
     }
 
     /* 筛选 Tab */
     .tabs {
-      display: flex; gap: 10px; background: white; padding: 5px;
-      border-radius: 50px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+      display: flex; gap: 15px; /* 按钮间距增加 */
+      background: white; padding: 8px; /* 内边距增加 */
+      border-radius: 60px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);
     }
     .tab-btn {
-      border: none; background: transparent; padding: 10px 25px;
+      border: none; background: transparent; padding: 12px 30px; /* 按钮更大 */
       border-radius: 40px; font-weight: 600; color: var(--text-gray);
-      cursor: pointer; transition: var(--transition);
+      cursor: pointer; transition: var(--transition); font-size: 1rem;
     }
     .tab-btn.active {
       background: var(--primary); color: white; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
@@ -86,7 +86,7 @@
     .audit-list {
       display: flex;
       flex-direction: column;
-      gap: 15px;
+      gap: 24px; /* 卡片之间的间距变大 */
     }
 
     .audit-item {
@@ -99,44 +99,58 @@
     }
 
     .audit-item:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+      transform: translateY(-4px); /* 悬浮位移增加 */
+      box-shadow: 0 12px 30px rgba(0,0,0,0.08);
     }
 
     /* --- 主行 (Summary Row) --- */
     .item-summary {
       display: grid;
-      /* 定义列宽：图片 | 信息 | 卖家 | 价格 | 状态 | 操作 */
-      grid-template-columns: 80px 2fr 1.5fr 1fr 1fr 120px;
+      /* 调整列宽比例，给内容更多空间 */
+      grid-template-columns: 90px 2fr 1.5fr 1fr 1fr 140px;
       align-items: center;
-      padding: 20px;
-      gap: 20px;
-      cursor: pointer; /* 暗示可点击展开 */
+      padding: 30px; /* 卡片内边距大幅增加 */
+      gap: 30px;     /* 列之间的间距增加 */
+      cursor: pointer;
     }
 
     /* 图片 */
     .item-thumb {
-      width: 80px; height: 80px; border-radius: 12px;
+      width: 90px; height: 90px; /* 图片变大一点 */
+      border-radius: 16px;
       object-fit: cover; background: #f3f4f6;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
     }
     .no-img {
-      width: 80px; height: 80px; border-radius: 12px;
-      background: #f3f4f6; display: flex; align-items: center; justify-content: center; font-size: 2rem;
+      width: 90px; height: 90px; border-radius: 16px;
+      background: #f3f4f6; display: flex; align-items: center; justify-content: center; font-size: 2.2rem;
     }
 
     /* 文本列 */
-    .col-info h4 { font-size: 1.1rem; font-weight: 700; color: var(--text-dark); margin-bottom: 4px; }
-    .col-info p { font-size: 0.85rem; color: var(--text-gray); display: flex; gap: 8px; align-items: center; }
-    .badge-cat { background: #EEF2FF; color: var(--primary); padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
+    .col-info h4 {
+      font-size: 1.25rem; font-weight: 700; color: var(--text-dark);
+      margin-bottom: 10px; /* 标题下边距增加 */
+      line-height: 1.4;
+    }
+    .col-info p {
+      font-size: 0.9rem; color: var(--text-gray);
+      display: flex; gap: 12px; align-items: center;
+    }
+    .badge-cat {
+      background: #EEF2FF; color: var(--primary);
+      padding: 4px 12px; /* 标签内边距增加 */
+      border-radius: 6px; font-size: 0.8rem; font-weight: 600;
+    }
 
-    .col-seller { display: flex; align-items: center; gap: 10px; }
-    .avatar { width: 32px; height: 32px; border-radius: 50%; background: #ddd; object-fit: cover; }
-    .seller-name { font-size: 0.9rem; font-weight: 600; }
+    .col-seller { display: flex; align-items: center; gap: 15px; }
+    .avatar { width: 40px; height: 40px; border-radius: 50%; background: #ddd; object-fit: cover; display: flex; align-items: center; justify-content: center; font-size: 18px;}
+    .seller-name { font-size: 1rem; font-weight: 600; color: #374151; }
 
-    .col-price { font-weight: 800; color: var(--text-dark); font-size: 1.1rem; }
+    .col-price { font-weight: 800; color: var(--text-dark); font-size: 1.25rem; letter-spacing: -0.5px; }
 
     .col-status span {
-      padding: 6px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 700;
+      padding: 8px 16px; /* 状态标变大 */
+      border-radius: 30px; font-size: 0.85rem; font-weight: 700;
       display: inline-block;
     }
     .status-pending { background: #FEF3C7; color: #D97706; }
@@ -144,82 +158,131 @@
     .status-rejected { background: #FEE2E2; color: #DC2626; }
 
     /* 操作按钮 */
-    .col-actions { display: flex; gap: 10px; justify-content: flex-end; }
+    .col-actions { display: flex; gap: 15px; justify-content: flex-end; }
     .btn-action {
-      width: 36px; height: 36px; border-radius: 50%; border: none;
+      width: 44px; height: 44px; /* 按钮变大 */
+      border-radius: 50%; border: none;
       display: flex; align-items: center; justify-content: center;
-      cursor: pointer; transition: var(--transition); font-size: 1.2rem;
+      cursor: pointer; transition: var(--transition); font-size: 1.4rem;
     }
     .btn-approve { background: #D1FAE5; color: #059669; }
-    .btn-approve:hover { background: #059669; color: white; transform: scale(1.1); }
+    .btn-approve:hover { background: #059669; color: white; transform: scale(1.1); box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3); }
     .btn-reject { background: #FEE2E2; color: #DC2626; }
-    .btn-reject:hover { background: #DC2626; color: white; transform: scale(1.1); }
+    .btn-reject:hover { background: #DC2626; color: white; transform: scale(1.1); box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3); }
 
     /* --- 详情展开区域 (Details Panel) --- */
     .item-details {
       max-height: 0; overflow: hidden;
       background: #fafafa; border-top: 1px dashed #e5e7eb;
-      transition: max-height 0.4s ease-out;
+      transition: max-height 0.5s ease-out; /* 动画稍慢一点更优雅 */
     }
-    .item-details.open { max-height: 500px; }
+    .item-details.open { max-height: 1200px; }
 
-    .details-content { padding: 25px; display: flex; gap: 40px; }
+    .details-content {
+      padding: 40px; /* 详情内边距增加 */
+      display: flex; gap: 60px; /* 左右分栏间距大幅增加 */
+    }
     .detail-desc { flex: 2; }
-    .detail-meta { flex: 1; border-left: 1px solid #e5e7eb; padding-left: 30px; }
+    .detail-meta {
+      flex: 1; border-left: 1px solid #e5e7eb; padding-left: 40px;
+      display: flex; flex-direction: column; gap: 10px; /* 元数据垂直间距 */
+    }
 
-    .detail-label { font-size: 0.8rem; color: #9ca3af; font-weight: 700; text-transform: uppercase; margin-bottom: 8px; display: block; }
-    .detail-text { font-size: 0.95rem; color: #4b5563; line-height: 1.6; margin-bottom: 20px; }
+    .detail-label {
+      font-size: 0.85rem; color: #9ca3af; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.5px;
+      margin-bottom: 10px; display: block;
+    }
+    .detail-text {
+      font-size: 1rem; color: #4b5563; line-height: 1.8; /* 行高增加 */
+      margin-bottom: 30px;
+    }
+
+    /* 🖼️ 多图画廊样式 */
+    .image-gallery { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 15px; }
+    .gallery-img {
+      width: 120px; height: 120px; /* 详情图变大 */
+      object-fit: cover; border-radius: 16px; cursor: zoom-in;
+      border: 3px solid #fff; box-shadow: 0 6px 12px rgba(0,0,0,0.08);
+      transition: transform 0.2s;
+    }
+    .gallery-img:hover { transform: translateY(-4px); border-color: var(--primary); }
 
     /* 模态框 (Reject Modal) */
     .modal-overlay {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.5); backdrop-filter: blur(5px);
+      background: rgba(0,0,0,0.5); backdrop-filter: blur(8px); /* 模糊度增加 */
       z-index: 2000; display: none; align-items: center; justify-content: center;
       opacity: 0; transition: opacity 0.3s;
     }
     .modal-overlay.show { display: flex; opacity: 1; }
 
     .modal-card {
-      background: white; width: 90%; max-width: 450px;
-      border-radius: 24px; padding: 30px;
-      box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+      background: white; width: 90%; max-width: 500px;
+      border-radius: 30px; padding: 40px;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.2);
       transform: translateY(20px); transition: transform 0.3s;
     }
     .modal-overlay.show .modal-card { transform: translateY(0); }
 
-    .modal-title { font-size: 1.5rem; font-weight: 800; margin-bottom: 15px; }
+    .modal-title { font-size: 1.8rem; font-weight: 800; margin-bottom: 20px; }
     .modal-textarea {
-      width: 100%; height: 120px; border: 2px solid #e5e7eb; border-radius: 12px;
-      padding: 15px; font-family: inherit; font-size: 1rem; resize: none; outline: none;
-      margin-bottom: 20px; transition: border-color 0.2s;
+      width: 100%; height: 140px; border: 2px solid #e5e7eb; border-radius: 16px;
+      padding: 18px; font-family: inherit; font-size: 1rem; resize: none; outline: none;
+      margin-bottom: 25px; transition: border-color 0.2s; background: #f9fafb;
     }
-    .modal-textarea:focus { border-color: var(--primary); }
+    .modal-textarea:focus { border-color: var(--primary); background: #fff; }
 
-    .modal-btns { display: flex; justify-content: flex-end; gap: 10px; }
-    .btn-modal { padding: 10px 24px; border-radius: 12px; font-weight: 600; cursor: pointer; border: none; }
+    .modal-btns { display: flex; justify-content: flex-end; gap: 15px; }
+    .btn-modal { padding: 12px 28px; border-radius: 14px; font-weight: 600; cursor: pointer; border: none; font-size: 1rem; transition: transform 0.2s;}
+    .btn-modal:active { transform: scale(0.95); }
     .btn-cancel { background: #f3f4f6; color: #4b5563; }
-    .btn-confirm-reject { background: var(--danger); color: white; }
+    .btn-confirm-reject { background: var(--danger); color: white; box-shadow: 0 4px 15px rgba(220, 38, 38, 0.3); }
+
+    /* 图片放大查看器样式 */
+    .img-viewer-overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.92); /* 背景更深 */
+      z-index: 3000; display: none; align-items: center; justify-content: center;
+      opacity: 0; transition: opacity 0.3s ease;
+      cursor: zoom-out;
+    }
+    .img-viewer-overlay.show { display: flex; opacity: 1; }
+
+    .img-viewer-content {
+      max-width: 85%; max-height: 85vh;
+      border-radius: 12px; box-shadow: 0 0 50px rgba(0,0,0,0.5);
+      transform: scale(0.95); transition: transform 0.3s ease;
+      cursor: default;
+    }
+    .img-viewer-overlay.show .img-viewer-content { transform: scale(1); }
+
+    .img-viewer-close {
+      position: absolute; top: 30px; right: 40px;
+      color: white; font-size: 50px; font-weight: bold;
+      cursor: pointer; z-index: 3001; transition: transform 0.2s; opacity: 0.8;
+    }
+    .img-viewer-close:hover { transform: scale(1.1); color: #fff; opacity: 1; }
 
     @media (max-width: 768px) {
-      .item-summary { grid-template-columns: 60px 1fr auto; gap: 10px; padding: 15px; }
+      .item-summary { grid-template-columns: 70px 1fr auto; gap: 15px; padding: 20px; }
       .col-info { grid-column: 2 / 3; }
       .col-actions { grid-column: 3 / 4; grid-row: 1 / 3; flex-direction: column; }
-      .col-seller, .col-price, .col-status { display: none; } /* 移动端简化显示 */
-      .item-thumb { width: 60px; height: 60px; }
+      .col-seller, .col-price, .col-status { display: none; }
+      .item-thumb { width: 70px; height: 70px; }
+      .details-content { flex-direction: column; gap: 30px; padding: 25px; }
+      .detail-meta { border-left: none; border-top: 1px solid #e5e7eb; padding-left: 0; padding-top: 20px; }
     }
   </style>
 </head>
 <body>
 
 <script src="../../Public_Assets/js/headerbar.js"></script>
-<script>
-  TreasureGoHeaderbar.mount({ basePath: '../../' });
-</script>
+<script>TreasureGoHeaderbar.mount({ basePath: '../../' });</script>
 
 <div class="container">
   <div class="page-header">
     <h1 class="page-title">Listing Audit</h1>
-
     <div class="tabs">
       <button class="tab-btn active" onclick="filterList('pending')">Pending</button>
       <button class="tab-btn" onclick="filterList('history')">History</button>
@@ -234,7 +297,7 @@
 <div class="modal-overlay" id="rejectModal">
   <div class="modal-card">
     <h3 class="modal-title">Reject Reason</h3>
-    <p style="margin-bottom:10px; color:#6b7280; font-size:0.9rem;">Please explain why this listing violates the guidelines.</p>
+    <p style="margin-bottom:15px; color:#6b7280; font-size:1rem;">Please explain why this listing violates the guidelines.</p>
     <textarea class="modal-textarea" id="rejectReasonInput" placeholder="e.g. Inappropriate content, Wrong category..."></textarea>
     <div class="modal-btns">
       <button class="btn-modal btn-cancel" onclick="closeRejectModal()">Cancel</button>
@@ -243,18 +306,19 @@
   </div>
 </div>
 
+<div class="img-viewer-overlay" id="imageViewer" onclick="closeImageViewer()">
+  <span class="img-viewer-close">&times;</span>
+  <img class="img-viewer-content" id="expandedImg" onclick="event.stopPropagation()">
+</div>
+
 <script>
   let currentRejectId = null;
-
-  // IMPORTANT: Adjust this path based on where this HTML file is located relative to the api folder.
-  // Assuming this HTML is in: Module_Platform_Governance_AI_Services/pages/
-  // And API is in: Module_Platform_Governance_AI_Services/api/
   const API_BASE = '../api/';
 
   // --- 1. Load Data ---
   async function loadAuditList(status = 'pending') {
     const container = document.getElementById('audit-list-container');
-    container.innerHTML = '<div style="text-align:center; padding: 40px; color: #999;">Loading... ⏳</div>';
+    container.innerHTML = '<div style="text-align:center; padding: 60px; color: #999;">Loading... ⏳</div>';
 
     try {
       const response = await fetch(`${API_BASE}Get_Audit_Products.php?status=${status}`);
@@ -289,31 +353,55 @@
     container.innerHTML = '';
 
     if (!items || items.length === 0) {
-      container.innerHTML = '<div style="text-align:center; padding: 60px; color: #999;">No items found. ✨</div>';
+      container.innerHTML = '<div style="text-align:center; padding: 80px; color: #999;">No items found. ✨</div>';
       return;
     }
 
     items.forEach(item => {
-      // 1. 图片路径处理
-      let imgHtml = '<div class="no-img">📦</div>';
+      // ✅ 修复：解析后端 GROUP_CONCAT 返回的逗号分隔字符串
+      let imagePaths = [];
       if (item.image) {
-        const cleanPath = item.image.replace(/^\.\.\//, '');
-        const finalPath = '../../' + cleanPath;
-
-        // 🔥 修复闪烁的核心代码：
-        // 1. this.onerror=null; 防止无限循环
-        // 2. this.outerHTML=...; 如果图片挂了，直接把自己变成一个灰色的盒子 div，不再尝试加载图片
-        imgHtml = `<img src="${finalPath}" class="item-thumb"
-                   onerror="this.onerror=null; this.outerHTML='<div class=\\'no-img\\'>📦</div>'">`;
+        imagePaths = item.image.toString().split(',').map(path => path.trim());
       }
 
-      // 2. 状态标准化
+      // 辅助函数：处理相对路径
+      const getCleanPath = (rawPath) => {
+        if (!rawPath) return '';
+        const clean = rawPath.replace(/^\.\.\//, '');
+        return '../../' + clean;
+      };
+
+      // 1. 列表封面图 (只显示第1张)
+      let thumbHtml = '<div class="no-img">📦</div>';
+      if (imagePaths.length > 0) {
+        const firstPath = getCleanPath(imagePaths[0]);
+        thumbHtml = `<img src="${firstPath}" class="item-thumb"
+                       onclick="openImageViewer(event, '${firstPath}')"
+                       onerror="this.onerror=null; this.outerHTML='<div class=\\'no-img\\'>📦</div>'">`;
+      }
+
+      // 2. 详情页多图画廊 (显示所有图)
+      let galleryHtml = '';
+      if (imagePaths.length > 0) {
+        imagePaths.forEach(path => {
+          const fullPath = getCleanPath(path);
+          galleryHtml += `
+                  <img src="${fullPath}" class="gallery-img"
+                       onclick="openImageViewer(event, '${fullPath}')"
+                       onerror="this.style.display='none'">
+              `;
+        });
+      } else {
+        galleryHtml = '<span style="color:#999; font-style:italic;">No images uploaded</span>';
+      }
+
+      // 状态标准化
       const rawStatus = item.status || 'pending';
       const normalizedStatus = rawStatus.toLowerCase();
       const statusClass = `status-${normalizedStatus}`;
       const statusText = normalizedStatus.charAt(0).toUpperCase() + normalizedStatus.slice(1);
 
-      // 3. 操作按钮逻辑
+      // 操作按钮
       let actionsHtml = '';
       if (normalizedStatus === 'pending') {
         actionsHtml = `
@@ -321,46 +409,44 @@
             <button class="btn-action btn-reject" title="Reject" onclick="openRejectModal(event, ${item.id})">✕</button>
         `;
       } else {
-        actionsHtml = `<span style="color:#ccc; font-size:0.9rem;">${statusText}</span>`;
+        actionsHtml = `<span style="color:#ccc; font-size:1rem; font-weight:600;">${statusText}</span>`;
       }
 
-      // 🔥 4. 构建审核日志区域 (Audit Log)
-      // 如果有审核备注（拒绝理由或通过备注），则显示出来
+      // 审核日志
       let auditLogHtml = '';
       if (item.comment && normalizedStatus !== 'pending') {
-        // 根据状态决定颜色：拒绝是红色背景，通过是绿色背景
-        const logColor = normalizedStatus === 'rejected' ? '#FEF2F2' : '#F0FDF4'; // 红淡色 vs 绿淡色
+        const logColor = normalizedStatus === 'rejected' ? '#FEF2F2' : '#F0FDF4';
         const logBorder = normalizedStatus === 'rejected' ? '#FECACA' : '#BBF7D0';
         const logTitleColor = normalizedStatus === 'rejected' ? '#DC2626' : '#16A34A';
-
         auditLogHtml = `
-            <div style="margin-top: 20px; background: ${logColor}; border: 1px solid ${logBorder}; padding: 15px; border-radius: 12px;">
-                <h5 style="color: ${logTitleColor}; font-weight: 700; margin-bottom: 5px;">
+            <div style="margin-top: 25px; background: ${logColor}; border: 1px solid ${logBorder}; padding: 20px; border-radius: 16px;">
+                <h5 style="color: ${logTitleColor}; font-weight: 700; margin-bottom: 8px; font-size: 1rem;">
                     📝 Audit Log (${statusText})
                 </h5>
-                <p style="color: #374151; font-size: 0.95rem;">${item.comment}</p>
+                <p style="color: #374151; font-size: 1rem;">${item.comment}</p>
             </div>
           `;
       }
 
-      // 🔥 5. 渲染 HTML
+      // 渲染 HTML
       const html = `
           <div class="audit-item" id="item-${item.id}">
               <div class="item-summary" onclick="toggleDetails(${item.id})">
-                  ${imgHtml}
+                  ${thumbHtml}
                   <div class="col-info">
-                      <div style="display:flex; gap:5px; margin-bottom:5px;">
+                      <div style="display:flex; gap:8px; margin-bottom:8px;">
                           <span class="badge-cat">${item.category}</span>
                           <span class="badge-cat" style="background:#F3F4F6; color:#6B7280;">${item.condition || 'Used'}</span>
+                          ${imagePaths.length > 1 ? `<span class="badge-cat" style="background:#E0E7FF; color:#4338CA;">${imagePaths.length} Images</span>` : ''}
                       </div>
                       <h4>${item.title}</h4>
                       <p>📅 ${item.date}</p>
                   </div>
                   <div class="col-seller">
-                      <div class="avatar" style="display:flex;align-items:center;justify-content:center;font-size:12px;">👤</div>
+                      <div class="avatar">👤</div>
                       <div>
                           <span class="seller-name">${item.seller}</span>
-                          <div style="font-size:0.8rem; color:#9CA3AF;">📍 ${item.location || 'Unknown'}</div>
+                          <div style="font-size:0.85rem; color:#9CA3AF; margin-top:4px;">📍 ${item.location || 'Unknown'}</div>
                       </div>
                   </div>
                   <div class="col-price">$${item.price.toFixed(2)}</div>
@@ -379,10 +465,10 @@
                           <span class="detail-label">Description</span>
                           <p class="detail-text">${item.description}</p>
 
-                          <span class="detail-label">Images</span>
-                          <div style="display:flex; gap:10px;">
-                              ${imgHtml}
-                              </div>
+                          <span class="detail-label">Images (${imagePaths.length})</span>
+                          <div class="image-gallery">
+                              ${galleryHtml}
+                          </div>
                       </div>
                       <div class="detail-meta">
                           <span class="detail-label">Item ID</span>
@@ -401,7 +487,7 @@
       container.insertAdjacentHTML('beforeend', html);
     });
   }
-  // --- 5. Toggle Details ---
+
   function toggleDetails(id) {
     const el = document.getElementById(`details-${id}`);
     if (el.classList.contains('open')) {
@@ -412,7 +498,6 @@
     }
   }
 
-  // --- 6. Approve Logic ---
   async function handleApprove(e, id) {
     e.stopPropagation();
     if (confirm(`Are you sure you want to APPROVE Item #${id}?`)) {
@@ -425,7 +510,6 @@
         const result = await res.json();
 
         if (result.success) {
-          // UI Removal Animation
           const itemEl = document.getElementById(`item-${id}`);
           itemEl.style.opacity = '0';
           setTimeout(() => itemEl.remove(), 300);
@@ -439,7 +523,6 @@
     }
   }
 
-  // --- 7. Reject Logic ---
   function openRejectModal(e, id) {
     e.stopPropagation();
     currentRejectId = id;
@@ -481,6 +564,28 @@
       alert('Network Error');
     }
   }
+
+  function openImageViewer(event, src) {
+    event.stopPropagation();
+    const viewer = document.getElementById('imageViewer');
+    const img = document.getElementById('expandedImg');
+    img.src = src;
+    viewer.classList.add('show');
+  }
+
+  function closeImageViewer() {
+    const viewer = document.getElementById('imageViewer');
+    viewer.classList.remove('show');
+    setTimeout(() => { document.getElementById('expandedImg').src = ''; }, 300);
+  }
+
+  document.addEventListener('keydown', function(event) {
+    if (event.key === "Escape") {
+      closeImageViewer();
+      closeRejectModal();
+    }
+  });
+
 </script>
 
 </body>

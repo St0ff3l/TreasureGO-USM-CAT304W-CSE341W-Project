@@ -396,15 +396,21 @@
     // 5.3 Image Gallery Logic
     function handleImages(item) {
         globalImageList = [];
-        // 解析图片路径
+
+        // 解析图片路径 - 修复了路径拼接问题 (../ -> ../../)
         if (item.All_Images) {
             globalImageList = item.All_Images.split(',').map(path => {
-                const cleanPath = path.replace(/^.*?Public_Images\//, 'Public_Images/');
-                return `../${cleanPath}`;
+                // 1. 标准化斜杠，防止 Windows 路径错误
+                let cleanPath = path.replace(/\\/g, '/');
+                // 2. 截取 Public_Images 之后的部分
+                cleanPath = cleanPath.replace(/^.*?Public_Images\//, 'Public_Images/');
+                // 3. 使用正确的 ../../ 层级
+                return `../../${cleanPath}`;
             });
         } else if (item.Main_Image) {
-            const cleanPath = item.Main_Image.replace(/^.*?Public_Images\//, 'Public_Images/');
-            globalImageList = [`../${cleanPath}`];
+            let cleanPath = item.Main_Image.replace(/\\/g, '/');
+            cleanPath = cleanPath.replace(/^.*?Public_Images\//, 'Public_Images/');
+            globalImageList = [`../../${cleanPath}`];
         }
 
         if (globalImageList.length === 0) {

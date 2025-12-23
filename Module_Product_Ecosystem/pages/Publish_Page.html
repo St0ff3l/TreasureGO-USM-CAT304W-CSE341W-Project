@@ -200,22 +200,32 @@
       border: 2px dashed #CBD5E1;
       border-radius: 20px;
       padding: 30px;
-      min-height: 220px;
+      /* 底部增加 padding，防止右下角按钮遮挡图片 */
+      padding-bottom: 80px;
+      min-height: 250px;
       background: #F8FAFC;
       transition: all 0.3s ease;
       display: flex; flex-direction: column;
       align-items: center; justify-content: center;
       position: relative;
-      cursor: pointer;
+      cursor: default;
     }
     .upload-area:hover {
+      border-color: var(--primary);
+    }
+    /* 拖拽时的高亮样式 */
+    .upload-area.drag-over {
       border-color: var(--primary);
       background: var(--primary-light);
       transform: scale(1.01);
     }
+
     #uploadPlaceholder {
       text-align: center;
       transition: transform 0.3s ease;
+      cursor: pointer;
+      width: 100%;
+      padding: 20px;
     }
     .upload-area:hover #uploadPlaceholder { transform: translateY(-5px); }
     .upload-icon {
@@ -225,12 +235,17 @@
       display: flex; align-items: center; justify-content: center;
       border-radius: 50%; box-shadow: 0 10px 20px rgba(0,0,0,0.05);
       color: var(--primary);
+      margin: 0 auto;
     }
 
+    /* --- 关键修改：将justify-content 改回 center --- */
     #imagePreview {
       display: none; width: 100%; gap: 15px;
-      flex-wrap: wrap; justify-content: center;
+      flex-wrap: wrap;
+      justify-content: center; /* 改回居中排列，多张时会自动向两侧扩展 */
     }
+    /* ------------------------------------------- */
+
     .preview-wrapper {
       position: relative;
       width: 110px; height: 110px;
@@ -269,7 +284,12 @@
       display: flex; align-items: center; justify-content: center;
       cursor: pointer; box-shadow: 0 10px 20px rgba(79, 70, 229, 0.4);
       transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-      position: absolute; bottom: -25px; right: 20px;
+
+      /* 修改位置到右下角 */
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+
       display: none; z-index: 20;
     }
     .add-more-btn:hover { background: var(--primary-hover); transform: scale(1.15) rotate(90deg); }
@@ -342,8 +362,9 @@
       <label>Product Images</label>
       <div class="upload-area" id="uploadArea">
         <button type="button" class="clear-btn" id="clearBtn" onclick="clearImages(event)">Clear All</button>
-        <div id="uploadPlaceholder" onclick="triggerUpload()">
+        <div id="uploadPlaceholder">
           <div class="upload-icon">📷</div>
+          <p style="margin-top: 15px; color: #6B7280; font-weight: 500;">Click or Drag & Drop images here</p>
         </div>
         <div id="imagePreview"></div>
         <button type="button" class="add-more-btn" id="addMoreBtn" onclick="triggerUpload()">+</button>
@@ -479,7 +500,9 @@
   });
 
 
-  // Image Upload Logic
+  // ==========================================
+  // Image Upload Logic (Click & Drag-and-Drop)
+  // ==========================================
   const uploadArea = document.getElementById('uploadArea');
   const fileInput = document.getElementById('fileInput');
   const preview = document.getElementById('imagePreview');
@@ -488,9 +511,69 @@
   const addMoreBtn = document.getElementById('addMoreBtn');
   let dt = new DataTransfer();
 
+  // 1. Click to Upload
   window.triggerUpload = function() { fileInput.click(); }
-  window.clearImages = function(e) { e.stopPropagation(); dt.items.clear(); fileInput.files = dt.files; renderPreview(); }
 
+  // Click on placeholder triggers upload
+  placeholder.addEventListener('click', function() {
+    triggerUpload();
+  });
+
+  // 2. Drag and Drop Support
+  ;['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+    uploadArea.addEventListener(eventName, preventDefaults, false);
+  });
+
+  function preventDefaults(e) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+
+  // Highlight effect
+  ;['dragenter', 'dragover'].forEach(eventName => {
+    uploadArea.addEventListener(eventName, highlight, false);
+  });
+  ;['dragleave', 'drop'].forEach(eventName => {
+    uploadArea.addEventListener(eventName, unhighlight, false);
+  });
+
+  function highlight(e) { uploadArea.classList.add('drag-over'); }
+  function unhighlight(e) { uploadArea.classList.remove('drag-over'); }
+
+  // Handle Dropped Files
+  uploadArea.addEventListener('drop', handleDrop, false);
+
+  function handleDrop(e) {
+    const droppedFiles = e.dataTransfer.files;
+    handleFiles(droppedFiles);
+  }
+
+  // 3. Common File Handling
+  function handleFiles(files) {
+    for (let file of files) {
+      // Only accept images
+      if (file.type.startsWith('image/')) {
+        dt.items.add(file);
+      }
+    }
+    fileInput.files = dt.files;
+    renderPreview();
+  }
+
+  // Handle Input Change (from clicking)
+  fileInput.addEventListener('change', function(e) {
+    handleFiles(this.files);
+  });
+
+  // Clear All
+  window.clearImages = function(e) {
+    if(e) e.stopPropagation();
+    dt.items.clear();
+    fileInput.files = dt.files;
+    renderPreview();
+  }
+
+  // Remove Single Image
   window.removeImage = function(index) {
     const newDt = new DataTransfer();
     const files = dt.files;
@@ -502,38 +585,37 @@
     renderPreview();
   }
 
-  fileInput.addEventListener('change', function(e) {
-    for (let file of this.files) { dt.items.add(file); }
-    this.files = dt.files;
-    renderPreview();
-  });
-
   function renderPreview() {
     preview.innerHTML = '';
     if (dt.files.length > 0) {
       placeholder.style.display = 'none';
       clearBtn.style.display = 'block';
+      // Flex display for the button
       addMoreBtn.style.display = 'flex';
       preview.style.display = 'flex';
+
       Array.from(dt.files).forEach((file, index) => {
-        if (file.type.startsWith('image/')) {
-          const reader = new FileReader();
-          reader.onload = function(event) {
-            const wrapper = document.createElement('div');
-            wrapper.className = 'preview-wrapper';
-            const img = document.createElement('img');
-            img.src = event.target.result;
-            img.className = 'preview-item';
-            const delBtn = document.createElement('div');
-            delBtn.className = 'delete-single-btn';
-            delBtn.innerHTML = '✕';
-            delBtn.onclick = function() { removeImage(index); };
-            wrapper.appendChild(img);
-            wrapper.appendChild(delBtn);
-            preview.appendChild(wrapper);
+        const reader = new FileReader();
+        reader.onload = function(event) {
+          const wrapper = document.createElement('div');
+          wrapper.className = 'preview-wrapper';
+          const img = document.createElement('img');
+          img.src = event.target.result;
+          img.className = 'preview-item';
+
+          const delBtn = document.createElement('div');
+          delBtn.className = 'delete-single-btn';
+          delBtn.innerHTML = '✕';
+          delBtn.onclick = function(e) {
+            e.stopPropagation(); // Stop event bubbling
+            removeImage(index);
           };
-          reader.readAsDataURL(file);
-        }
+
+          wrapper.appendChild(img);
+          wrapper.appendChild(delBtn);
+          preview.appendChild(wrapper);
+        };
+        reader.readAsDataURL(file);
       });
     } else {
       placeholder.style.display = 'block';
@@ -544,7 +626,7 @@
   }
 
   // ==========================================
-  // Form Submission (Updated with StatusDialog)
+  // Form Submission
   // ==========================================
   document.getElementById('publishForm').addEventListener('submit', async function(e) {
     e.preventDefault();

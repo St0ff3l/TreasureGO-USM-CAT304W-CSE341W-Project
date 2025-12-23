@@ -2,16 +2,11 @@
 // Module_Product_Ecosystem/api/Get_Audit_Products.php
 
 header('Content-Type: application/json');
-
-// 引入数据库配置文件
 require_once __DIR__ . '/config/treasurego_db_config.php';
 
 $statusFilter = isset($_GET['status']) ? $_GET['status'] : 'pending';
 
 try {
-    // 构建 SQL 查询
-    // 1. 修正了图片查询子句：使用 Image_URL 字段
-    // 2. 增加了排序：ORDER BY Image_is_primary DESC (优先取主图)
     $sql = "SELECT 
                 p.Product_ID, 
                 p.Product_Title, 
@@ -24,21 +19,32 @@ try {
                 p.Product_Review_Comment,
                 u.User_Username AS Seller_Name,
                 c.Category_Name,
-                (SELECT Image_URL FROM Product_Images pi 
-                 WHERE pi.Product_ID = p.Product_ID 
-                 ORDER BY Image_is_primary DESC LIMIT 1) as Main_Image
+                
+                -- ✅ 关键：获取该商品所有图片，用逗号拼接
+                (SELECT GROUP_CONCAT(Image_URL SEPARATOR ',') 
+                 FROM Product_Images pi 
+                 WHERE pi.Product_ID = p.Product_ID) as All_Images,
+                 
+                par.Admin_Review_Result,
+                par.Admin_Review_Comment as Log_Comment,
+                par.Admin_Review_Time as Log_Time,
+                adminUser.User_Username as Admin_Name
+
             FROM Product p
             LEFT JOIN User u ON p.User_ID = u.User_ID
-            LEFT JOIN Categories c ON p.Category_ID = c.Category_ID";
+            LEFT JOIN Categories c ON p.Category_ID = c.Category_ID
+            LEFT JOIN Product_Admin_Review par ON par.Product_Review_ID = (
+                SELECT Product_Review_ID FROM Product_Admin_Review 
+                WHERE Product_ID = p.Product_ID 
+                ORDER BY Admin_Review_Time DESC LIMIT 1
+            )
+            LEFT JOIN User adminUser ON par.Admin_ID = adminUser.User_ID";
 
-    // 筛选逻辑
     if ($statusFilter === 'pending') {
-        $sql .= " WHERE p.Product_Review_Status = 'pending'";
+        $sql .= " WHERE p.Product_Review_Status = 'pending' ORDER BY p.Product_Created_Time DESC";
     } else {
-        $sql .= " WHERE p.Product_Review_Status IN ('approved', 'rejected')";
+        $sql .= " WHERE p.Product_Review_Status IN ('approved', 'rejected') ORDER BY par.Admin_Review_Time DESC";
     }
-
-    $sql .= " ORDER BY p.Product_Created_Time DESC";
 
     $stmt = $conn->prepare($sql);
     $stmt->execute();
@@ -46,30 +52,32 @@ try {
 
     $data = [];
     foreach ($products as $row) {
+        // ✅ 关键：将数据库取出的字符串直接传给 image 字段
+        $imageString = $row['All_Images'] ?? '';
+
+        $displayDate = ($statusFilter === 'pending') ? $row['Product_Created_Time'] : ($row['Log_Time'] ?? $row['Product_Created_Time']);
+        $displayComment = ($statusFilter === 'pending') ? null : ($row['Log_Comment'] ?? $row['Product_Review_Comment']);
+
         $data[] = [
             'id' => $row['Product_ID'],
             'title' => $row['Product_Title'],
-            // 如果分类表联查失败，显示ID作为兜底
             'category' => $row['Category_Name'] ?? 'Unknown',
             'price' => (float)$row['Product_Price'],
-            // 如果用户表联查失败，显示ID作为兜底
             'seller' => $row['Seller_Name'] ?? 'User#' . $row['User_ID'],
-            'sellerAvatar' => null,
+            'admin_auditor' => $row['Admin_Name'] ?? null,
             'status' => $row['Product_Review_Status'],
-            'image' => $row['Main_Image'], // 这里拿到的是 Image_URL
+            'image' => $imageString, // 这里是 "url1,url2"
             'description' => $row['Product_Description'],
-            'date' => $row['Product_Created_Time'],
+            'date' => $displayDate,
             'condition' => $row['Product_Condition'],
             'location' => $row['Product_Location'],
-            'comment' => $row['Product_Review_Comment']
+            'comment' => $displayComment
         ];
     }
 
     echo json_encode(['success' => true, 'data' => $data]);
 
 } catch (Exception $e) {
-    // ⚠️ 调试模式：如果 User 表或 Categories 表字段不对，这里会报具体错误
-    // 比如：Unknown column 'u.Username' in 'field list'
     error_log("SQL Error: " . $e->getMessage());
     echo json_encode(['success' => false, 'msg' => 'SQL Error: ' . $e->getMessage()]);
 }
