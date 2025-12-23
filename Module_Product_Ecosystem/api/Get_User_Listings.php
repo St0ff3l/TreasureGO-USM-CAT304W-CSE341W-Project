@@ -30,6 +30,7 @@ try {
                 p.Product_Description, 
                 p.Product_Price, 
                 p.Product_Status, 
+                p.Product_Review_Status,
                 p.Product_Condition, 
                 p.Product_Created_Time,
                 (SELECT Image_URL FROM Product_Images pi 

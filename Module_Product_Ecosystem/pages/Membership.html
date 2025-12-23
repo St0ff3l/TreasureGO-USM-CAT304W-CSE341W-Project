@@ -213,7 +213,7 @@
 
   document.addEventListener('DOMContentLoaded', async () => {
     try {
-      const response = await fetch('../api/get_membership_plans.php');
+      const response = await fetch('../api/Get_Membership_Plans.php');
       const result = await response.json();
 
       if (result.success) {

@@ -136,13 +136,15 @@
 
   <div class="product-info">
 
+    <div id="rejection-alert-container"></div>
+
     <div class="stats-row">
       <div class="stat-item"><span class="stat-val">1,204</span><span class="stat-label">Views</span></div>
       <div class="stat-item"><span class="stat-val">42</span><span class="stat-label">Likes</span></div>
       <div class="stat-item"><span class="stat-val">8</span><span class="stat-label">Chats</span></div>
     </div>
 
-    <h1 class="product-title">Loading...</h1>
+    <h1 class="product-title" id="product-title">Loading...</h1>
 
     <div class="price-container">
       <span class="product-price" id="displayPrice">$0.00</span>
@@ -211,22 +213,72 @@
     const statusBadge = document.getElementById('statusBadge');
     const unlistBtn = document.getElementById('btnUnlist');
 
-    if (item.Product_Status === 'Active') {
-      statusBadge.className = 'status-badge status-active';
-      statusBadge.innerText = '● On Sale';
-      unlistBtn.innerText = '🔒 Pull Off Shelf (Unlist)';
-      unlistBtn.style.background = '#FFF7ED';
-      unlistBtn.style.color = '#F59E0B';
-      unlistBtn.style.border = '1px solid #FFEDD5';
-    } else {
-      statusBadge.className = 'status-badge status-inactive';
-      statusBadge.innerText = '● Unlisted';
+    // 获取两个状态字段
+    const reviewStatus = (item.Product_Review_Status || 'pending').toLowerCase();
+    const sellerStatus = (item.Product_Status || 'active').toLowerCase();
+
+    // 默认情况
+    let badgeText = '● On Sale';
+    let badgeClass = 'status-active'; // 绿色
+
+    // 🔥🔥🔥 核心修改：状态逻辑判断 🔥🔥🔥
+    if (reviewStatus === 'rejected') {
+      // --- 1. 被拒绝状态 ---
+      badgeText = '🚫 Rejected';
+
+      // 强制修改样式为红色
+      statusBadge.style.backgroundColor = '#FEF2F2';
+      statusBadge.style.color = '#DC2626';
+
+      // 插入拒绝理由警告框
+      const reason = item.Product_Review_Comment || "No specific reason provided.";
+      const alertHtml = `
+            <div style="background: #FFF5F5; border: 1px solid #FECACA; color: #B91C1C; padding: 15px; border-radius: 12px; margin-bottom: 20px;">
+                <h4 style="margin-bottom: 5px; display:flex; align-items:center; gap:8px;">
+                    ⚠️ Action Required: Listing Rejected
+                </h4>
+                <p style="font-size: 0.9rem;">
+                    <strong>Reason:</strong> ${reason}
+                </p>
+                <p style="font-size: 0.85rem; margin-top:5px; color: #991B1B;">
+                    Please fix the issue and contact admin or re-submit.
+                </p>
+            </div>
+        `;
+      document.getElementById('rejection-alert-container').innerHTML = alertHtml;
+
+    } else if (reviewStatus === 'pending') {
+      // --- 2. 审核中 ---
+      badgeText = '⏳ Under Review';
+      statusBadge.style.backgroundColor = '#FFFBEB'; // 黄色
+      statusBadge.style.color = '#D97706';
+
+    } else if (sellerStatus === 'unlisted') {
+      // --- 3. 卖家自己下架 ---
+      badgeText = '● Unlisted';
+      statusBadge.style.backgroundColor = '#F3F4F6'; // 灰色
+      statusBadge.style.color = '#6B7280';
+
       unlistBtn.innerText = '📢 Re-list Item';
       unlistBtn.style.background = '#ECFDF5';
       unlistBtn.style.color = '#059669';
       unlistBtn.style.border = '1px solid #A7F3D0';
+    } else {
+      // --- 4. 正常在售 (Active & Approved) ---
+      badgeText = '● On Sale';
+      statusBadge.style.backgroundColor = '#ECFDF5'; // 绿色
+      statusBadge.style.color = '#10B981';
+
+      unlistBtn.innerText = '🔒 Pull Off Shelf (Unlist)';
+      unlistBtn.style.background = '#FFF7ED';
+      unlistBtn.style.color = '#F59E0B';
+      unlistBtn.style.border = '1px solid #FFEDD5';
     }
 
+    // 应用文字
+    statusBadge.innerText = badgeText;
+
+    // 图片渲染逻辑 (保持不变)
     productImages = [];
     if (item.All_Images) {
       productImages = item.All_Images.split(',').map(path => {
@@ -397,7 +449,7 @@
                           'Item deleted successfully.',
                           'Back to List',
                           // 直接跳转到当前目录下的文件
-                          () => { window.location.href = 'Search_Results_Page.html'; }
+                          () => { window.location.href = 'My_Listings.html'; }
                   );
                 } else {
                   StatusDialog.fail('Delete Failed', result.message);

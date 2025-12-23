@@ -1,5 +1,5 @@
 <?php
-// 文件路径: api/Get_Products.php
+// 文件路径: Module_Product_Ecosystem/api/Get_Products.php
 
 // 1. 屏蔽错误输出 (生产环境建议)
 error_reporting(0);
@@ -25,7 +25,6 @@ try {
     $conditions = isset($_GET['conditions']) ? $_GET['conditions'] : [];
 
     // 2. 构建 SQL 查询
-    // 🔥 修改点 1：把 WHERE p.Product_Status = 'Active' 去掉，改为 WHERE 1=1
     $sql = "SELECT 
                 p.Product_ID, 
                 p.User_ID,
@@ -37,11 +36,10 @@ try {
                 p.Product_Created_Time,
                 p.Product_Location,
                 p.Delivery_Method,
+                p.Product_Review_Status, /* 把审核状态也查出来，前端可能用到 */
                 u.User_Username, 
                 u.User_Average_Rating,
-                /* 获取主图 */
                 (SELECT Image_URL FROM Product_Images pi WHERE pi.Product_ID = p.Product_ID AND pi.Image_is_primary = 1 LIMIT 1) as Main_Image,
-                /* 获取所有图片 (用逗号分隔) */
                 (SELECT GROUP_CONCAT(Image_URL SEPARATOR ',') FROM Product_Images pi WHERE pi.Product_ID = p.Product_ID) as All_Images
             FROM Product p
             JOIN User u ON p.User_ID = u.User_ID
@@ -52,17 +50,19 @@ try {
 
     // --- 3. 动态添加筛选条件 ---
 
-    // 🔥 修改点 2：智能判断逻辑
     if ($product_id > 0) {
-        // 【情况A：详情页模式】如果指定了 ID，就不限制状态（允许查询 Sold、Active 甚至 Unlisted）
+        // 【详情页模式】根据 ID 查询
         $sql .= " AND p.Product_ID = ?";
         $params[] = $product_id;
     } else {
-        // 【情况B：搜索/列表模式】如果没有指定 ID，强制只显示 Active (在售)
+        // 【大众列表/搜索模式】
+        // 必须是上架状态 (Active)
         $sql .= " AND p.Product_Status = 'Active'";
+        // 🔥 必须是审核通过状态 (approved)
+        $sql .= " AND p.Product_Review_Status = 'approved'";
     }
 
-    // --- 其他通用的筛选条件 (搜索、分类、价格) ---
+    // --- 其他通用的筛选条件 ---
 
     if (!empty($q)) {
         $sql .= " AND (p.Product_Title LIKE ? OR p.Product_Description LIKE ?)";

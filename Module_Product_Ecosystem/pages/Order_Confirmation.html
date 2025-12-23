@@ -317,9 +317,11 @@
 </div>
 
 <script>
-    // 全局变量
+    // ==============================================
+    // 1. 全局变量 (完全复用旧代码的初始逻辑)
+    // ==============================================
     let currentProductPrice = 0;
-    let currentShippingCost = 8.00;
+    let currentShippingCost = 7.00;
     let userCurrentBalance = 0.00;
 
     const urlParams = new URLSearchParams(window.location.search);
@@ -366,6 +368,9 @@
         }
     }
 
+    // ==============================================
+    // 2. 渲染页面逻辑 (判断 Shipping 或 Meetup 限制)
+    // ==============================================
     function renderOrderPage(item) {
         document.getElementById('order-title').innerText = item.Product_Title;
         document.getElementById('order-condition').innerText = `Condition: ${item.Product_Condition}`;
@@ -384,23 +389,34 @@
         const meetOpt = document.getElementById('opt-meet');
         const shipOpt = document.getElementById('opt-ship');
 
+        // --- 核心判断逻辑修改 ---
         if (item.Delivery_Method === 'shipping') {
+            // 情况1：仅支持快递 -> 禁用面交
             selectDelivery('ship');
             meetOpt.classList.add('disabled');
             meetOpt.innerHTML += '<div style="font-size:0.7rem; margin-top:5px; color:#ef4444; font-weight:600;">(Unavailable)</div>';
-        } else if (item.Delivery_Method === 'meetup') {
+        }
+        else if (item.Delivery_Method === 'meetup') {
+            // 情况2：仅支持面交 -> 禁用快递 (新增逻辑)
             selectDelivery('meet');
             shipOpt.classList.add('disabled');
             shipOpt.innerHTML += '<div style="font-size:0.7rem; margin-top:5px; color:#ef4444; font-weight:600;">(Unavailable)</div>';
-        } else {
+        }
+        else {
+            // 情况3：两者都支持 -> 默认选中快递
             selectDelivery('ship');
         }
+
         calculateTotals();
     }
 
+    // ==============================================
+    // 3. 配送切换逻辑 (复用旧版 0 vs 15 的逻辑)
+    // ==============================================
     function selectDelivery(type) {
         const meetOpt = document.getElementById('opt-meet');
         const shipOpt = document.getElementById('opt-ship');
+
         if (type === 'meet' && meetOpt.classList.contains('disabled')) return;
         if (type === 'ship' && shipOpt.classList.contains('disabled')) return;
 
@@ -410,11 +426,11 @@
         if (type === 'meet') {
             meetOpt.classList.add('selected'); shipOpt.classList.remove('selected');
             meetInfo.style.display = 'block'; shipForm.style.display = 'none';
-            currentShippingCost = 0;
+            currentShippingCost = 0; // 旧版逻辑：面交0元
         } else {
             shipOpt.classList.add('selected'); meetOpt.classList.remove('selected');
             meetInfo.style.display = 'none'; shipForm.style.display = 'block';
-            currentShippingCost = 8.00;
+            currentShippingCost = 7.00;
         }
         calculateTotals();
     }
@@ -426,10 +442,11 @@
         document.getElementById('total-price-display').innerText = `$${total.toFixed(2)}`;
     }
 
-
-    // 🔥 第一步：点击 Pay Now 触发
+    // ==============================================
+    // 4. 支付触发器：仅保留二次确认 UI
+    // ==============================================
     function handlePayClick() {
-        // 1. 验证地址
+        // 1. 基础验证
         if (currentShippingCost > 0) {
             const addressInputs = document.querySelectorAll('#shipping-form .input-field');
             for (let input of addressInputs) {
@@ -440,38 +457,40 @@
             }
         }
 
-        // 2. 验证余额 (保留这里的弹窗，因为提供了充值跳转的便利性)
         const totalAmount = parseFloat(document.getElementById('total-price-display').innerText.replace('$', ''));
 
-        if (totalAmount > userCurrentBalance) {
-            // 余额不足时，点击 "Top Up" 跳转
-            StatusDialog.fail('Insufficient Funds', 'Your balance is too low.', 'Top Up', () => {
-                // ✅ 修正路径：跳转到充值页面
-                window.location.href = '../../Module_Transaction_Fund/pages/Fund_Request.html';
-            });
-            return;
-        }
-
-        // 3. 弹出二次确认
+        // 2. 仅弹出确认框 (保留新版UI的交互)
         StatusDialog.confirm(
             'Confirm Payment?',
             `You are about to pay $${totalAmount.toFixed(2)} from your wallet.`,
             'Yes, Pay Now',
             function() {
-                // 用户点击 "Yes" 后，执行真正的支付
+                // 点击 Yes 后，进入真正的处理逻辑
                 processPayment(totalAmount);
             }
         );
     }
 
-
-    // 🔥 第二步：真正的支付逻辑 (API 请求)
+    // ==============================================
+    // 5. 核心支付逻辑 (复用旧版：余额不足直接跳失败页)
+    // ==============================================
     async function processPayment(totalAmount) {
         const payBtn = document.querySelector('.btn-pay');
+
+        // --- 旧代码核心逻辑：余额判断 ---
+        // 如果余额不足，直接跳转 Payment_Failure.html，而不是弹窗提示充值
+        if (totalAmount > userCurrentBalance) {
+            window.location.href = "Payment_Failure.html";
+            return;
+        }
+        // -----------------------------
+
+        const shippingType = currentShippingCost > 0 ? 'shipping' : 'meetup';
+
         const payload = {
             product_id: productId,
             total_amount: totalAmount,
-            shipping_type: currentShippingCost > 0 ? 'shipping' : 'meetup'
+            shipping_type: shippingType
         };
 
         payBtn.disabled = true;
@@ -486,19 +505,22 @@
 
             const result = await response.json();
 
-            // 🔥🔥🔥 关键修改：恢复跳转到原始的 HTML 页面 🔥🔥🔥
             if (result.success) {
-                // 成功 -> 跳转 Payment_Success.html (带上参数以防万一)
-                window.location.href = 'Payment_Success.html?type=order&id=' + productId;
+                // 成功 -> 跳转 Payment_Success.html (旧版不带参数，为了兼容UI建议带参数，但逻辑上已是旧版)
+                window.location.href = "Payment_Success.html";
             } else {
-                // 失败 -> 跳转 Payment_Failure.html
-                window.location.href = 'Payment_Failure.html?type=order&msg=' + encodeURIComponent(result.msg);
+                console.warn("Payment failed:", result.msg);
+                if (result.msg.includes('Insufficient balance')) {
+                    window.location.href = "Payment_Failure.html";
+                } else {
+                    // 其他API错误提示
+                    StatusDialog.fail('Payment Error', result.msg);
+                    payBtn.disabled = false;
+                    payBtn.innerText = "Pay Now";
+                }
             }
-
         } catch (error) {
             console.error("Network Error:", error);
-            // 网络错误作为特殊情况，还是用弹窗提示比较好，或者你也想跳转失败页？
-            // 这里保留弹窗提示网络错误，因为 API 还没通
             StatusDialog.fail('Connection Error', 'Please check your internet connection.');
             payBtn.disabled = false;
             payBtn.innerText = "Pay Now";

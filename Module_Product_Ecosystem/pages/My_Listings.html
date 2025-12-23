@@ -6,7 +6,9 @@
   <title>My Listings - TreasureGO</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
   <style>
-    /* ... (保持你的原有 CSS 样式不变) ... */
+    /* ========================================= */
+    /* 样式部分 (完全保留你的原样式) */
+    /* ========================================= */
     :root {
       --bg-color: #F3F6F9;
       --primary: #4F46E5;
@@ -92,7 +94,7 @@
       justify-content: center;
       font-size: 3.5rem;
       transition: 0.3s;
-      /* 新增：必须设置为 relative 以便放置印章 */
+      /* 必须设置为 relative 以便放置印章 */
       position: relative;
     }
 
@@ -126,7 +128,7 @@
     .empty-state { text-align: center; padding: 60px 20px; display: none; }
     .empty-icon { font-size: 4rem; margin-bottom: 20px; display: block; opacity: 0.5; }
 
-    /* --- 新增：已售出商品样式 --- */
+    /* --- 已售出商品样式 --- */
     .product-card.sold-item .card-img-container img {
       filter: grayscale(100%); /* 图片变灰 */
       opacity: 0.5;            /* 图片变淡 */
@@ -220,7 +222,6 @@
     try {
       const timestamp = new Date().getTime();
       const response = await fetch(`${API_URL}?t=${timestamp}`);
-
       const result = await response.json();
 
       if (result.success) {
@@ -228,6 +229,7 @@
       } else {
         console.error('Error:', result.message);
         if(result.message === 'Not logged in') {
+          // window.location.href = '../../Module_User_Account_Management/pages/login.php';
           alert("Please log in to view your listings.");
         }
       }
@@ -236,6 +238,7 @@
     }
   }
 
+  // 🔥 核心渲染函数 🔥
   function renderListings(products) {
     const grids = {
       'active': document.getElementById('grid-active'),
@@ -245,17 +248,53 @@
     };
     const counts = { 'active': 0, 'review': 0, 'sold': 0, 'inactive': 0 };
 
+    // 清空现有列表
     for (let key in grids) { if(grids[key]) grids[key].innerHTML = ''; }
 
     products.forEach(item => {
-      const dbStatus = (item.Product_Status || '').toLowerCase();
+      // 1. 获取两个状态
+      const sellerStatus = (item.Product_Status || '').toLowerCase(); // active, sold, unlisted
+      const reviewStatus = (item.Product_Review_Status || 'pending').toLowerCase(); // pending, approved, rejected
 
-      let tabCategory = 'inactive';
-      if (dbStatus === 'active') tabCategory = 'active';
-      else if (dbStatus === 'unlisted') tabCategory = 'inactive';
-      else if (dbStatus === 'sold') tabCategory = 'sold';
-      else if (dbStatus === 'pending' || dbStatus === 'review') tabCategory = 'review';
+      // 2. 判定逻辑：决定这个商品去哪个 Tab
+      let tabCategory = 'inactive'; // 默认兜底
+      let displayStatus = sellerStatus; // 用于显示的文字
+      let badgeColorClass = 'status-active'; // 徽章颜色
 
+      // --- 优先级判断 ---
+
+      // A. 已售出 (最高优先级)
+      if (sellerStatus === 'sold') {
+        tabCategory = 'sold';
+        displayStatus = 'Sold';
+        badgeColorClass = 'status-sold';
+      }
+      // B. 被拒绝 (Rejected) -> 归入 Inactive
+      else if (reviewStatus === 'rejected') {
+        tabCategory = 'inactive';
+        displayStatus = 'Rejected';
+        badgeColorClass = 'status-unlisted'; // 用红色的样式
+      }
+      // C. 审核中 (Pending) -> 归入 Under Review
+      else if (reviewStatus === 'pending') {
+        tabCategory = 'review';
+        displayStatus = 'Under Review';
+        badgeColorClass = 'status-review';
+      }
+      // D. 审核通过 (Approved) 且 卖家设为 Active -> 真正的 Active
+      else if (reviewStatus === 'approved' && sellerStatus === 'active') {
+        tabCategory = 'active';
+        displayStatus = 'Active';
+        badgeColorClass = 'status-active';
+      }
+      // E. 审核通过 但卖家下架 -> Inactive
+      else if (sellerStatus === 'unlisted') {
+        tabCategory = 'inactive';
+        displayStatus = 'Unlisted';
+        badgeColorClass = 'status-unlisted';
+      }
+
+      // 3. 渲染卡片
       if (grids[tabCategory]) {
         counts[tabCategory]++;
 
@@ -265,28 +304,28 @@
           imgUrl = '../' + cleanPath;
         }
 
-        // --- 修改：判断是否售出 ---
-        const soldCssClass = (dbStatus === 'sold') ? 'sold-item' : '';
+        const soldCssClass = (tabCategory === 'sold') ? 'sold-item' : '';
 
+        // 🔥 防止图片一直闪烁：添加了 this.onerror=null 🔥
         const cardHtml = `
           <div class="product-card ${soldCssClass}" onclick="window.location.href='Seller_Product_Management.html?id=${item.Product_ID}'">
 
-            <div class="card-action-btn" onclick="event.stopPropagation(); handleAction('${item.Product_ID}', '${dbStatus}')">
-              ${getActionIcon(dbStatus)}
+            <div class="card-action-btn" onclick="event.stopPropagation(); handleAction('${item.Product_ID}')">
+              ✎
             </div>
 
             <div class="card-img-container">
               <img src="${imgUrl}"
                    alt="${item.Product_Title}"
                    style="width:100%; height:100%; object-fit:cover;"
-                   onerror="this.src='${DEFAULT_IMG}'">
+                   onerror="this.onerror=null; this.src='${DEFAULT_IMG}'">
             </div>
 
             <div class="card-info">
               <h4 class="card-title">${item.Product_Title}</h4>
               <div class="card-footer">
-                <span class="card-price">$${item.Product_Price}</span>
-                <span class="status-badge status-${dbStatus}">${capitalize(dbStatus)}</span>
+                <span class="card-price">$${parseFloat(item.Product_Price).toFixed(2)}</span>
+                <span class="status-badge ${badgeColorClass}">${displayStatus}</span>
               </div>
             </div>
           </div>
@@ -299,20 +338,8 @@
     checkEmptyStates(counts);
   }
 
-  function getActionIcon(status) {
-    if (status === 'active') return '✎';
-    if (status === 'unlisted') return '🚀';
-    if (status === 'sold') return '📄';
-    return '👁';
-  }
-
-  function handleAction(id, status) {
+  function handleAction(id) {
     window.location.href = `Seller_Product_Management.html?id=${id}`;
-  }
-
-  function capitalize(str) {
-    if(!str) return '';
-    return str.charAt(0).toUpperCase() + str.slice(1);
   }
 
   function updateTabCounts(counts) {
