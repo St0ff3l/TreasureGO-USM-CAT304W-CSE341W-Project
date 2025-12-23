@@ -56,8 +56,16 @@
     .sidebar-card {
       background: white; border-radius: var(--card-radius);
       padding: 20px; box-shadow: var(--card-shadow);
-      position: sticky; top: 100px;
+      /* 统一为 admin dashboard 的固定/滑动样式 */
+      position: sticky;
+      top: 110px;
+      z-index: 5;
+      max-height: calc(100vh - 140px); /* 预留顶部 header + 底部空间 */
+      overflow-y: auto;
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+      will-change: transform;
     }
+    .sidebar-card:hover { transform: translateY(-6px); box-shadow: 0 20px 50px rgba(79,70,229,0.08); }
     .menu-title { font-size: 0.85rem; color: var(--text-gray); font-weight: 700; margin-bottom: 10px; margin-top: 20px; text-transform: uppercase; letter-spacing: 0.5px; }
     .menu-title:first-child { margin-top: 0; }
 
@@ -144,7 +152,16 @@
     .action-card {
       background: white; border-radius: var(--card-radius); padding: 20px; box-shadow: var(--card-shadow);
       display: flex; flex-direction: column; gap: 10px;
+      /* 与左侧一致：固定位置 + 内部滑动 */
+      position: sticky;
+      top: 110px;
+      z-index: 5;
+      max-height: calc(100vh - 140px);
+      overflow-y: auto;
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+      will-change: transform;
     }
+    .action-card:hover { transform: translateY(-6px); box-shadow: 0 20px 50px rgba(79,70,229,0.08); }
     .action-btn {
       display: flex; align-items: center; gap: 10px; padding: 12px; border-radius: 12px; text-decoration: none;
       color: var(--text-dark); font-weight: 500; transition: 0.2s;
@@ -395,3 +412,4 @@
 </script>
 </body>
 </html>
+
