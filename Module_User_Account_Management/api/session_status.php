@@ -42,4 +42,5 @@ if (is_logged_in()) {
 // ...
 
 echo json_encode($response);
+
 ?>

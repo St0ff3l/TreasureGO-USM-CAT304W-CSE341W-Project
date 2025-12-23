@@ -177,42 +177,98 @@
         const avatarBtn = document.getElementById('nav-avatar');
         const adminBtn = document.getElementById('nav-admin-btn');
 
-        if (!loginBtn || !userMenu) return;
+        console.log('[Headerbar] Checking session...');
+        console.log('[Headerbar] BasePath:', p);
+        console.log('[Headerbar] API URL:', apiUrl);
+        console.log('[Headerbar] Elements found:', {
+            loginBtn: !!loginBtn,
+            userMenu: !!userMenu,
+            avatarBtn: !!avatarBtn,
+            adminBtn: !!adminBtn
+        });
+
+        if (!loginBtn || !userMenu) {
+            console.error('[Headerbar] Required DOM elements not found!');
+            return;
+        }
 
         try {
-            const res = await fetch(apiUrl);
+            // 修改点：带上 credentials，设置 Accept 并关闭缓存，检测重定向与非 JSON 响应
+            const res = await fetch(apiUrl, {
+                method: 'GET',
+                credentials: 'include', // <- 关键：让浏览器发送 cookie（HttpOnly 会话 cookie）
+                headers: { 'Accept': 'application/json' },
+                cache: 'no-cache'
+            });
+            console.log('[Headerbar] Response status:', res.status, 'redirected:', res.redirected);
+
+            // 如果被重定向，很可能服务器返回了 HTML 登录页（没有携带会话）
+            if (res.redirected) {
+                console.warn('[Headerbar] Request was redirected — likely not authenticated or wrong endpoint.');
+                throw new Error('Redirected to non-API endpoint');
+            }
+
+            // 确保返回的是 JSON，再去解析
+            const contentType = res.headers.get('content-type') || '';
+            if (!contentType.includes('application/json')) {
+                console.warn('[Headerbar] session_status did not return JSON. Content-Type:', contentType);
+                throw new Error('Invalid response content-type: ' + contentType);
+            }
+
+            if (!res.ok) {
+                throw new Error(`HTTP error! status: ${res.status}`);
+            }
+
             const data = await res.json();
+            console.log('[Headerbar] Session data received:', data);
 
             if (data.is_logged_in) {
+                console.log('[Headerbar] User is logged in');
                 loginBtn.style.display = 'none';
                 userMenu.style.display = 'inline-block';
 
                 if (data.user) {
+                    console.log('[Headerbar] User data:', {
+                        username: data.user.username,
+                        role: data.user.role,
+                        avatar_url: data.user.avatar_url
+                    });
+
                     if (avatarBtn) {
                         if (data.user.avatar_url) {
+                            console.log('[Headerbar] Setting avatar image');
                             avatarBtn.innerHTML = `<img src="${data.user.avatar_url}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
                             avatarBtn.style.background = 'transparent';
                         }
                         else if (data.user.username) {
+                            console.log('[Headerbar] Setting avatar initial');
                             avatarBtn.innerText = data.user.username.charAt(0).toUpperCase();
                         }
                     }
 
                     if (adminBtn && data.user.role === 'admin') {
+                        console.log('[Headerbar] User is admin, showing admin button');
                         adminBtn.style.display = 'inline-block';
                     } else if (adminBtn) {
                         adminBtn.style.display = 'none';
                     }
                 }
             } else {
+                console.log('[Headerbar] User is not logged in');
                 loginBtn.style.display = 'inline-block';
                 userMenu.style.display = 'none';
                 if (adminBtn) adminBtn.style.display = 'none';
             }
         } catch (err) {
-            console.error("Headerbar: Session check failed", err);
+            console.error('[Headerbar] Session check failed:', err);
+            console.error('[Headerbar] Error details:', {
+                message: err.message,
+                stack: err.stack
+            });
+            // 发生错误时显示登录按钮
             loginBtn.style.display = 'inline-block';
             userMenu.style.display = 'none';
+            if (adminBtn) adminBtn.style.display = 'none';
         }
     }
 
