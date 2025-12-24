@@ -6,3 +6,4 @@
 /Module_User_Account_Management/api/config/secrets.php
 /Module_User_Account_Management/api/config/treasurego_db_config.php
 /.idea/
+/Module_Product_Ecosystem/api/config/Gemini_Service.php
