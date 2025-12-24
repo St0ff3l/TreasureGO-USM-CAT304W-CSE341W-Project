@@ -215,7 +215,7 @@
         <button id="nav-login-btn" class="btn-primary" onclick="window.location.href='${p}Module_User_Account_Management/pages/login.php'">Login</button>
 
         <div id="nav-user-menu" class="menu-container" style="display: none;">
-          <div id="nav-avatar" class="dots-btn" onclick="window.location.href='${p}Module_User_Account_Management/pages/profile.php'">👤</div>
+          <div id="nav-avatar" class="dots-btn" onclick="window.location.href='${p}Module_User_Account_Management/pages/profile.php'"></div>
           <div class="dropdown-content">
             <a href="${p}Module_User_Account_Management/api/logout.php" class="dropdown-item" style="color: #ef4444;">Log Out</a>
           </div>
@@ -254,11 +254,22 @@
                 if (data.user) {
                     // 头像处理
                     if (avatarBtn) {
-                        if (data.user.avatar_url) {
-                            avatarBtn.innerHTML = `<img src="${data.user.avatar_url}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
+                        if (data.user.avatar_url && data.user.avatar_url.trim() !== '') {
+                            // 如果是 http 开头（外部链接）则直接用，否则加上 basePath
+                            const avatarSrc = data.user.avatar_url.startsWith('http') 
+                                ? data.user.avatar_url 
+                                : (p + data.user.avatar_url);
+                                
+                            const fallbackInitial = (data.user.username || '?').charAt(0).toUpperCase();
+                            avatarBtn.innerHTML = `<img src="${avatarSrc}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;" onerror="this.style.display='none'; this.parentNode.innerText='${fallbackInitial}'; this.parentNode.style.background='#EEF2FF';">`;
                             avatarBtn.style.background = 'transparent';
-                        } else if (data.user.username) {
-                            avatarBtn.innerText = data.user.username.charAt(0).toUpperCase();
+                        } else {
+                            // 重置为文字头像模式
+                            avatarBtn.innerHTML = ''; // 清空可能存在的 img
+                            avatarBtn.style.background = '#EEF2FF'; // 恢复背景色
+                            
+                            const name = data.user.username || '?';
+                            avatarBtn.innerText = name.charAt(0).toUpperCase();
                         }
                     }
                     // 管理员按钮处理

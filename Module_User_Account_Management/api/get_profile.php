@@ -18,7 +18,7 @@ $user_id = get_current_user_id();
 try {
     $pdo = getDBConnection();
     // 2. 查询数据 (不查密码!)
-    $stmt = $pdo->prepare("SELECT User_ID, User_Username, User_Email, User_Role, User_Created_At FROM User WHERE User_ID = ?");
+    $stmt = $pdo->prepare("SELECT User_ID, User_Username, User_Email, User_Role, User_Created_At, User_Profile_Image AS User_Profile_image FROM User WHERE User_ID = ?");
     $stmt->execute([$user_id]);
     $user = $stmt->fetch();
 

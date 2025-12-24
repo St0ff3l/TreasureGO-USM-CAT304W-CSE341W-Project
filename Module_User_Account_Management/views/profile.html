@@ -92,6 +92,14 @@
       display: flex; align-items: center; justify-content: center;
       font-size: 3rem; border: 4px solid white;
       box-shadow: 0 10px 25px rgba(79, 70, 229, 0.15);
+      cursor: pointer; transition: transform 0.2s; position: relative;
+    }
+    .large-avatar:hover { transform: scale(1.05); }
+    .large-avatar::after {
+        content: '📷'; position: absolute; bottom: 0; right: 0;
+        font-size: 1.2rem; background: white; border-radius: 50%;
+        width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     }
     .user-name { font-size: 1.8rem; font-weight: 800; margin-bottom: 5px; }
     .user-meta { color: var(--text-gray); font-size: 0.95rem; display: flex; align-items: center; justify-content: center; gap: 10px; }
@@ -300,7 +308,7 @@
 
     <div id="view-overview" class="view-section active">
       <div class="profile-header-card">
-        <div class="large-avatar" id="u_avatar">👤</div>
+        <div class="large-avatar" id="u_avatar" onclick="openAvatarModal()" title="Click to change avatar">👤</div>
         <h1 class="user-name" id="u_name">Loading...</h1>
         <div class="user-meta">
           <span id="u_email">...</span>
@@ -456,6 +464,30 @@
   </div>
 </div>
 
+<!-- Avatar Upload Modal -->
+<div class="modal-overlay" id="avatar-modal">
+  <div class="modal-content" style="text-align: center;">
+    <div class="settings-header" style="margin-bottom: 20px; display:flex; justify-content:space-between;">
+      <h2>Change Avatar</h2>
+      <i class="ri-close-line" style="font-size:1.5rem; cursor:pointer;" onclick="closeAvatarModal()"></i>
+    </div>
+    
+    <div style="margin-bottom: 20px;">
+      <div id="avatar-preview" style="width: 120px; height: 120px; border-radius: 50%; background: #f3f4f6; margin: 0 auto; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 2px dashed #ccc;">
+        <span style="color: #999;">Preview</span>
+      </div>
+    </div>
+
+    <form onsubmit="handleAvatarSubmit(event)">
+      <div class="form-group">
+        <input type="file" id="avatar_file" accept="image/*" class="form-input" onchange="previewAvatar(this)" required>
+        <p style="font-size: 0.8rem; color: #666; margin-top: 5px;">Max size: 5MB. Formats: JPG, PNG, GIF, WebP</p>
+      </div>
+      <button type="submit" class="btn-save" style="width:100%;">Upload & Save</button>
+    </form>
+  </div>
+</div>
+
 <script>
   document.addEventListener('DOMContentLoaded', async () => {
     // 1. 挂载 Headerbar 组件
@@ -499,7 +531,12 @@
 
     const avatarEl = document.getElementById('u_avatar');
     if (user.User_Profile_image) {
-      avatarEl.innerHTML = `<img src="${user.User_Profile_image}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+      // Handle relative path for profile page (depth 2)
+      const src = user.User_Profile_image.startsWith('http') 
+          ? user.User_Profile_image 
+          : ('../../' + user.User_Profile_image);
+      const fallbackInitial = (user.User_Username || '?').charAt(0).toUpperCase();
+      avatarEl.innerHTML = `<img src="${src}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" onerror="this.style.display='none'; this.parentNode.innerText='${fallbackInitial}';">`;
     } else if (user.User_Username) {
       avatarEl.innerText = user.User_Username.charAt(0).toUpperCase();
     }
@@ -736,6 +773,81 @@
     StatusDialog.confirm("Log Out", "Are you sure you want to sign out?", "Log Out", "Cancel", () => {
       window.location.href = '../api/logout.php';
     }, true);
+  }
+
+  // --- Avatar Upload Logic ---
+  const avatarModal = document.getElementById('avatar-modal');
+  
+  function openAvatarModal() {
+    avatarModal.classList.add('open');
+    // Reset form
+    document.getElementById('avatar_file').value = '';
+    document.getElementById('avatar-preview').innerHTML = '<span style="color: #999;">Preview</span>';
+  }
+  
+  function closeAvatarModal() {
+    avatarModal.classList.remove('open');
+  }
+  
+  function previewAvatar(input) {
+    if (input.files && input.files[0]) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        document.getElementById('avatar-preview').innerHTML = `<img src="${e.target.result}" style="width:100%; height:100%; object-fit:cover;">`;
+      }
+      reader.readAsDataURL(input.files[0]);
+    }
+  }
+  
+  async function handleAvatarSubmit(e) {
+    e.preventDefault();
+    const fileInput = document.getElementById('avatar_file');
+    if (!fileInput.files || !fileInput.files[0]) return;
+    
+    const formData = new FormData();
+    formData.append('avatar', fileInput.files[0]);
+    
+    try {
+      const res = await fetch('../api/upload_avatar.php', {
+        method: 'POST',
+        body: formData
+      });
+      const json = await res.json();
+      
+      if (json.status === 'success') {
+        closeAvatarModal();
+        StatusDialog.success('Success', 'Avatar updated successfully!', 'OK', () => {
+            // Update profile page avatar
+            const avatarEl = document.getElementById('u_avatar');
+            const fallbackInitial = document.getElementById('u_name').innerText.charAt(0).toUpperCase();
+            avatarEl.innerHTML = `<img src="${json.url}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" onerror="this.style.display='none'; this.parentNode.innerText='${fallbackInitial}';">`;
+            
+            // Update Headerbar avatar (if possible)
+            // Try to update headerbar DOM directly if it exists
+            const headerAvatar = document.querySelector('#nav-avatar img');
+            if (headerAvatar) {
+                headerAvatar.src = json.url;
+                headerAvatar.onerror = function() {
+                    this.style.display='none'; 
+                    this.parentNode.innerText = fallbackInitial;
+                    this.parentNode.style.background='#EEF2FF';
+                };
+            } else {
+                // If it was text before, we might need to replace the content
+                const headerAvatarBtn = document.getElementById('nav-avatar');
+                if (headerAvatarBtn) {
+                     headerAvatarBtn.innerHTML = `<img src="${json.url}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;" onerror="this.style.display='none'; this.parentNode.innerText='${fallbackInitial}'; this.parentNode.style.background='#EEF2FF';">`;
+                     headerAvatarBtn.style.background = 'transparent';
+                }
+            }
+        });
+      } else {
+        StatusDialog.fail('Upload Failed', json.message);
+      }
+    } catch (err) {
+      console.error(err);
+      StatusDialog.fail('Error', 'Network error occurred.');
+    }
   }
 </script>
 </body>

@@ -21,7 +21,7 @@ if (is_logged_in()) {
     $user_id = get_current_user_id();
 
     try {
-        $pdo = getDatabaseConnection();
+        $pdo = getDBConnection();
         if (!$pdo) {
             // 数据库连接失败时仍然返回会话信息
             $response['is_logged_in'] = true;
@@ -35,7 +35,7 @@ if (is_logged_in()) {
             exit;
         }
 
-        $stmt = $pdo->prepare("SELECT User_Username, User_Role, User_Profile_image FROM User WHERE User_ID = ? LIMIT 1");
+        $stmt = $pdo->prepare("SELECT User_Username AS User_Username, User_Role AS User_Role, User_Profile_Image AS User_Profile_Image FROM User WHERE User_ID = ? LIMIT 1");
         $stmt->execute([$user_id]);
         $user = $stmt->fetch();
 
@@ -46,7 +46,7 @@ if (is_logged_in()) {
                 'username' => $user['User_Username'],
                 'role' => $user['User_Role'],
                 // 👇 修改这里：如果有图就用图，没图就给 null
-                'avatar_url' => $user['User_Profile_image'] ?? null
+                'avatar_url' => $user['User_Profile_Image'] ?? null
             ];
         } else {
             // 如果用户行未找到，则回退到会话

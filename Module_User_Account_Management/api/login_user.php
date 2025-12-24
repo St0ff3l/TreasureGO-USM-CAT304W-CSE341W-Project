@@ -20,7 +20,7 @@ try {
     // 2. 查询数据库
     $pdo = getDBConnection();
     // 注意：字段名严格遵守你的数据库约束
-    $stmt = $pdo->prepare("SELECT User_ID, User_Password_Hash, User_Username, User_Role FROM User WHERE User_Email = ? LIMIT 1");
+    $stmt = $pdo->prepare("SELECT User_ID AS User_ID, User_Password_Hash AS User_Password_Hash, User_Username AS User_Username, User_Role AS User_Role FROM User WHERE User_Email = ? LIMIT 1");
     $stmt->execute([$email]);
     $user = $stmt->fetch();
 
@@ -29,6 +29,7 @@ try {
         // 4. 写入 Session
         $_SESSION['user_id'] = $user['User_ID'];
         $_SESSION['user_role'] = $user['User_Role'];
+        $_SESSION['user_username'] = $user['User_Username'];
 
         echo json_encode([
             'status' => 'success',
