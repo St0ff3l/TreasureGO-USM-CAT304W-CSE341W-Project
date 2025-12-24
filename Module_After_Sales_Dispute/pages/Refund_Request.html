@@ -11,7 +11,7 @@
 
   <style>
     /* =========================================
-       1. Global Variables & Reset (保持一致)
+       1. Global Variables & Reset
        ========================================= */
     :root {
       --primary: #4F46E5;
@@ -30,7 +30,7 @@
     body {
       font-family: 'Plus Jakarta Sans', sans-serif;
       background: #F0F2F5;
-      /* 复用原本的背景纹理 */
+      /* Background Pattern */
       background-image:
               radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%),
               radial-gradient(at 50% 0%, hsla(225,39%,30%,1) 0, transparent 50%),
@@ -72,7 +72,7 @@
       -webkit-text-fill-color: transparent;
     }
 
-    /* Item Summary Box (New) */
+    /* Item Summary Box */
     .item-summary {
       background: #F8FAFC;
       border: 1px solid #E2E8F0;
@@ -153,7 +153,7 @@
     .form-group small::before { content: "ℹ️"; font-size: 14px; }
 
     /* =========================================
-       3. Upload Area (Copied & Adapted)
+       3. Upload Area
        ========================================= */
     .upload-area {
       border: 2px dashed #CBD5E1;
@@ -408,6 +408,7 @@
 
   async function fetchOrderDetails(orderId) {
     try {
+      // 获取商品详情 API 路径
       const response = await fetch(`../../Module_Transaction_Fund/api/Orders_Management.php?action=get_order&order_id=${orderId}`);
 
       if (!response.ok) {
@@ -504,7 +505,7 @@
 
   function handleFiles(files) {
     for (let file of files) {
-      if (file.type.startsWith('image/')) dt.items.add(file);
+      if (file.type.startsWith('image/') || file.type.startsWith('video/')) dt.items.add(file);
     }
     fileInput.files = dt.files;
     renderPreview();
@@ -541,10 +542,18 @@
         reader.onload = function(event) {
           const wrapper = document.createElement('div');
           wrapper.className = 'preview-wrapper';
-          wrapper.innerHTML = `
-            <img src="${event.target.result}" class="preview-item">
-            <div class="delete-single-btn" onclick="event.stopPropagation(); removeImage(${index})">✕</div>
-          `;
+          // 判断是图片还是视频来显示预览
+          if(file.type.startsWith('video/')) {
+            wrapper.innerHTML = `
+              <video src="${event.target.result}" class="preview-item"></video>
+              <div class="delete-single-btn" onclick="event.stopPropagation(); removeImage(${index})">✕</div>
+            `;
+          } else {
+            wrapper.innerHTML = `
+              <img src="${event.target.result}" class="preview-item">
+              <div class="delete-single-btn" onclick="event.stopPropagation(); removeImage(${index})">✕</div>
+            `;
+          }
           preview.appendChild(wrapper);
         };
         reader.readAsDataURL(file);
@@ -558,11 +567,21 @@
   }
 
   // ==========================================
-  // 3. Form Submission
+  // 3. Form Submission (Debug Mode Enabled)
   // ==========================================
   document.getElementById('refundForm').addEventListener('submit', async function(e) {
     e.preventDefault();
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const orderId = urlParams.get('order_id');
+
+    if (!orderId) {
+      alert('Error: Missing Order ID in URL.');
+      return;
+    }
+
     const formData = new FormData(this);
+    formData.append('order_id', orderId);
 
     if (!formData.get('refund_type')) {
       alert('Please select a refund type.');
@@ -570,24 +589,58 @@
     }
 
     const submitBtn = document.querySelector('.btn-submit');
+    const originalText = submitBtn.innerText;
     submitBtn.innerText = 'Submitting...';
     submitBtn.disabled = true;
 
-    setTimeout(() => {
-      if(typeof StatusDialog !== 'undefined') {
-        StatusDialog.success(
-                'Request Submitted',
-                'We have received your refund request.',
-                'Back to Orders',
-                () => { window.location.href = '../../Module_Transaction_Fund/pages/Orders_Management.html'; }
-        );
-      } else {
-        alert('Request Submitted!');
-        window.history.back();
+    try {
+      const response = await fetch('../../Module_After_Sales_Dispute/api/Refund_Requests.php', {
+        method: 'POST',
+        body: formData
+      });
+
+      // 🔥 调试核心：先获取文本，看看是 JSON 还是 PHP 报错 HTML
+      const rawText = await response.text();
+      console.log("Raw Server Response:", rawText); // 在浏览器控制台(F12)查看
+
+      let result;
+      try {
+        result = JSON.parse(rawText);
+      } catch (jsonError) {
+        // 如果 JSON 解析失败，说明 PHP 崩了，直接弹出原始 HTML 报错信息
+        throw new Error("Server Error (Not JSON): " + rawText.substring(0, 200));
       }
-      submitBtn.innerText = 'Submit Request';
+
+      if (result.success) {
+        if(typeof StatusDialog !== 'undefined') {
+          StatusDialog.success(
+                  'Request Submitted',
+                  'We have received your refund request.',
+                  'Back to Orders',
+                  () => { window.location.href = '../../Module_Transaction_Fund/pages/Orders_Management.html'; }
+          );
+        } else {
+          alert('Success: ' + result.message);
+          window.location.href = '../../Module_Transaction_Fund/pages/Orders_Management.html';
+        }
+      } else {
+        // 后端返回了 success: false
+        throw new Error(result.message || 'Unknown error occurred');
+      }
+
+    } catch (error) {
+      console.error('Submission error:', error);
+
+      // 弹出详细错误
+      if(typeof StatusDialog !== 'undefined') {
+        StatusDialog.fail('Submission Failed', error.message);
+      } else {
+        alert('Error: ' + error.message);
+      }
+    } finally {
+      submitBtn.innerText = originalText;
       submitBtn.disabled = false;
-    }, 1500);
+    }
   });
 </script>
 
