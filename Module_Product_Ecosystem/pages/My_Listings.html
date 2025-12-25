@@ -345,8 +345,10 @@
 
       const soldCssClass = (statusLabel === 'Sold') ? 'sold-item' : '';
 
+      const targetPage = (statusLabel === 'Sold') ? 'Product_Detail.html' : 'Seller_Product_Management.html';
+
       const cardHtml = `
-          <div class="product-card ${soldCssClass}" onclick="window.location.href='Seller_Product_Management.html?id=${item.Product_ID}'">
+          <div class="product-card ${soldCssClass}" onclick="window.location.href='${targetPage}?id=${item.Product_ID}'">
             <div class="card-action-btn" onclick="event.stopPropagation(); handleAction('${item.Product_ID}')">
               ✎
             </div>

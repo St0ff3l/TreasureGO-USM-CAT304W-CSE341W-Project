@@ -45,7 +45,7 @@ try {
             if (!empty($imgUrl)) {
                 $cleanPath = str_replace(['../', './'], '', $imgUrl);
                 $fullPath = $baseDir . $cleanPath;
-                
+
                 if (file_exists($fullPath)) {
                     $localImagePaths[] = $fullPath;
                 }
