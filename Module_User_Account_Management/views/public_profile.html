@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User Profile - TreasureGO</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@2.5.0/fonts/remixicon.css" rel="stylesheet">
+  <style>
+    :root {
+      --bg-color: #F3F6F9;
+      --primary: #4F46E5;
+      --text-dark: #1F2937;
+      --text-gray: #6B7280;
+      --card-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.05);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-dark);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .profile-container {
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 0 20px;
+      width: 100%;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .profile-header-card {
+      background: white;
+      border-radius: 24px;
+      padding: 40px;
+      text-align: center;
+      box-shadow: var(--card-shadow);
+      width: 100%;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Decorative background circle */
+    .profile-header-card::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 150%;
+      height: 300px;
+      background: linear-gradient(180deg, #EEF2FF 0%, rgba(255,255,255,0) 100%);
+      border-radius: 50%;
+      z-index: 0;
+    }
+
+    .large-avatar {
+      width: 120px; height: 120px; margin: 0 auto 20px;
+      background: white; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 3.5rem; border: 4px solid white;
+      box-shadow: 0 10px 25px rgba(79, 70, 229, 0.15);
+      position: relative;
+      z-index: 1;
+      color: var(--primary);
+      background-color: #EEF2FF;
+    }
+
+    .user-name {
+      font-size: 2rem;
+      font-weight: 800;
+      margin-bottom: 10px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .user-meta {
+      color: var(--text-gray);
+      font-size: 0.95rem;
+      margin-bottom: 25px;
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 15px;
+    }
+
+    .user-meta span {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .stats-row {
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      margin-top: 30px;
+      padding-top: 30px;
+      border-top: 1px solid #f3f4f6;
+      position: relative;
+      z-index: 1;
+    }
+
+    .stat-item { text-align: center; }
+    .stat-value { font-size: 1.5rem; font-weight: 800; color: var(--primary); display: block; }
+    .stat-label { font-size: 0.85rem; color: var(--text-gray); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    .back-btn {
+        margin-top: 30px;
+        color: var(--text-gray);
+        text-decoration: none;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        transition: color 0.2s;
+    }
+    .back-btn:hover { color: var(--primary); }
+
+    .report-btn {
+        margin-top: 30px;
+        color: #EF4444;
+        text-decoration: none;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        transition: color 0.2s;
+        margin-left: 20px; /* Space between Back and Report */
+        cursor: pointer;
+    }
+    .report-btn:hover { color: #DC2626; }
+
+  </style>
+</head>
+<body>
+
+<!-- Headerbar -->
+<script src="../../Public_Assets/js/headerbar.js"></script>
+<script>TreasureGoHeaderbar.mount({ basePath: '../../' });</script>
+
+<div class="profile-container">
+  <div class="profile-header-card">
+    <div class="large-avatar" id="u_avatar">?</div>
+    <h1 class="user-name" id="u_name">Loading...</h1>
+    
+    <div class="user-meta">
+        <span id="u_join_date"><i class="ri-calendar-line"></i> Joined ...</span>
+        <span id="u_rating"><i class="ri-star-fill" style="color: #F59E0B;"></i> ...</span>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-item">
+        <span class="stat-value" id="u_listings_count">-</span>
+        <span class="stat-label">Listings</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-value" id="u_sold_count">-</span>
+        <span class="stat-label">Sold</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex; align-items: center;">
+      <a href="javascript:history.back()" class="back-btn"><i class="ri-arrow-left-line"></i> Back</a>
+      <a href="javascript:void(0)" class="report-btn" id="reportUserBtn"><i class="ri-flag-line"></i> Report User</a>
+  </div>
+</div>
+
+<script>
+  // Get User ID from URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const userId = urlParams.get('user_id');
+
+  if (!userId) {
+      alert("User ID not provided");
+      window.location.href = '../../index.html';
+  }
+
+  async function loadPublicProfile() {
+      try {
+          // 1. Get Basic Info
+          const res = await fetch(`../api/get_user_public_info.php?user_id=${userId}`);
+          const json = await res.json();
+
+          if (json.status === 'success') {
+              const user = json.data;
+              
+              // Avatar
+              const avatarEl = document.getElementById('u_avatar');
+              if (user.User_Avatar_Url) {
+                  const src = user.User_Avatar_Url.startsWith('http') 
+                      ? user.User_Avatar_Url 
+                      : ('../../' + user.User_Avatar_Url);
+                  const fallbackInitial = (user.User_Username || '?').charAt(0).toUpperCase();
+                  avatarEl.innerHTML = `<img src="${src}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" onerror="this.style.display='none'; this.parentNode.innerText='${fallbackInitial}';">`;
+                  avatarEl.style.background = 'transparent';
+              } else {
+                  avatarEl.innerText = (user.User_Username || '?').charAt(0).toUpperCase();
+              }
+
+              // Name
+              document.getElementById('u_name').innerText = user.User_Username;
+
+              // Join Date
+              if (user.User_Created_At) {
+                  const date = new Date(user.User_Created_At);
+                  document.getElementById('u_join_date').innerHTML = `<i class="ri-calendar-line"></i> Joined ${date.toLocaleDateString()}`;
+              }
+
+              // Rating
+              const rating = user.User_Average_Rating ? parseFloat(user.User_Average_Rating).toFixed(1) : 'New';
+              document.getElementById('u_rating').innerHTML = `<i class="ri-star-fill" style="color: #F59E0B;"></i> ${rating}`;
+
+              // Stats (Now returned directly from API)
+              document.getElementById('u_listings_count').innerText = user.posted_count || 0;
+              document.getElementById('u_sold_count').innerText = user.sold_count || 0;
+              
+              // Setup Report Button
+              const reportBtn = document.getElementById('reportUserBtn');
+              if (reportBtn) {
+                  const reportUrl = `../../Module_Platform_Governance_AI_Services/pages/report_submit.html?type=user&reportedUserId=${user.User_ID}&reportedUserName=${encodeURIComponent(user.User_Username)}`;
+                  reportBtn.href = reportUrl;
+                  reportBtn.onclick = null; // Remove void(0) behavior
+              }
+
+              // Optional: If we want to show membership in public profile, we can add it. 
+              // For now, just syncing the existing ones.
+
+          } else {
+              alert("User not found");
+              window.location.href = '../../index.html';
+          }
+      } catch (err) {
+          console.error(err);
+          alert("Error loading profile");
+      }
+  }
+
+  loadPublicProfile();
+</script>
+
+</body>
+</html>

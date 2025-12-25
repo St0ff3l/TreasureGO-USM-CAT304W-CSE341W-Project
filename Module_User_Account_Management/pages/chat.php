@@ -16,6 +16,8 @@ require_login();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TreasureGO - Chat</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+    <!-- 引入 Headerbar CSS -->
+    <link rel="stylesheet" href="../../Public_Assets/css/headerbar.css">
     <style>
         /* ========================================= */
         /* 复用 index.html 核心样式                */
@@ -43,95 +45,9 @@ require_login();
             flex-direction: column;
         }
 
-        /* Navbar 样式 (简化版) */
-        .navbar {
-            background: var(--glass-bg);
-            backdrop-filter: blur(12px);
-            padding: 1rem 5%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid rgba(255,255,255,0.5);
-            flex-shrink: 0;
-        }
-
-        .logo {
-            font-weight: 800; font-size: 1.5rem; color: var(--primary);
-            display: flex; align-items: center; gap: 10px; text-decoration: none;
-        }
-        .logo span { color: var(--text-dark); }
-        .logo-img { width: 40px; height: 40px; border-radius: 8px; object-fit: cover; }
-
-        .nav-actions { display: flex; align-items: center; gap: 20px; }
-        .nav-btn {
-            border: none; background: transparent; font-weight: 600; color: var(--text-gray);
-            padding: 0.6rem 0.5rem; cursor: pointer; transition: color 0.2s; font-size: 1rem;
-        }
-        .nav-btn:hover { color: var(--text-dark); }
-
-        /* --- 下拉菜单 (修复缝隙版) --- */
-        .menu-container { position: relative; display: inline-block; }
-
-        .dots-btn {
-            width: 40px; height: 40px; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 20px; cursor: pointer; color: var(--text-dark);
-            font-weight: bold; transition: 0.2s; background: #f3f4f6;
-        }
-        .dots-btn:hover { background: #eee; }
-
-        .dropdown-content {
-            display: none; position: absolute; right: 0;
-            top: 100%; margin-top: 10px;
-            background-color: white; min-width: 160px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.12);
-            border-radius: 16px; z-index: 1001; padding: 8px;
-            animation: fadeIn 0.2s ease;
-        }
-        /* 修复鼠标滑过缝隙 */
-        .dropdown-content::before {
-            content: ""; position: absolute; top: -20px; left: 0;
-            width: 100%; height: 20px; background: transparent;
-        }
-
-        .menu-container:hover .dropdown-content { display: block; }
-        .dropdown-item {
-            color: var(--text-dark); padding: 12px 16px; text-decoration: none;
-            display: block; font-size: 14px; font-weight: 500; border-radius: 10px;
-        }
-        .dropdown-item:hover { background-color: #f3f4f6; color: var(--primary); }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* ✨ Logo 发光效果 (新添加) ✨ */
-        .logo-img {
-            width: 40px;
-            height: 40px;
-            border-radius: 8px;
-            object-fit: cover;
-            /* 呼吸发光动画 */
-            animation: glowAnimation 3s infinite alternate;
-        }
-
-        /* 发光动画定义 */
-        @keyframes glowAnimation {
-            0% {
-                box-shadow: 0 0 5px rgba(245, 158, 11, 0.2),
-                0 0 10px rgba(245, 158, 11, 0.1);
-            }
-            100% {
-                box-shadow: 0 0 15px rgba(245, 158, 11, 0.8),
-                0 0 25px rgba(245, 158, 11, 0.5);
-            }
-        }
-
-        .btn-primary {
-            border: none; background-color: var(--text-dark); color: white;
-            font-weight: 600; padding: 0.7rem 1.8rem; border-radius: 12px;
-            cursor: pointer; transition: all 0.2s; font-size: 1rem;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        }
-        .btn-primary:hover { transform: translateY(-2px); background-color: #000; }
-
+        /* 移除旧的 Navbar 样式，使用 headerbar.js 提供的样式 */
+        /* 但为了兼容 chat.php 特有的布局，可能需要微调 */
+        
         /* ========================================= */
         /* Chat 布局样式                           */
         /* ========================================= */
@@ -475,32 +391,8 @@ require_login();
 </head>
 <body>
 
-<nav class="navbar">
-    <a href="../../index.html" class="logo">
-        <img src="../../Public_Assets/images/TreasureGo_Logo.png" alt="Logo" class="logo-img">
-        Treasure<span>Go</span>
-    </a>
-
-    <div class="nav-actions">
-        <button class="nav-btn" onclick="window.location.href='../../Module_Transaction_Fund/pages/Fund_Request.html'">Top Up</button>
-        <button id="nav-admin-btn" class="nav-btn" style="display: none;" onclick="window.location.href='admin_dashboard.php'">Admin Dashboard</button>
-        <button class="nav-btn" onclick="window.location.href='../../Module_Transaction_Fund/pages/Orders_Management.html'">Orders</button>
-
-        <button id="nav-login-btn" class="btn-primary" onclick="window.location.href='login.php'">Login</button>
-
-        <div id="nav-user-menu" class="menu-container" style="display: none;">
-
-            <div id="nav-avatar" class="dots-btn" onclick="window.location.href='profile.php'">
-                👤
-            </div>
-            <div class="dropdown-content">
-                <a href="profile.php" class="dropdown-item">My Profile</a>
-                <a href="#" class="dropdown-item">Settings</a>
-                <a href="../api/logout.php" class="dropdown-item" style="color: #ef4444;">Log Out</a>
-            </div>
-        </div>
-    </div>
-</nav>
+<!-- 移除无效的 Custom Element -->
+<!-- <treasurego-headerbar base-path="../../"></treasurego-headerbar> -->
 
 <div class="chat-container">
     <!-- 左侧联系人列表 -->
@@ -988,69 +880,15 @@ require_login();
         if (e.key === 'Enter') sendMessage();
     });
 
-    // 5. 页面加载时检查 Session 状态 (复用 index.html 逻辑)
-    document.addEventListener('DOMContentLoaded', async () => {
-        const loginBtn = document.getElementById('nav-login-btn');
-        const userMenu = document.getElementById('nav-user-menu');
-        const avatarBtn = document.getElementById('nav-avatar');
-        const adminBtn = document.getElementById('nav-admin-btn');
-
-        // 安全检查：确保所有元素都存在
-        if (!loginBtn || !userMenu || !avatarBtn) {
-            console.error('Navigation elements not found');
-            return;
+    // 引入 headerbar.js 并初始化
+    const script = document.createElement('script');
+    script.src = '../../Public_Assets/js/headerbar.js';
+    script.onload = () => {
+        if (window.TreasureGoHeaderbar) {
+            window.TreasureGoHeaderbar.mount({ basePath: '../../' });
         }
-
-        try {
-            const res = await fetch('../api/session_status.php');
-            const data = await res.json();
-
-            if (data.is_logged_in) {
-                // 更新全局变量
-                // isUserLoggedIn = true; // chat.php 本身就是强制登录的，所以这里不需要这个变量
-
-                // UI 更新
-                loginBtn.style.display = 'none';
-                userMenu.style.display = 'inline-block';
-
-                if (data.user) {
-                    // 设置头像
-                    if (data.user.avatar_url) {
-                        avatarBtn.innerHTML = `<img src="${data.user.avatar_url}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
-                        avatarBtn.style.background = 'transparent';
-                        avatarBtn.style.border = '2px solid #fff';
-                        avatarBtn.style.boxShadow = '0 4px 10px rgba(79, 70, 229, 0.2)';
-                    } else if (data.user.username) {
-                        avatarBtn.innerText = data.user.username.charAt(0).toUpperCase();
-                        avatarBtn.style.background = '#EEF2FF';
-                        avatarBtn.style.color = '#4F46E5';
-                        avatarBtn.style.border = '2px solid #fff';
-                    }
-
-                    // 如果是管理员，显示 Admin Dashboard 按钮
-                    if (adminBtn && data.user.role === 'admin') {
-                        adminBtn.style.display = 'inline-block';
-                    } else if (adminBtn) {
-                        adminBtn.style.display = 'none';
-                    }
-                }
-            } else {
-                // 未登录 (理论上 chat.php 会被 require_login() 拦截，但为了保险起见)
-                loginBtn.style.display = 'inline-block';
-                userMenu.style.display = 'none';
-                if (adminBtn) {
-                    adminBtn.style.display = 'none';
-                }
-            }
-        } catch (err) {
-            console.error("Session check failed:", err);
-            loginBtn.style.display = 'inline-block';
-            userMenu.style.display = 'none';
-            if (adminBtn) {
-                adminBtn.style.display = 'none';
-            }
-        }
-    });
+    };
+    document.body.appendChild(script);
 
     // 初始化
     loadConversations();

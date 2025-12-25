@@ -218,7 +218,114 @@
     .modal-overlay.open { display: flex; animation: fadeIn 0.2s; }
     .modal-content { background: white; width: 90%; max-width: 500px; border-radius: 20px; padding: 30px; }
 
-    @media (max-width: 900px) { .layout-container { grid-template-columns: 1fr; } .sidebar-card, .action-card { display: none; } }
+    @media (max-width: 900px) { 
+        .layout-container { 
+            grid-template-columns: 1fr; 
+            margin-top: 10px;
+            padding-bottom: 80px; /* Space for bottom action bar */
+        } 
+        
+        /* Mobile Sidebar (Top Navigation) */
+        .sidebar-card { 
+            display: flex; 
+            position: static; 
+            width: 100%; 
+            max-height: none; 
+            overflow-x: auto; 
+            padding: 10px;
+            gap: 10px;
+            margin-bottom: 15px;
+            white-space: nowrap;
+            border-radius: 12px;
+            /* Hide scrollbar */
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+        .sidebar-card::-webkit-scrollbar {
+            display: none;
+        }
+
+        .menu-title { display: none; }
+        
+        .menu-item {
+            width: auto;
+            padding: 8px 12px;
+            font-size: 0.85rem;
+            margin-bottom: 0;
+            flex-shrink: 0;
+            border: 1px solid #eee;
+        }
+        
+        .menu-item i { font-size: 1rem; }
+
+        /* Mobile Action Card (Bottom Floating Bar) */
+        .action-card { 
+            display: flex;
+            flex-direction: row;
+            position: fixed;
+            top: auto; /* 🔥 Fix: Override desktop 'top: 110px' to prevent stretching */
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            max-height: none;
+            border-radius: 20px 20px 0 0;
+            padding: 10px 20px;
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.1);
+            z-index: 100;
+            justify-content: space-around;
+            background: white;
+            gap: 5px;
+        }
+        
+        .action-btn {
+            flex-direction: column;
+            gap: 4px;
+            font-size: 0.7rem;
+            padding: 5px;
+            text-align: center;
+            flex: 1;
+        }
+        
+        .action-btn i {
+            font-size: 1.4rem;
+        }
+        
+        .btn-primary-action {
+            margin-bottom: 0;
+            background: var(--primary);
+            color: white;
+            border-radius: 12px;
+        }
+        .btn-primary-action:hover {
+            background: var(--primary-hover);
+            transform: none;
+        }
+
+        /* Adjust Profile Header for Mobile */
+        .profile-header-card {
+            padding: 20px;
+        }
+        .large-avatar {
+            width: 80px; height: 80px;
+            font-size: 2.5rem;
+        }
+        .user-name { font-size: 1.4rem; }
+        
+        .stats-row {
+            gap: 15px;
+        }
+        .stat-item { min-width: auto; flex: 1; }
+        .stat-num { font-size: 1rem; }
+        .stat-label { font-size: 0.75rem; }
+        
+        /* Adjust Listings Grid */
+        #listings-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 10px !important;
+        }
+        .product-img { height: 120px; }
+    } 
+
 
 
     /* 确保列表项中的文字和图标对齐 */
@@ -252,6 +359,19 @@
       border: 1px solid #FEE2E2;
       margin-left: 8px;
     }
+
+    /* --- Product Card Styles --- */
+    .product-card {
+      background: white; border: 1px solid #E5E7EB; border-radius: 12px; overflow: hidden;
+      transition: transform 0.2s, box-shadow 0.2s; cursor: pointer;
+      display: flex; flex-direction: column;
+    }
+    .product-card:hover { transform: translateY(-4px); box-shadow: 0 10px 20px rgba(0,0,0,0.08); border-color: var(--primary); }
+    .product-img { width: 100%; height: 150px; object-fit: cover; background: #f3f4f6; }
+    .product-info { padding: 12px; flex: 1; display: flex; flex-direction: column; }
+    .product-title { font-weight: 600; font-size: 0.95rem; margin-bottom: 5px; color: var(--text-dark); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .product-price { color: var(--primary); font-weight: 700; font-size: 1.1rem; margin-top: auto; }
+    .product-status { font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; background: #EEF2FF; color: var(--primary); display: inline-block; margin-bottom: 5px; width: fit-content; }
 
   </style>
 </head>
@@ -325,12 +445,30 @@
 
       <div class="tabs-container">
         <div class="tabs-header">
-          <div class="tab-btn active">Active Listings</div>
-          <div class="tab-btn">Recent Reviews</div>
+          <div class="tab-btn active" id="tab-btn-listings" onclick="switchProfileTab('listings')">Active Listings</div>
+          <div class="tab-btn" id="tab-btn-reviews" onclick="switchProfileTab('reviews')">Recent Reviews</div>
         </div>
-        <div class="mock-content">
-          <div class="mock-icon"><i class="ri-inbox-line"></i></div>
-          <p>No active listings found.</p>
+        
+        <!-- Listings Content -->
+        <div id="tab-content-listings">
+            <div class="mock-content" id="listings-loading">
+              <p>Loading listings...</p>
+            </div>
+            <div id="listings-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; display: none;">
+                <!-- Items will be injected here -->
+            </div>
+            <div class="mock-content" id="listings-empty" style="display: none;">
+              <div class="mock-icon"><i class="ri-inbox-line"></i></div>
+              <p>No active listings found.</p>
+            </div>
+        </div>
+
+        <!-- Reviews Content -->
+        <div id="tab-content-reviews" style="display: none;">
+            <div class="mock-content">
+              <div class="mock-icon"><i class="ri-chat-smile-2-line"></i></div>
+              <p>No reviews yet.</p>
+            </div>
         </div>
       </div>
     </div>
@@ -501,7 +639,81 @@
     await fetchProfileData();
     // 3. 获取地址数据
     await fetchAddressList();
+    // 4. 获取 Active Listings
+    fetchActiveListings();
   });
+
+  // --- Tab Switching Logic ---
+  function switchProfileTab(tabName) {
+      // Update buttons
+      document.querySelectorAll('.tabs-header .tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.getElementById('tab-btn-' + tabName).classList.add('active');
+
+      // Update content
+      document.getElementById('tab-content-listings').style.display = 'none';
+      document.getElementById('tab-content-reviews').style.display = 'none';
+      
+      document.getElementById('tab-content-' + tabName).style.display = 'block';
+  }
+
+  // --- Active Listings Logic ---
+  async function fetchActiveListings() {
+      const loadingEl = document.getElementById('listings-loading');
+      const gridEl = document.getElementById('listings-grid');
+      const emptyEl = document.getElementById('listings-empty');
+
+      try {
+          const res = await fetch('../../Module_Product_Ecosystem/api/Get_User_Listings.php');
+          const json = await res.json();
+
+          loadingEl.style.display = 'none';
+
+          if (json.success && json.data && json.data.length > 0) {
+              // Filter for Active listings only
+              const activeListings = json.data.filter(item => item.Product_Status === 'Active');
+
+              if (activeListings.length > 0) {
+                  gridEl.innerHTML = '';
+                  activeListings.forEach(item => {
+                      const card = document.createElement('div');
+                      card.className = 'product-card';
+                      card.onclick = () => window.location.href = `../../Module_Product_Ecosystem/pages/Product_Detail.html?product_id=${item.Product_ID}`;
+                      
+                      // Handle image path
+                      let imgUrl = item.Main_Image;
+                      if (imgUrl && !imgUrl.startsWith('http')) {
+                          imgUrl = '../../' + imgUrl;
+                      }
+                      if (!imgUrl) imgUrl = '../../Public_Assets/images/TreasureGo_Logo.png'; // Fallback
+
+                      card.innerHTML = `
+                          <img src="${imgUrl}" class="product-img" alt="${escapeHtml(item.Product_Title)}">
+                          <div class="product-info">
+                              <span class="product-status">${item.Product_Status}</span>
+                              <div class="product-title">${escapeHtml(item.Product_Title)}</div>
+                              <div class="product-price">$${parseFloat(item.Product_Price).toFixed(2)}</div>
+                          </div>
+                      `;
+                      gridEl.appendChild(card);
+                  });
+                  gridEl.style.display = 'grid';
+                  emptyEl.style.display = 'none';
+              } else {
+                  gridEl.style.display = 'none';
+                  emptyEl.style.display = 'block';
+                  emptyEl.querySelector('p').innerText = "No active listings found.";
+              }
+          } else {
+              gridEl.style.display = 'none';
+              emptyEl.style.display = 'block';
+          }
+      } catch (err) {
+          console.error("Fetch Listings Error:", err);
+          loadingEl.style.display = 'none';
+          emptyEl.style.display = 'block';
+          emptyEl.querySelector('p').innerText = "Failed to load listings.";
+      }
+  }
 
   // --- Profile Logic (Old) ---
   async function fetchProfileData() {

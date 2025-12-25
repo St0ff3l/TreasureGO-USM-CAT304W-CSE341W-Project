@@ -373,6 +373,32 @@
 
         // F. 图片处理
         handleImages(item);
+
+        // G. 卖家头像处理 (与 Headerbar 逻辑一致)
+        const sellerAvatarEl = document.querySelector('.seller-avatar');
+        
+        // 添加点击跳转到公开个人主页
+        sellerAvatarEl.style.cursor = 'pointer';
+        sellerAvatarEl.onclick = () => {
+            window.location.href = `../../Module_User_Account_Management/pages/public_profile.php?user_id=${item.User_ID}`;
+        };
+        
+        if (item.User_Profile_Image && item.User_Profile_Image.trim() !== '') {
+            // 处理路径：如果是 http 开头则直接用，否则加上 ../../
+            const avatarSrc = item.User_Profile_Image.startsWith('http') 
+                ? item.User_Profile_Image 
+                : ('../../' + item.User_Profile_Image);
+            
+            const fallbackInitial = (item.User_Username || '?').charAt(0).toUpperCase();
+            
+            sellerAvatarEl.innerHTML = `<img src="${avatarSrc}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;" onerror="this.style.display='none'; this.parentNode.innerText='${fallbackInitial}'; this.parentNode.style.background='#EEF2FF'; this.parentNode.style.color='#4F46E5';">`;
+            sellerAvatarEl.style.background = 'transparent';
+        } else {
+            // 无头像，显示首字母
+            sellerAvatarEl.innerText = (item.User_Username || '?').charAt(0).toUpperCase();
+            sellerAvatarEl.style.background = '#EEF2FF';
+            sellerAvatarEl.style.color = '#4F46E5';
+        }
     }
 
     // --- 5. 辅助功能逻辑 ---

@@ -39,6 +39,7 @@ try {
                 p.Product_Review_Status, /* 把审核状态也查出来，前端可能用到 */
                 u.User_Username, 
                 u.User_Average_Rating,
+                u.User_Profile_Image, /* 新增：用户头像 */
                 (SELECT Image_URL FROM Product_Images pi WHERE pi.Product_ID = p.Product_ID AND pi.Image_is_primary = 1 LIMIT 1) as Main_Image,
                 (SELECT GROUP_CONCAT(Image_URL SEPARATOR ',') FROM Product_Images pi WHERE pi.Product_ID = p.Product_ID) as All_Images
             FROM Product p
