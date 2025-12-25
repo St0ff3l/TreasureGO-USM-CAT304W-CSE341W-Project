@@ -261,7 +261,139 @@
       margin-right: 4px;
     }
 
-    /* ...existing code... */
+    /* =========================================
+       🔥 Optimized Refund Status Card (New Design)
+       ========================================= */
+    .refund-status-card {
+      background: white;
+      border-radius: 16px;
+      padding: 0;
+      margin-top: 25px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+      border: 1px solid #E5E7EB;
+      overflow: hidden;
+      animation: slideUp 0.3s ease-out;
+    }
+
+    .refund-status-header {
+      padding: 15px 25px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #F9FAFB;
+      border-bottom: 1px solid #F3F4F6;
+    }
+
+    .refund-status-label {
+      font-weight: 700;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* 状态颜色变体 */
+    .status-pending .refund-status-label { color: #F59E0B; } /* Orange */
+    .status-return  .refund-status-label { color: #3B82F6; } /* Blue */
+    .status-success .refund-status-label { color: #10B981; } /* Green */
+    .status-closed  .refund-status-label { color: #EF4444; } /* Red */
+
+    .refund-status-body {
+      padding: 20px 25px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+
+    .refund-info-text h4 {
+      margin: 0 0 5px 0;
+      font-size: 1.1rem;
+      color: #1F2937;
+    }
+
+    .refund-info-text p {
+      margin: 0;
+      color: #6B7280;
+      font-size: 0.9rem;
+    }
+
+    .btn-view-details {
+      padding: 10px 24px;
+      background: white;
+      border: 1px solid #E5E7EB;
+      border-radius: 10px;
+      color: #374151;
+      font-weight: 600;
+      transition: all 0.2s;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-view-details:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+      background: #EEF2FF;
+    }
+
+    /* 卖家操作栏特别样式 */
+    .seller-actions-row {
+      display: flex;
+      gap: 10px;
+      width: 100%;
+      margin-top: 15px;
+      padding-top: 15px;
+      border-top: 1px dashed #E5E7EB;
+    }
+
+    /* =========================================
+       ✨ New: Refund Success Card Styles
+       ========================================= */
+    .refund-success-card {
+      background: linear-gradient(to right, #F0FDF4, #DCFCE7); /* 渐变绿背景 */
+      border: 1px solid #86EFAC;
+      border-left: 6px solid #22C55E; /* 左侧加粗强调条 */
+      border-radius: 16px;
+      padding: 25px;
+      margin-top: 25px;
+      display: flex; /* 弹性布局 */
+      align-items: center; /* 垂直居中 */
+      gap: 20px; /* 图标和文字的间距 */
+      box-shadow: 0 4px 15px rgba(34, 197, 94, 0.1);
+      animation: fadeIn 0.5s ease-out;
+    }
+
+    .refund-success-icon {
+      width: 50px;
+      height: 50px;
+      background: #22C55E;
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      flex-shrink: 0; /* 防止图标被压缩 */
+      box-shadow: 0 4px 10px rgba(34, 197, 94, 0.3);
+    }
+
+    .refund-success-content h3 {
+      color: #14532D;
+      font-size: 1.2rem;
+      margin-bottom: 5px;
+      font-weight: 800;
+    }
+
+    .refund-success-content p {
+      color: #166534;
+      font-size: 0.95rem;
+      line-height: 1.5;
+      margin: 0;
+    }
+
   </style>
 </head>
 <body>
@@ -338,7 +470,7 @@
   const ORDER_ADDRESS_API = '../api/Get_Order_Address.php';
   let CURRENT_USER_ID = null;
 
-  // --- 全局变量用于图片画廊 ---
+  // --- Global variables for gallery ---
   let globalOrderImages = [];
   let currentOrderImageIndex = 0;
 
@@ -366,6 +498,7 @@
 
       if (!data.success) throw new Error(data.msg);
 
+      // Join buying and selling arrays for search
       const allOrders = [...(data.buying || []).map(o => ({...o, type: 'buy'})), ...(data.selling || []).map(o => ({...o, type: 'sell'}))];
       const targetOrder = allOrders.find(o => o.Orders_Order_ID == ORDER_ID);
 
@@ -388,7 +521,6 @@
 
   async function loadOrderAddress(order) {
     currentOrderAddress = null;
-
     try {
       const res = await fetch(`${ORDER_ADDRESS_API}?order_id=${encodeURIComponent(order.Orders_Order_ID)}`);
       const json = await res.json();
@@ -444,39 +576,33 @@
     const isBuyer = order.type === 'buy';
     const statusClass = getStatusClass(order.Orders_Status);
 
-    // 1. 初始化图片数据
+    // 1. Initialize Images
     globalOrderImages = parseOrderImages(order);
     currentOrderImageIndex = 0;
 
-    // 2. 自动收货提示
+    // 2. Auto-Confirm Countdown Logic
     let autoConfirmHtml = '';
-    // 只有在订单进行中才计算
     if (['processing', 'shipped'].includes(order.Orders_Status.toLowerCase())) {
-
       let startTime = null;
       let showCountdown = false;
       let msgPrefix = "";
 
-      // 判断是否已发货 (有 Shipped_At 字段)
       if (order.Orders_Shipped_At) {
         startTime = new Date(order.Orders_Shipped_At);
         showCountdown = true;
         msgPrefix = "🚚 Shipped! Auto-confirm in";
       }
-      // 没发货，但配送方式是纯面交
       else if (order.Delivery_Method === 'meetup') {
         startTime = new Date(order.Orders_Created_AT);
         showCountdown = true;
         msgPrefix = "🤝 Meet-up Order. Auto-confirm in";
       }
-      // 快递待发货
       else {
         if (isBuyer) {
           autoConfirmHtml = `<div class="auto-confirm-text" style="background:#EEF2FF; color:#4F46E5; border-color:#C7D2FE;">📦 Waiting for seller to ship. 7-day timer starts after shipment.</div>`;
         }
       }
 
-      // 计算剩余天数
       if (showCountdown && startTime) {
         const autoConfirmDate = new Date(startTime.getTime() + (7 * 24 * 60 * 60 * 1000));
         const now = new Date();
@@ -490,39 +616,55 @@
       }
     }
 
-    // 3. Action 按钮
+    // 3. Action Buttons & Refund Logic
     let actionButtons = '';
-    if (isBuyer && order.Orders_Status !== 'completed' && order.Orders_Status !== 'cancelled') {
+
+    // Check if there is an active refund status
+    if (order.Refund_Status) {
+      // 🔥 Use new render function for refund scenarios
+      actionButtons = renderRefundStatusCard(order, isBuyer);
+    }
+    else if (isBuyer && order.Orders_Status !== 'completed' && order.Orders_Status !== 'cancelled') {
+      // Normal Flow: Show Confirm Receipt & Refund buttons
       actionButtons = `
-                <div class="actions-box">
-                    <div style="font-weight:700; margin-bottom:10px;">⚡ Actions</div>
-                    <div class="btn-group">
-                        <button class="btn btn-confirm" onclick="openConfirmDialog(${order.Orders_Order_ID})">✅ Confirm Receipt</button>
-                        <button class="btn btn-refund" onclick="openRefundModal(${order.Orders_Order_ID})">↩️ Request Refund</button>
-                    </div>
-                    ${autoConfirmHtml}
+            <div class="actions-box">
+                <div style="font-weight:700; margin-bottom:10px;">⚡ Actions</div>
+                <div class="btn-group">
+                    <button class="btn btn-confirm" onclick="openConfirmDialog(${order.Orders_Order_ID})">✅ Confirm Receipt</button>
+                    <button class="btn btn-refund" onclick="openRefundModal(${order.Orders_Order_ID})">↩️ Request Refund</button>
                 </div>
-            `;
+                ${autoConfirmHtml}
+            </div>
+        `;
+    } else if (order.Orders_Status === 'completed') {
+      actionButtons = `<div class="status-badge status-completed" style="margin-top:20px; width:100%; text-align:center;">Order Completed</div>`;
     }
 
-    // 4. Tracking Number 逻辑
+    // 4. Tracking Number Logic (Modified for Meetup)
     const trackingNum = order.Tracking_Number || '';
     let deliveryHtml = '';
-    if (trackingNum) {
-      deliveryHtml = `<div class="tracking-display">${trackingNum}</div>`;
+
+    // 🔥🔥🔥 修改 1: 面交不需要显示 Awaiting Shipment 🔥🔥🔥
+    if (order.Delivery_Method === 'meetup') {
+      deliveryHtml = `<span style="color:#6B7280; font-size:0.9rem;"><i class="ri-walk-line"></i> Not Required (Meet-up)</span>`;
     } else {
-      if (isBuyer) {
-        deliveryHtml = `<span style="color:#F59E0B; font-size:0.9rem;">⏳ Awaiting Shipment</span>`;
+      // 原有快递逻辑
+      if (trackingNum) {
+        deliveryHtml = `<div class="tracking-display">${trackingNum}</div>`;
       } else {
-        if (order.Orders_Status !== 'cancelled' && order.Orders_Status !== 'completed') {
-          deliveryHtml = `
-                    <div class="tracking-group">
-                        <input type="text" id="trackingInput_${order.Orders_Order_ID}" class="tracking-input" placeholder="Enter No.">
-                        <button class="btn-small-upload" onclick="submitTracking(${order.Orders_Order_ID})">Ship</button>
-                    </div>
-                `;
+        if (isBuyer) {
+          deliveryHtml = `<span style="color:#F59E0B; font-size:0.9rem;">⏳ Awaiting Shipment</span>`;
         } else {
-          deliveryHtml = `<span style="color:#9CA3AF;">-</span>`;
+          if (order.Orders_Status !== 'cancelled' && order.Orders_Status !== 'completed') {
+            deliveryHtml = `
+                        <div class="tracking-group">
+                            <input type="text" id="trackingInput_${order.Orders_Order_ID}" class="tracking-input" placeholder="Enter No.">
+                            <button class="btn-small-upload" onclick="submitTracking(${order.Orders_Order_ID})">Ship</button>
+                        </div>
+                    `;
+          } else {
+            deliveryHtml = `<span style="color:#9CA3AF;">-</span>`;
+          }
         }
       }
     }
@@ -530,15 +672,32 @@
     const condition = order.Product_Condition || order.Condition || order.condition || '-';
     const category = order.Category_Name || order.Category || '-';
 
-    // 5. 用户名显示逻辑
+    // 5. Username Display
     const otherPartyLabel = isBuyer ? 'Seller' : 'Buyer';
     const otherPartyName = isBuyer
             ? (order.Seller_Username || `ID: ${order.Orders_Seller_ID}`)
             : (order.Buyer_Username || `ID: ${order.Orders_Buyer_ID}`);
 
     const addrIdFromOrder = order.Address_ID ?? order.address_id ?? order.Orders_Address_ID ?? null;
+
+    // 🔥🔥🔥 修改 2: 面交显示 Product Location 而不是 No shipping address 🔥🔥🔥
     const addressBlock = (() => {
-      // meetup or not provided in order list -> also treat as meetup
+      // 1. 面交逻辑
+      if (order.Delivery_Method === 'meetup') {
+        const location = order.Product_Location || 'Location not specified'; // 获取产品地点
+        return `
+          <div class="info-section">
+            <div class="section-label">Meet-up Location (Product Location)</div>
+            <div class="address-item">
+              <div class="addr-content">
+                <div class="addr-main-text"><i class="ri-map-pin-user-line"></i>${location}</div>
+                <div style="font-size:0.85rem; color:#6B7280; margin-top:4px;">Please arrange a meeting place via chat.</div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
       if (!addrIdFromOrder) {
         return `
           <div class="info-section">
@@ -552,7 +711,6 @@
         `;
       }
 
-      // We queried by order_id; if still null it means address missing or not accessible
       if (!currentOrderAddress) {
         return `
           <div class="info-section">
@@ -568,8 +726,8 @@
 
       const a = currentOrderAddress;
       const tagHtml = (String(a.Address_Is_Default) === '1')
-        ? `<span class="addr-tag"><i class="ri-star-line"></i>Default</span>`
-        : '';
+              ? `<span class="addr-tag"><i class="ri-star-line"></i>Default</span>`
+              : '';
 
       return `
         <div class="info-section">
@@ -651,29 +809,156 @@
     updateGalleryDisplay();
   }
 
-  function escapeHtml(str) {
-    return String(str ?? '')
-      .replaceAll('&', '&amp;')
-      .replaceAll('<', '&lt;')
-      .replaceAll('>', '&gt;')
-      .replaceAll('"', '&quot;')
-      .replaceAll("'", '&#039;');
+  // 🔥 Optimized Render Function
+  function renderRefundStatusCard(order, isBuyer) {
+    const status = order.Refund_Status;
+    const type = order.Refund_Type;
+    const deliveryMethod = order.Delivery_Method || 'shipping';
+
+    if (!status) return '';
+
+    let html = '';
+
+    // 辅助文本生成
+    const typeText = type === 'refund_only' ? 'Refund Only' : 'Return & Refund';
+
+    // --- 🟢 状态 1: 等待卖家处理 ---
+    if (status === 'pending_approval') {
+      const icon = `<i class="ri-time-line"></i>`;
+
+      if (isBuyer) {
+        html = `
+                <div class="refund-status-card status-pending">
+                    <div class="refund-status-header">
+                        <span class="refund-status-label">${icon} Refund Requested</span>
+                        <span style="font-size:0.85rem; color:#9CA3AF;">${new Date().toLocaleDateString()}</span>
+                    </div>
+                    <div class="refund-status-body">
+                        <div class="refund-info-text">
+                            <h4>Waiting for Seller</h4>
+                            <p>You requested a <strong>${typeText}</strong> of <strong>RM${order.Refund_Amount}</strong>.</p>
+                        </div>
+                        <a href="../../Module_After_Sales_Dispute/pages/Refund_Details.html?order_id=${order.Orders_Order_ID}" class="btn-view-details">
+                            View Details <i class="ri-arrow-right-s-line"></i>
+                        </a>
+                    </div>
+                </div>
+            `;
+      } else {
+        // 卖家视角：操作卡片
+        html = `
+                <div class="refund-status-card status-pending">
+                    <div class="refund-status-header" style="background:#FFF7ED;">
+                        <span class="refund-status-label" style="color:#C2410C;">⚡ Action Required</span>
+                    </div>
+                    <div class="refund-status-body">
+                        <div style="width:100%">
+                            <div class="refund-info-text">
+                                <h4>Buyer Requested ${typeText}</h4>
+                                <p>Reason: ${order.Refund_Reason || 'No reason'}</p>
+                            </div>
+                            <div class="seller-actions-row">
+                                <button class="btn" style="background:#F97316; color:white; flex:1; justify-content:center; padding:10px;"
+                                    onclick="sellerProcessRefund(${order.Orders_Order_ID}, 'approve', '${type}')">
+                                    ✅ Approve
+                                </button>
+                                <button class="btn" style="background:white; border:1px solid #EF4444; color:#EF4444; flex:1; justify-content:center; padding:10px;"
+                                    onclick="sellerProcessRefund(${order.Orders_Order_ID}, 'reject', '${type}')">
+                                    ❌ Reject
+                                </button>
+                                <a href="../../Module_After_Sales_Dispute/pages/Refund_Details.html?order_id=${order.Orders_Order_ID}" class="btn-view-details">
+                                    Details
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+      }
+    }
+
+    // --- 🔵 状态 2: 退货中 (Awaiting Return) ---
+    else if (status === 'awaiting_return') {
+      // ... (保持你之前的逻辑，只是外层套上 class="refund-status-card status-return")
+      // 简单示例：
+      html = `
+            <div class="refund-status-card status-return">
+                <div class="refund-status-header">
+                    <span class="refund-status-label"><i class="ri-truck-line"></i> Return in Progress</span>
+                </div>
+                <div class="refund-status-body">
+                    <div class="refund-info-text">
+                        <h4>Return Request Accepted</h4>
+                        <p>${isBuyer ? 'Please return the item.' : 'Waiting for buyer to return.'}</p>
+                    </div>
+                    ${isBuyer && deliveryMethod === 'shipping' ?
+              `<div class="tracking-group" style="margin-top:10px; width:100%;">
+                          <input type="text" id="returnTrackingInput" class="tracking-input" placeholder="Tracking No.">
+                          <button class="btn-small-upload" onclick="submitReturnTracking(${order.Orders_Order_ID})">Submit</button>
+                       </div>` : ''
+      }
+                    <a href="../../Module_After_Sales_Dispute/pages/Refund_Details.html?order_id=${order.Orders_Order_ID}" class="btn-view-details" style="margin-left:auto;">Details</a>
+                </div>
+            </div>
+        `;
+    }
+
+    // --- ✅ 状态 3: 完成 ---
+    else if (status === 'completed') {
+
+      // 核心修改：根据身份显示不同文案
+      let message = '';
+      if (isBuyer) {
+        message = `The refund of <strong>RM${order.Refund_Amount || '0.00'}</strong> has been successfully returned to your wallet.`;
+      } else {
+        message = `The refund of <strong>RM${order.Refund_Amount || '0.00'}</strong> has been returned to the buyer's wallet.`;
+      }
+
+      html = `
+            <div class="refund-status-card status-success">
+                <div class="refund-status-header">
+                    <span class="refund-status-label"><i class="ri-checkbox-circle-fill"></i> Refund Completed</span>
+                </div>
+                <div class="refund-status-body">
+                    <div class="refund-success-icon">
+                        <i class="ri-check-double-line"></i>
+                    </div>
+                    <div class="refund-success-content">
+                        <h3>Refund Successful</h3>
+                        <p>${message}</p>
+                    </div>
+                    <a href="../../Module_After_Sales_Dispute/pages/Refund_Details.html?order_id=${order.Orders_Order_ID}" class="btn-view-details" style="margin-left:auto;">History</a>
+                </div>
+            </div>
+        `;
+    }
+
+    // ... 其他状态同理
+
+    return html;
   }
 
-  // --- 画廊更新逻辑 ---
+  function escapeHtml(str) {
+    return String(str ?? '')
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#039;');
+  }
+
+  // --- Gallery Logic ---
   function updateGalleryDisplay() {
     const mainBox = document.getElementById('mainImageContainer');
     const thumbBox = document.getElementById('thumbnailContainer');
     if (!mainBox || !thumbBox) return;
 
-    // 1. 渲染大图
     mainBox.innerHTML = '';
     const img = document.createElement('img');
     img.src = globalOrderImages[currentOrderImageIndex];
     img.className = 'fade-anim';
     mainBox.appendChild(img);
 
-    // 2. 渲染箭头 (多于1张时)
     if (globalOrderImages.length > 1) {
       const prevBtn = document.createElement('button');
       prevBtn.className = 'nav-arrow prev-btn';
@@ -689,7 +974,6 @@
       mainBox.appendChild(nextBtn);
     }
 
-    // 3. 渲染缩略图
     thumbBox.innerHTML = '';
     if (globalOrderImages.length > 1) {
       globalOrderImages.forEach((src, index) => {
@@ -714,7 +998,7 @@
     updateGalleryDisplay();
   }
 
-  // --- 提交快递单号逻辑 ---
+  // --- Shipping Logic (Seller) ---
   async function submitTracking(orderId) {
     const input = document.getElementById(`trackingInput_${orderId}`);
     const trackingNum = input.value.trim();
@@ -744,7 +1028,7 @@
     }
   }
 
-  // --- 通用函数 ---
+  // --- Helpers ---
   function getStatusClass(status) {
     const map = { 'paid': 'status-paid', 'completed': 'status-completed', 'processing': 'status-processing', 'cancelled': 'status-cancelled' };
     return map[status ? status.toLowerCase() : ''] || 'status-processing';
@@ -752,7 +1036,89 @@
   function capitalizeFirst(str) { return str ? String(str).charAt(0).toUpperCase() + String(str).slice(1) : ''; }
 
   // ---------------------------------------------
-  // 🔥🔥🔥 收货确认弹窗逻辑 🔥🔥🔥
+  // 🔥 Refund Navigation & Actions
+  // ---------------------------------------------
+  function goToRefundDetail(orderId) {
+    window.location.href = `../../Module_After_Sales_Dispute/pages/Refund_Details.html?order_id=${orderId}`;
+  }
+
+  // --- 卖家处理退款 (新加函数) ---
+  async function sellerProcessRefund(orderId, action, type) {
+    let confirmMsg = "";
+
+    if (action === 'approve') {
+      if (type === 'refund_only') {
+        confirmMsg = "⚠️ Approve Refund Only?\nMoney will be refunded to buyer immediately.";
+      } else {
+        confirmMsg = "⚠️ Accept Return?\nBuyer will be notified to return the item to your default address.";
+      }
+    } else {
+      confirmMsg = "❌ Reject this refund request?";
+    }
+
+    if (!confirm(confirmMsg)) return;
+
+    try {
+      const response = await fetch('../api/Refund_Actions.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'seller_decision',
+          order_id: orderId,
+          decision: action, // 'approve' or 'reject'
+          refund_type: type
+        })
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        alert("✅ Action processed successfully!");
+        location.reload();
+      } else {
+        alert("❌ Error: " + result.message);
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Network error processing refund.");
+    }
+  }
+
+  async function submitReturnTracking(orderId) {
+    const tracking = document.getElementById('returnTrackingInput').value;
+    if(!tracking) return alert("Please enter tracking number");
+
+    if(confirm("Submit return tracking number?")) {
+      try {
+        const res = await fetch('../api/Refund_Actions.php', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ action: 'submit_return_tracking', order_id: orderId, tracking: tracking })
+        });
+        const data = await res.json();
+        if(data.success) location.reload();
+        else alert(data.message);
+      } catch(e) { console.error(e); }
+    }
+  }
+
+  async function confirmReturnHandover(orderId) {
+    if(confirm("Have you handed over the item to the seller?")) {
+      try {
+        const res = await fetch('../api/Refund_Actions.php', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ action: 'confirm_return_handover', order_id: orderId })
+        });
+        const data = await res.json();
+        if(data.success) location.reload();
+        else alert(data.message);
+      } catch(e) { console.error(e); }
+    }
+  }
+
+  // ---------------------------------------------
+  // Confirm Receipt Modal
   // ---------------------------------------------
   function openConfirmDialog(orderId) {
     document.getElementById('secondaryConfirmModal').classList.add('active');
@@ -784,36 +1150,28 @@
   }
 
   // ---------------------------------------------
-  // 🔥🔥🔥 退款原因选择弹窗逻辑 (已更新路径) 🔥🔥🔥
+  // Refund Request Modal
   // ---------------------------------------------
   let currentRefundOrderId = null;
 
   function openRefundModal(orderId) {
     currentRefundOrderId = orderId;
     document.getElementById('refundReasonModal').classList.add('active');
-
-    // 绑定提交事件
     document.getElementById('submitRefundBtn').onclick = () => processRefundSelection();
   }
 
   function closeRefundModal() {
     document.getElementById('refundReasonModal').classList.remove('active');
-    // 清空输入
     document.getElementById('refundReasonSelect').selectedIndex = 0;
   }
 
   function processRefundSelection() {
     const reason = document.getElementById('refundReasonSelect').value;
-
     if (!reason) {
       alert('Please select a refund reason.');
       return;
     }
-
-    // 🔥 修改跳转路径为新的 Module 地址
     const targetUrl = `../../Module_After_Sales_Dispute/pages/Refund_Request.html?order_id=${currentRefundOrderId}&reason=${encodeURIComponent(reason)}`;
-
-    console.log('Redirecting to refund page:', targetUrl);
     window.location.href = targetUrl;
   }
 

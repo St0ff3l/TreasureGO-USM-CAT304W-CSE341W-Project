@@ -30,18 +30,29 @@ try {
                     o.Orders_Buyer_ID,
                     MAX(o.Address_ID) AS Address_ID,
                     
-                    /* 🔥🔥 修改：使用 MAX() 解决 GROUP BY 报错 🔥🔥 */
+                    /* 基本订单信息 */
                     MAX(s.Shipments_Shipped_Time) AS Orders_Shipped_At,
                     MAX(s.Shipments_Tracking_Number) AS Tracking_Number,
-                    
-                    /* 🔥🔥 修改：使用 MAX() 解决 GROUP BY 报错 🔥🔥 */
                     MAX(u.User_Username) AS Seller_Username,
+
+                    /* 🔥 退款信息 (关联 Refund_Requests) */
+                    MAX(rr.Refund_Status) AS Refund_Status,
+                    MAX(rr.Refund_Type) AS Refund_Type,
+                    MAX(rr.Refund_Amount) AS Refund_Amount,
+
+                    /* 🔥 卖家退货地址 (关联 Address 表) */
+                    MAX(sa.Address_Detail) AS Seller_Return_Address,
 
                     p.Product_ID, 
                     p.Product_Title,
                     p.Product_Description,
                     p.Product_Condition,
-                    p.Delivery_Method,
+                    
+                    /* 🔥🔥 修改点 1：动态判断配送方式 (Address_ID 为空即为面交) 🔥🔥 */
+                    (CASE WHEN MAX(o.Address_ID) IS NULL THEN 'meetup' ELSE 'shipping' END) AS Delivery_Method,
+                    
+                    /* 🔥🔥 修改点 2：添加 Product_Location 供面交显示 🔥🔥 */
+                    p.Product_Location,
                     
                     c.Category_Name,
 
@@ -56,6 +67,12 @@ try {
                LEFT JOIN User u ON o.Orders_Seller_ID = u.User_ID
 
                LEFT JOIN Shipments s ON o.Orders_Order_ID = s.Order_ID AND s.Shipments_Type = 'forward'
+               
+               /* 关联退款表 */
+               LEFT JOIN Refund_Requests rr ON o.Orders_Order_ID = rr.Order_ID
+
+               /* 🔥🔥 修复点：使用正确的字段名 Address_User_ID 🔥🔥 */
+               LEFT JOIN Address sa ON o.Orders_Seller_ID = sa.Address_User_ID AND sa.Address_Is_Default = 1
                
                WHERE o.Orders_Buyer_ID = :uid
                GROUP BY o.Orders_Order_ID
@@ -77,18 +94,28 @@ try {
                     o.Orders_Buyer_ID,
                     MAX(o.Address_ID) AS Address_ID,
 
-                    /* 🔥🔥 修改：使用 MAX() 解决 GROUP BY 报错 🔥🔥 */
                     MAX(s.Shipments_Shipped_Time) AS Orders_Shipped_At,
                     MAX(s.Shipments_Tracking_Number) AS Tracking_Number,
-
-                    /* 🔥🔥 修改：使用 MAX() 解决 GROUP BY 报错 🔥🔥 */
                     MAX(u.User_Username) AS Buyer_Username,
+
+                    /* 🔥 退款信息 */
+                    MAX(rr.Refund_Status) AS Refund_Status,
+                    MAX(rr.Refund_Type) AS Refund_Type,
+                    MAX(rr.Refund_Amount) AS Refund_Amount,
+
+                    /* 🔥 卖家(我)的默认地址 */
+                    MAX(sa.Address_Detail) AS Seller_Return_Address,
 
                     p.Product_ID, 
                     p.Product_Title,
                     p.Product_Description,
                     p.Product_Condition,
-                    p.Delivery_Method,
+                    
+                    /* 🔥🔥 修改点 1：动态判断配送方式 🔥🔥 */
+                    (CASE WHEN MAX(o.Address_ID) IS NULL THEN 'meetup' ELSE 'shipping' END) AS Delivery_Method,
+
+                    /* 🔥🔥 修改点 2：添加 Product_Location 🔥🔥 */
+                    p.Product_Location,
 
                     c.Category_Name,
 
@@ -103,6 +130,11 @@ try {
                LEFT JOIN User u ON o.Orders_Buyer_ID = u.User_ID
 
                LEFT JOIN Shipments s ON o.Orders_Order_ID = s.Order_ID AND s.Shipments_Type = 'forward'
+
+               LEFT JOIN Refund_Requests rr ON o.Orders_Order_ID = rr.Order_ID
+
+               /* 🔥🔥 修复点：使用正确的字段名 Address_User_ID 🔥🔥 */
+               LEFT JOIN Address sa ON o.Orders_Seller_ID = sa.Address_User_ID AND sa.Address_Is_Default = 1
 
                WHERE o.Orders_Seller_ID = :uid
                GROUP BY o.Orders_Order_ID
