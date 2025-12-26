@@ -44,6 +44,9 @@
     .banner-return { background: #EFF6FF; border: 1px solid #BFDBFE; color: #1E40AF; }
     .banner-return i { color: #3B82F6; }
 
+    .banner-action { background: #EEF2FF; border: 1px solid #C7D2FE; color: #4338CA; } /* 卖家专用 */
+    .banner-action i { color: #4F46E5; }
+
     /* 信息网格 */
     .details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px; }
     .info-card { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.02); }
@@ -103,51 +106,52 @@
 </div>
 
 <script>
-  // 获取 URL 参数
   const urlParams = new URLSearchParams(window.location.search);
   const ORDER_ID = urlParams.get('order_id');
-
-  // 🔥🔥🔥 已根据你的要求更新为正确的路径 🔥🔥🔥
   const API_URL = '../../Module_Transaction_Fund/api/Get_User_Orders.php';
+
+  // 🔥🔥🔥 新增：当前用户ID变量
+  let currentUserId = null;
 
   async function loadDetails() {
     if(!ORDER_ID) return alert("No Order ID provided.");
 
     try {
-      // 1. 调用 API 获取订单数据
-      const res = await fetch(API_URL);
-
-      // 检查网络或路径错误
-      if (!res.ok) {
-        throw new Error(`API Path Error: ${res.status} ${res.statusText}. Path tried: ${API_URL}`);
+      // 1. 🔥 先获取当前用户ID (用于判断身份)
+      const sessionRes = await fetch('../../Module_User_Account_Management/api/session_status.php');
+      const sessionData = await sessionRes.json();
+      if (!sessionData.is_logged_in) {
+        window.location.href = '../../Module_User_Account_Management/pages/login.php';
+        return;
       }
+      currentUserId = sessionData.user.user_id;
 
+      // 2. 调用 API 获取订单数据
+      const res = await fetch(API_URL);
+      if (!res.ok) throw new Error(`API Error: ${res.statusText}`);
       const data = await res.json();
+      if(!data.success) throw new Error(data.msg || "Failed to load data.");
 
-      if(!data.success) throw new Error(data.msg || "Failed to load order data.");
-
-      // 2. 在买家和卖家列表中查找对应订单
       const allOrders = [...(data.buying || []), ...(data.selling || [])];
       const order = allOrders.find(o => o.Orders_Order_ID == ORDER_ID);
 
       if(order) {
         renderPage(order);
       } else {
-        document.body.innerHTML = "<div style='text-align:center; margin-top:50px;'><h3>Order Not Found</h3><p>Could not find order #" + ORDER_ID + "</p><button onclick='history.back()'>Go Back</button></div>";
+        document.body.innerHTML = "<div style='text-align:center; margin-top:50px;'><h3>Order Not Found</h3><button onclick='history.back()'>Go Back</button></div>";
       }
 
     } catch(e) {
       console.error(e);
-      document.getElementById('statusMessageContainer').innerHTML = `<div style="background:#FEF2F2; border:1px solid #FECACA; color:#991B1B; padding:15px; border-radius:12px; text-align:center;"><strong>Error:</strong> ${e.message}</div>`;
+      document.getElementById('statusMessageContainer').innerHTML = `<div style="padding:15px; color:red; text-align:center;">Error: ${e.message}</div>`;
     }
   }
 
   function renderPage(order) {
-    // 1. 填充基础文本信息
+    // 1. 填充基础信息
     const amount = order.Refund_Amount ? parseFloat(order.Refund_Amount).toFixed(2) : '0.00';
     document.getElementById('refundAmount').innerText = 'RM' + amount;
 
-    // 简单的类型映射
     let typeText = '-';
     if (order.Refund_Type === 'refund_only') typeText = 'Refund Only';
     else if (order.Refund_Type === 'return_refund') typeText = 'Return & Refund';
@@ -155,7 +159,6 @@
 
     document.getElementById('refundReason').innerText = order.Refund_Reason || 'Not Specified';
 
-    // 优先使用更新时间，如果没有则使用创建时间或当前时间
     const dateStr = order.Refund_Updated_At || order.Refund_Created_At || new Date().toISOString();
     document.getElementById('refundDate').innerText = new Date(dateStr).toLocaleDateString();
 
@@ -163,13 +166,19 @@
       document.getElementById('refundDesc').innerText = order.Refund_Description;
     }
 
-    // 2. 根据状态渲染 Banner
+    // 2. 根据状态 + 身份 渲染 Banner
     const statusDiv = document.getElementById('statusMessageContainer');
     const status = order.Refund_Status;
+
+    // 🔥🔥🔥 核心修改：判断买家/卖家身份
+    const isBuyer = (order.Orders_Buyer_ID == currentUserId);
+
     let bannerHtml = '';
 
     if(status === 'pending_approval') {
-      bannerHtml = `
+      if (isBuyer) {
+        // 买家视角：等待审核
+        bannerHtml = `
             <div class="status-banner banner-pending">
                 <i class="ri-hourglass-fill"></i>
                 <div class="status-content">
@@ -177,14 +186,25 @@
                     <p>The request has been sent. The seller will review your request shortly.</p>
                 </div>
             </div>`;
+      } else {
+        // 🔥 卖家视角：需要操作
+        bannerHtml = `
+            <div class="status-banner banner-action">
+                <i class="ri-error-warning-fill"></i>
+                <div class="status-content">
+                    <h3>Action Required: Refund Requested</h3>
+                    <p>The buyer has requested a refund. Please review the details below and go back to Order Details to Approve or Reject.</p>
+                </div>
+            </div>`;
+      }
     }
     else if (status === 'awaiting_return') {
       bannerHtml = `
             <div class="status-banner banner-return">
                 <i class="ri-truck-line"></i>
                 <div class="status-content">
-                    <h3>Return Accepted</h3>
-                    <p>Seller has accepted. Please return the item and submit the tracking number.</p>
+                    <h3>Return In Progress</h3>
+                    <p>${isBuyer ? 'Please return the item and submit tracking.' : 'Waiting for buyer to return the item.'}</p>
                 </div>
             </div>`;
     }
@@ -194,7 +214,7 @@
                 <i class="ri-checkbox-circle-fill"></i>
                 <div class="status-content">
                     <h3>Refund Completed</h3>
-                    <p>Funds have been successfully returned to the buyer's wallet.</p>
+                    <p>Funds have been returned.</p>
                 </div>
             </div>`;
     }
@@ -204,24 +224,21 @@
                 <i class="ri-close-circle-fill"></i>
                 <div class="status-content">
                     <h3>Request Rejected</h3>
-                    <p>The seller has rejected this refund request. You may contact support.</p>
+                    <p>The refund request was rejected.</p>
                 </div>
             </div>`;
     }
     else {
-      // 默认状态
       bannerHtml = `
             <div class="status-banner" style="background:#F3F4F6; color:#374151;">
                 <i class="ri-information-line"></i>
-                <div class="status-content">
-                    <h3>Status: ${status || 'Unknown'}</h3>
-                </div>
+                <div class="status-content"><h3>Status: ${status || 'Unknown'}</h3></div>
             </div>`;
     }
 
     statusDiv.innerHTML = bannerHtml;
 
-    // 3. 处理图片 (如果有 Refund_Images 字段)
+    // 3. 处理图片
     const gallery = document.getElementById('evidenceGallery');
     if(order.Refund_Images) {
       gallery.innerHTML = '';
@@ -234,7 +251,6 @@
       images.forEach(src => {
         if(src && src.trim()) {
           const img = document.createElement('img');
-          // 简单的路径修正逻辑：如果不是 http 开头也不是相对路径，假设它在根目录下
           let cleanSrc = src.trim();
           if(!cleanSrc.startsWith('http') && !cleanSrc.startsWith('../')) {
             cleanSrc = '../../' + cleanSrc;
