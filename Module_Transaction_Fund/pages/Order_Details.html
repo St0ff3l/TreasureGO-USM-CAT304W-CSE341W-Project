@@ -881,6 +881,18 @@
 
     // 🟢 1. Pending Approval
     if (status === 'pending_approval') {
+      // Refund Reason Mapping
+      const reasonMap = {
+        'damaged': 'Item Damaged / Defective',
+        'wrong_item': 'Received Wrong Item',
+        'not_described': 'Item Not As Described',
+        'missing_parts': 'Missing Parts / Accessories',
+        'fake': 'Counterfeit / Fake Item',
+        'other': 'Other'
+      };
+      const readableReason = reasonMap[order.Refund_Reason] || order.Refund_Reason;
+      const description = order.Refund_Description || 'No description provided.';
+
       if (isBuyer) {
         html = `
             <div class="refund-status-card status-pending">
@@ -889,6 +901,7 @@
                     <div class="refund-info-text">
                         <h4>Waiting for Seller</h4>
                         <p>You requested a <strong>${typeText}</strong> of <strong>RM${order.Refund_Amount}</strong>.</p>
+                        <p style="margin-top:5px; color:#4B5563;"><strong>Reason:</strong> ${readableReason}</p>
                     </div>
                 </div>
             </div>`;
@@ -906,9 +919,12 @@
                     <span class="refund-status-label" style="color:#C2410C;">⚡ Action Required</span>
                 </div>
                 <div class="refund-status-body">
-                    <div class="refund-info-text">
+                    <div class="refund-info-text" style="width:100%">
                         <h4>Buyer Requested ${typeText}</h4>
-                        <p>Reason: ${order.Refund_Reason}</p>
+                        <p><strong>Reason:</strong> ${readableReason}</p>
+                        <div style="background:#F9FAFB; padding:10px; border-radius:8px; margin-top:8px; font-size:0.9rem; color:#374151;">
+                            "${description}"
+                        </div>
                     </div>
 
                     <div style="width:100%">
@@ -1107,20 +1123,22 @@
     const container = document.getElementById(`addr-container-${orderId}`);
     let html = `<div class="inline-addr-header">Select Return Address:</div>`;
 
-    // 1. 渲染现有地址
+    // 1. 修复地址选择逻辑：传递索引而不是字符串
     fetchedAddressList.forEach((addr, index) => {
-      const isDefault = addr.Address_Is_Default == 1;
-      if(isDefault && !selectedReturnAddressStr) selectedReturnAddressStr = `${addr.Address_Detail}, ${addr.Address_Receiver_Name}, ${addr.Address_Phone_Number}`;
+      const isDefault = (index === 0); // 默认选中第一个
+      if(isDefault) {
+        selectedAddressStr = `${addr.Address_Detail}, ${addr.Address_Receiver_Name}, ${addr.Address_Phone_Number}`;
+      }
 
       html += `
-            <div class="addr-option ${isDefault ? 'selected' : ''}" onclick="selectInlineAddress(this, '${addr.Address_Detail}, ${addr.Address_Receiver_Name}, ${addr.Address_Phone_Number}')">
-                <input type="radio" name="inlineAddr_${orderId}" ${isDefault ? 'checked' : ''}>
-                <div class="addr-content-inline">
-                    <div><strong>${addr.Address_Receiver_Name}</strong> (${addr.Address_Phone_Number})</div>
-                    <div>${addr.Address_Detail}</div>
-                </div>
+        <div class="addr-option ${isDefault ? 'selected' : ''}" onclick="selectInlineAddress(this, ${index})">
+            <input type="radio" name="inlineAddr_${orderId}" ${isDefault ? 'checked' : ''}>
+            <div class="addr-content-inline">
+                <div><strong>${addr.Address_Receiver_Name}</strong> (${addr.Address_Phone_Number})</div>
+                <div>${addr.Address_Detail}</div>
             </div>
-          `;
+        </div>
+      `;
     });
 
     // 2. 🔥 添加新地址按钮 🔥
@@ -1187,16 +1205,25 @@
 
 
   // Helper: Visual selection
-  window.selectInlineAddress = function(el, fullAddrStr) {
+  window.selectInlineAddress = function(el, index) {
     // Remove selected class from siblings
     const siblings = el.parentNode.querySelectorAll('.addr-option');
     siblings.forEach(sib => sib.classList.remove('selected'));
-    siblings.forEach(sib => sib.querySelector('input').checked = false);
+    siblings.forEach(sib => {
+        const radio = sib.querySelector('input[type="radio"]');
+        if(radio) radio.checked = false;
+    });
 
     // Add to clicked
     el.classList.add('selected');
-    el.querySelector('input').checked = true;
-    selectedReturnAddressStr = fullAddrStr;
+    const currentRadio = el.querySelector('input[type="radio"]');
+    if(currentRadio) currentRadio.checked = true;
+    
+    // Get data from array
+    const addr = fetchedAddressList[index];
+    if(addr) {
+        selectedReturnAddressStr = `${addr.Address_Detail}, ${addr.Address_Receiver_Name}, ${addr.Address_Phone_Number}`;
+    }
   }
 
   // Helper: Cancel / Back
