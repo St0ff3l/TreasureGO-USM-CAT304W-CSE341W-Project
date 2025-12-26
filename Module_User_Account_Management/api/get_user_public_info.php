@@ -50,10 +50,102 @@ try {
  
          // C. Membership Tier
          try {
-             $stmt = $pdo->prepare("SELECT mp.Membership_Tier FROM Memberships m JOIN Membership_Plans mp ON m.Membership_Plan_ID = mp.Membership_Plan_ID WHERE m.User_ID = ? AND m.Membership_Status = 'Active' AND m.Membership_End_Date > NOW() ORDER BY m.Membership_End_Date DESC LIMIT 1");
+             // 1. Fetch all valid memberships (active or future)
+             $stmt = $pdo->prepare("
+                 SELECT 
+                     mp.Membership_Tier,
+                     mp.Membership_Price,
+                     mp.Membership_Description,
+                     m.Memberships_Start_Date,
+                     m.Memberships_End_Date
+                 FROM Memberships m 
+                 JOIN Membership_Plans mp ON m.Plan_ID = mp.Plan_ID 
+                 WHERE m.User_ID = ? 
+                   AND m.Memberships_End_Date > NOW() 
+                 ORDER BY mp.Membership_Price DESC, m.Memberships_Start_Date ASC
+             ");
              $stmt->execute([$user_id]);
-             $membership = $stmt->fetchColumn();
-             $user['Memberships_tier'] = $membership ? $membership : 'Free';
+             $allMemberships = $stmt->fetchAll(PDO::FETCH_ASSOC);
+ 
+             $currentDate = date('Y-m-d H:i:s');
+             $highestActiveTier = null;
+             $highestPrice = -1;
+             $selectedDescription = '';
+ 
+             // 2. Identify Highest Active Tier (must be active NOW)
+             foreach ($allMemberships as $m) {
+                 if ($m['Memberships_Start_Date'] <= $currentDate && $m['Memberships_End_Date'] > $currentDate) {
+                     if ($m['Membership_Price'] > $highestPrice) {
+                         $highestPrice = $m['Membership_Price'];
+                         $highestActiveTier = $m['Membership_Tier'];
+                         $selectedDescription = $m['Membership_Description'];
+                     }
+                 }
+             }
+ 
+             if ($highestActiveTier) {
+                 // 3. Filter records for this specific tier
+                 $tierRecords = array_filter($allMemberships, function($m) use ($highestActiveTier) {
+                     return $m['Membership_Tier'] === $highestActiveTier;
+                 });
+                 
+                 // Sort by Start Date (crucial for merging)
+                 usort($tierRecords, function($a, $b) {
+                     return strcmp($a['Memberships_Start_Date'], $b['Memberships_Start_Date']);
+                 });
+ 
+                 // 4. Merge overlapping/continuous intervals
+                 $mergedIntervals = [];
+                 foreach ($tierRecords as $rec) {
+                     if (empty($mergedIntervals)) {
+                         $mergedIntervals[] = [
+                             'start' => $rec['Memberships_Start_Date'],
+                             'end' => $rec['Memberships_End_Date']
+                         ];
+                     } else {
+                         $lastIndex = count($mergedIntervals) - 1;
+                         $last = &$mergedIntervals[$lastIndex];
+                         
+                         // Check for overlap or adjacency
+                         if ($rec['Memberships_Start_Date'] <= $last['end']) {
+                             if ($rec['Memberships_End_Date'] > $last['end']) {
+                                 $last['end'] = $rec['Memberships_End_Date'];
+                             }
+                         } else {
+                             $mergedIntervals[] = [
+                                 'start' => $rec['Memberships_Start_Date'],
+                                 'end' => $rec['Memberships_End_Date']
+                             ];
+                         }
+                     }
+                 }
+ 
+                 // 5. Find the interval that covers NOW
+                 $finalStart = null;
+                 $finalEnd = null;
+                 foreach ($mergedIntervals as $interval) {
+                     if ($interval['start'] <= $currentDate && $interval['end'] > $currentDate) {
+                         $finalStart = $interval['start'];
+                         $finalEnd = $interval['end'];
+                         break;
+                     }
+                 }
+ 
+                 if ($finalStart && $finalEnd) {
+                     $user['Memberships_tier'] = $highestActiveTier;
+                     $user['Memberships_Start_Date'] = $finalStart;
+                     $user['Memberships_End_Date'] = $finalEnd;
+                     $user['Membership_Description'] = $selectedDescription;
+                 } else {
+                     $user['Memberships_tier'] = 'Free';
+                 }
+ 
+             } else {
+                 $user['Memberships_tier'] = 'Free';
+                 $user['Memberships_Start_Date'] = null;
+                 $user['Memberships_End_Date'] = null;
+                 $user['Membership_Description'] = 'Standard free account.';
+             }
          } catch (Exception $e) {
              $user['Memberships_tier'] = 'Free';
          }
