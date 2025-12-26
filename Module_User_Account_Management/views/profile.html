@@ -228,36 +228,73 @@
         
         /* Mobile Sidebar (Top Navigation) */
         .sidebar-card { 
-            display: flex; 
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
             position: static; 
             width: 100%; 
             max-height: none; 
-            overflow-x: auto; 
             padding: 10px;
             gap: 10px;
             margin-bottom: 15px;
-            white-space: nowrap;
             border-radius: 12px;
-            /* Hide scrollbar */
-            -ms-overflow-style: none;  /* IE and Edge */
-            scrollbar-width: none;  /* Firefox */
+            overflow: hidden;
         }
-        .sidebar-card::-webkit-scrollbar {
-            display: none;
-        }
-
+        
         .menu-title { display: none; }
         
         .menu-item {
+            display: none; /* Hide all by default */
             width: auto;
-            padding: 8px 12px;
-            font-size: 0.85rem;
+            padding: 10px 12px;
+            font-size: 0.8rem;
             margin-bottom: 0;
-            flex-shrink: 0;
             border: 1px solid #eee;
+            flex-direction: row; /* 🔥 Changed to row */
+            align-items: center;
+            justify-content: center;
+            text-align: left;
+            height: 50px;
+            gap: 8px; /* Space between icon and text */
         }
         
-        .menu-item i { font-size: 1rem; }
+        .menu-item i { font-size: 1.1rem; margin-bottom: 0; }
+
+        /* Priority Items: Always Visible */
+        #menu-overview, #menu-address, #menu-security {
+            display: flex;
+            order: -1;
+        }
+
+        /* Expanded State */
+        .sidebar-card.expanded .menu-item {
+            display: flex;
+            order: 0; /* Reset order */
+        }
+        /* Keep priority items at top */
+        .sidebar-card.expanded #menu-overview { order: -10; }
+        .sidebar-card.expanded #menu-address { order: -9; }
+        .sidebar-card.expanded #menu-security { order: -8; }
+
+        /* Expand Button */
+        .mobile-expand-btn {
+            grid-column: 1 / -1; /* Span full width */
+            text-align: center;
+            padding: 5px;
+            cursor: pointer;
+            color: var(--text-gray);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #f9fafb;
+            border-radius: 8px;
+            margin-top: 5px;
+        }
+        .mobile-expand-btn:hover { background: #eee; }
+        .mobile-expand-btn i { font-size: 1.5rem; transition: transform 0.3s; }
+        
+        .sidebar-card.expanded .mobile-expand-btn i {
+            transform: rotate(180deg);
+        }
 
         /* Mobile Action Card (Bottom Floating Bar) */
         .action-card { 
@@ -380,10 +417,10 @@
 
 <div class="layout-container">
 
-  <aside class="sidebar-card">
+  <aside class="sidebar-card" id="mobile-sidebar">
     <div class="menu-title">Dashboard</div>
 
-    <button class="menu-item active-view" onclick="switchView('overview', this)">
+    <button class="menu-item active-view" id="menu-overview" onclick="switchView('overview', this)">
       <i class="ri-user-line"></i> Overview
     </button>
 
@@ -412,17 +449,22 @@
       <i class="ri-user-settings-line"></i> Personal
     </button>
 
-    <button class="menu-item" onclick="switchView('address', this)">
+    <button class="menu-item" id="menu-address" onclick="switchView('address', this)">
       <i class="ri-map-pin-line"></i> Address
     </button>
 
-    <button class="menu-item" onclick="switchView('security', this)">
+    <button class="menu-item" id="menu-security" onclick="switchView('security', this)">
       <i class="ri-shield-check-line"></i> Security
     </button>
 
     <a href="#" class="menu-item" onclick="handleLogout()" style="color: #EF4444; margin-top: 10px;">
       <i class="ri-logout-box-r-line"></i> Log Out
     </a>
+
+    <!-- Mobile Expand Button -->
+    <div class="mobile-expand-btn" onclick="toggleMobileMenu()">
+        <i class="ri-arrow-down-s-line" id="expand-icon"></i>
+    </div>
   </aside>
 
   <main class="main-content">
@@ -440,7 +482,10 @@
           <div class="stat-item"><span class="stat-num" id="s_posted">0</span><span class="stat-label">Published</span></div>
           <div class="stat-item"><span class="stat-num" id="s_sold">0</span><span class="stat-label">Sold</span></div>
           <div class="stat-item"><span class="stat-num" id="s_score">5.0</span><span class="stat-label">Rating</span></div>
-          <div class="stat-item"><span class="stat-num" id="s_membership" style="color: #F59E0B;">Free</span><span class="stat-label">Membership</span></div>
+          <div class="stat-item" id="membership-stat-item" style="cursor: pointer;" onclick="openMembershipModal()">
+            <span class="stat-num" id="s_membership" style="color: #F59E0B;">Free</span>
+            <span class="stat-label">Membership <i class="ri-information-line" style="font-size: 0.8rem;"></i></span>
+          </div>
         </div>
       </div>
 
@@ -561,6 +606,39 @@
 
 <!-- Address modal is now provided by the injected subview fragment -->
 
+<!-- Membership Details Modal -->
+<div class="modal-overlay" id="membership-modal">
+  <div class="modal-content">
+    <div class="settings-header" style="margin-bottom: 20px; display:flex; justify-content:space-between;">
+      <h2>Membership Details</h2>
+      <i class="ri-close-line" style="font-size:1.5rem; cursor:pointer;" onclick="closeMembershipModal()"></i>
+    </div>
+    
+    <div style="text-align: center; margin-bottom: 20px;">
+        <div id="modal_mem_icon" style="font-size: 3rem; margin-bottom: 10px;">👑</div>
+        <h3 id="modal_mem_tier" style="font-size: 1.5rem; color: #F59E0B; margin-bottom: 5px;">Free</h3>
+        <p id="modal_mem_desc" style="color: #6B7280; font-size: 0.95rem;">Standard free account.</p>
+    </div>
+
+    <div style="background: #F9FAFB; padding: 15px; border-radius: 12px; margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+            <span style="color: #6B7280;">Start Date:</span>
+            <span id="modal_mem_start" style="font-weight: 600;">-</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+            <span style="color: #6B7280;">End Date:</span>
+            <span id="modal_mem_end" style="font-weight: 600;">-</span>
+        </div>
+        <div id="modal_mem_countdown_row" style="display: flex; justify-content: space-between; color: #EF4444; font-weight: 700; display: none;">
+            <span>Expires in:</span>
+            <span id="modal_mem_countdown"></span>
+        </div>
+    </div>
+
+    <button onclick="window.location.href='../../Module_Product_Ecosystem/pages/Membership.html'" class="btn-save" style="width:100%;">Upgrade / Renew</button>
+  </div>
+</div>
+
 <!-- Avatar Upload Modal -->
 <div class="modal-overlay" id="avatar-modal">
   <div class="modal-content" style="text-align: center;">
@@ -596,8 +674,11 @@
 
     // 2. 获取个人资料数据
     await fetchProfileData();
+    
+    // 3. 获取 Active Listings
+    await fetchActiveListings();
 
-    // 3. 支持 hash 深链接（例如 profile.php#address）
+    // 4. 支持 hash 深链接（例如 profile.php#address）
     const hash = (window.location.hash || '').replace('#', '').trim();
     if (hash === 'address' || hash === 'personal' || hash === 'security' || hash === 'overview') {
       // 找到对应的 sidebar button 并触发 switchView
@@ -605,6 +686,12 @@
       await switchView(hash, btn || null);
     }
   });
+
+  // --- Mobile Menu Toggle ---
+  function toggleMobileMenu() {
+      const sidebar = document.getElementById('mobile-sidebar');
+      sidebar.classList.toggle('expanded');
+  }
 
   // --- Tab Switching Logic ---
   function switchProfileTab(tabName) {
@@ -619,6 +706,17 @@
       document.getElementById('tab-content-' + tabName).style.display = 'block';
   }
 
+  // --- Helper: Escape HTML ---
+  function escapeHtml(text) {
+      if (!text) return '';
+      return text
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+  }
+
   // --- Active Listings Logic ---
   async function fetchActiveListings() {
       const loadingEl = document.getElementById('listings-loading');
@@ -626,8 +724,23 @@
       const emptyEl = document.getElementById('listings-empty');
 
       try {
+          // 🔥 Fix: Use correct relative path to API
           const res = await fetch('../../Module_Product_Ecosystem/api/Get_User_Listings.php');
-          const json = await res.json();
+          
+          // Check if response is OK
+          if (!res.ok) {
+              const errText = await res.text();
+              throw new Error(`HTTP error! status: ${res.status}, body: ${errText}`);
+          }
+          
+          const text = await res.text();
+          let json;
+          try {
+              json = JSON.parse(text);
+          } catch (e) {
+              console.error("JSON Parse Error. Response text:", text);
+              throw new Error("Invalid JSON response from server");
+          }
 
           loadingEl.style.display = 'none';
 
@@ -669,13 +782,73 @@
           } else {
               gridEl.style.display = 'none';
               emptyEl.style.display = 'block';
+              if (json.message) {
+                  console.warn("API Message:", json.message);
+              }
           }
       } catch (err) {
           console.error("Fetch Listings Error:", err);
           loadingEl.style.display = 'none';
           emptyEl.style.display = 'block';
-          emptyEl.querySelector('p').innerText = "Failed to load listings.";
+          emptyEl.querySelector('p').innerText = "Failed to load listings: " + err.message;
       }
+  }
+
+  // --- Membership Modal Logic ---
+  const memModal = document.getElementById('membership-modal');
+  let currentMemData = {};
+
+  function openMembershipModal() {
+      if (!memModal) return;
+      
+      const tier = currentMemData.tier || 'Free';
+      
+      // 1. Set Icon based on Tier (from Membership.html)
+      // VIP: 💎 (#4F46E5)
+      // SVIP: 👑 (#F59E0B)
+      let icon = '👤';
+      let color = '#6B7280';
+      
+      if (tier.includes('SVIP')) {
+          icon = '👑';
+          color = '#F59E0B';
+      } else if (tier.includes('VIP')) {
+          icon = '💎';
+          color = '#4F46E5';
+      }
+      
+      document.getElementById('modal_mem_icon').innerText = icon;
+      document.getElementById('modal_mem_tier').innerText = tier;
+      document.getElementById('modal_mem_tier').style.color = color;
+      
+      setText('modal_mem_desc', currentMemData.desc || 'Standard free account.');
+      setText('modal_mem_start', currentMemData.start ? new Date(currentMemData.start).toLocaleDateString() : '-');
+      setText('modal_mem_end', currentMemData.end ? new Date(currentMemData.end).toLocaleDateString() : '-');
+      
+      // 2. Calculate Countdown
+      const countdownRow = document.getElementById('modal_mem_countdown_row');
+      if (currentMemData.end) {
+          const endDate = new Date(currentMemData.end);
+          const now = new Date();
+          const diffTime = endDate - now;
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+          
+          if (diffDays > 0) {
+              setText('modal_mem_countdown', diffDays + (diffDays === 1 ? ' day' : ' days'));
+              countdownRow.style.display = 'flex';
+          } else {
+              setText('modal_mem_countdown', 'Expired');
+              countdownRow.style.display = 'flex';
+          }
+      } else {
+          countdownRow.style.display = 'none';
+      }
+      
+      memModal.classList.add('open');
+  }
+
+  function closeMembershipModal() {
+      if (memModal) memModal.classList.remove('open');
   }
 
   // --- Profile Logic (Old) ---
@@ -698,6 +871,14 @@
     setText('s_posted', user.posted_count || 0);
     setText('s_sold', user.sold_count || 0);
     setText('s_membership', user.Memberships_tier || 'Free');
+    
+    // Store membership data for modal
+    currentMemData = {
+        tier: user.Memberships_tier,
+        start: user.Memberships_Start_Date,
+        end: user.Memberships_End_Date,
+        desc: user.Membership_Description
+    };
 
     const inputUser = document.getElementById('input_username');
     const inputEmail = document.getElementById('input_email');
