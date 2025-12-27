@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Withdraw Funds - TreasureGO</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+    <script src="../../Public_Assets/js/status_dialog.js"></script>
     <style>
         :root {
             --bg-color: #F3F6F9;
@@ -779,7 +780,7 @@
                 // We take the first file for the proof image
                 proofImage = await convertFileToBase64(dt.files[0]);
             } catch (err) {
-                alert("Error processing image");
+                StatusDialog.fail('Error', 'Error processing image');
                 return;
             }
         }
@@ -796,13 +797,15 @@
                 admin_remark: finalRemark
             });
 
-            alert(`✅ Withdrawal Submitted Successfully!\n\nRequest ID: #FR${result.data.request_id}\nAmount: $${amount}\nStatus: ${result.data.status}`);
-
-            // Redirect back to wallet
-            window.location.href = 'Fund_Request.html';
+            StatusDialog.success(
+                'Success',
+                `Withdrawal Submitted Successfully!<br><br>Request ID: #FR${result.data.request_id}<br>Amount: $${amount}<br>Status: ${result.data.status}`,
+                'OK',
+                () => { window.location.href = 'Fund_Request.html'; }
+            );
 
         } catch (error) {
-            alert('❌ Failed to submit withdrawal: ' + error.message);
+            StatusDialog.fail('Submission Failed', error.message);
         }
     });
 </script>

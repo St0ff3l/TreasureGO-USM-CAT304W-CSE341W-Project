@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Deposit Funds - TreasureGO</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+    <script src="../../Public_Assets/js/status_dialog.js"></script>
     <style>
         :root {
             --bg-color: #F3F6F9;
@@ -1080,19 +1081,15 @@ User Notes: ${adminRemarkInput}`;
                 admin_remark: finalRemark  // 包含时间戳的备注
             });
 
-            // 🔥 显示提交时间
-            alert(`✅ Deposit Submitted Successfully!
-
-Request ID: #FR${result.data.request_id}
-Amount: $${amount}
-Submitted at: ${timestamp}
-Status: ${result.data.status}`);
-
-            // Redirect back to wallet
-            window.location.href = 'Fund_Request.html';
+            StatusDialog.success(
+                'Success',
+                `Deposit Submitted Successfully!<br><br>Request ID: #FR${result.data.request_id}<br>Amount: $${amount}<br>Submitted at: ${timestamp}<br>Status: ${result.data.status}`,
+                'OK',
+                () => { window.location.href = 'Fund_Request.html'; }
+            );
 
         } catch (error) {
-            alert('❌ Failed to submit deposit: ' + error.message);
+            StatusDialog.fail('Submission Failed', error.message);
         }
     });
 

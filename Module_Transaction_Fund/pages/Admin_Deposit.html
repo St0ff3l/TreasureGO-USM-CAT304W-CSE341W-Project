@@ -6,6 +6,7 @@
     <title>TreasureGO - Admin Deposit Management</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
     <script src="../../Public_Assets/js/admin_guard.js"></script>
+    <script src="../../Public_Assets/js/status_dialog.js"></script>
     <style>
         /* ========================================= */
         /* 核心样式 & 变量 (Core Styles)        */
@@ -638,33 +639,8 @@
             background: #DC2626;
         }
 
-        /* Toast notification */
-        .toast {
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%) translateY(100px);
-            background: var(--text-dark);
-            color: white;
-            padding: 15px 25px;
-            border-radius: 12px;
-            font-weight: 500;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            transition: transform 0.3s ease;
-            z-index: 3000;
-        }
+        /* Toast notification - REMOVED */
 
-        .toast.show {
-            transform: translateX(-50%) translateY(0);
-        }
-
-        .toast.success {
-            background: var(--success);
-        }
-
-        .toast.error {
-            background: var(--danger);
-        }
 
         /* ========================================= */
         /* 手机端适配 (Mobile Responsive)     */
@@ -846,8 +822,8 @@
     </div>
 </div>
 
-<!-- Toast 通知 -->
-<div id="toast" class="toast"></div>
+<!-- Toast 通知 - REMOVED -->
+
 
 <script>
     // API 配置
@@ -1031,7 +1007,7 @@
         const request = allRequests.find(r => String(r.REQUEST_ID) === String(requestId));
         if (!request) {
             console.error('Request not found:', requestId);
-            showToast('Error: Request not found', 'error');
+            StatusDialog.fail('Error', 'Request not found');
             return;
         }
 
@@ -1100,21 +1076,19 @@
             const data = await res.json();
 
             if (data.success) {
-                showToast(
-                    currentAction === 'approve'
-                        ? '✅ Deposit approved! User balance updated.'
-                        : '❌ Deposit rejected.',
-                    currentAction === 'approve' ? 'success' : 'error'
+                StatusDialog.success(
+                    'Success',
+                    currentAction === 'approve' ? 'Deposit approved! User balance updated.' : 'Deposit rejected.'
                 );
                 closeActionModal();
                 loadStatistics();
                 loadRequests();
             } else {
-                showToast('Failed to process request: ' + data.message, 'error');
+                StatusDialog.fail('Error', 'Failed to process request: ' + data.message);
             }
         } catch (err) {
             console.error('Failed to process request:', err);
-            showToast('Network error. Please try again.', 'error');
+            StatusDialog.fail('Error', 'Network error. Please try again.');
         }
     }
 
@@ -1160,16 +1134,6 @@
         return status.charAt(0).toUpperCase() + status.slice(1);
     }
 
-    function showToast(message, type = '') {
-        const toast = document.getElementById('toast');
-        toast.textContent = message;
-        toast.className = 'toast ' + type + ' show';
-
-        setTimeout(() => {
-            toast.classList.remove('show');
-        }, 3000);
-    }
-
     // 点击弹窗外部关闭
     document.querySelectorAll('.modal-overlay').forEach(modal => {
         modal.addEventListener('click', (e) => {
@@ -1184,7 +1148,7 @@
         const request = allRequests.find(r => String(r.REQUEST_ID) === String(requestId));
         if (!request) {
             console.error('Request not found:', requestId);
-            showToast('Error: Request not found', 'error');
+            StatusDialog.fail('Error', 'Request not found');
             return;
         }
 
