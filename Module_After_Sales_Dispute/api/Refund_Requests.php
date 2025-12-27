@@ -73,10 +73,11 @@ try {
     $conn->beginTransaction();
 
     // (A) 查询订单信息 (确保订单存在且归属正确)
-    $orderQuery = "SELECT Orders_Buyer_ID, Orders_Seller_ID, Orders_Total_Amount, Orders_Status FROM Orders WHERE Orders_Order_ID = ?";
+    // 🔥 修改：这里增加了 Address_ID，用于判断是否为面交
+    $orderQuery = "SELECT Orders_Buyer_ID, Orders_Seller_ID, Orders_Total_Amount, Orders_Status, Address_ID FROM Orders WHERE Orders_Order_ID = ?";
     $stmt = $conn->prepare($orderQuery);
     $stmt->execute([$order_id]);
-    $orderData = $stmt->fetch();
+    $orderData = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$orderData) {
         throw new Exception("Order #{$order_id} not found.");
@@ -90,6 +91,28 @@ try {
         throw new Exception("Refund amount exceeds order total.");
     }
 
+    // =================================================================
+    // 🔥🔥🔥 新增核心逻辑：校验发货状态 🔥🔥🔥
+    // =================================================================
+    if ($refund_type === 'return_refund') {
+        // 判断是否为面交 (Address_ID 为 NULL 或 0 视为面交)
+        $is_meetup = (is_null($orderData['Address_ID']) || $orderData['Address_ID'] == 0);
+
+        if (!$is_meetup) {
+            // 如果不是面交，必须检查 Shipments 表是否有追踪单号
+            $checkShipSql = "SELECT Shipments_Tracking_Number FROM Shipments WHERE Order_ID = ? AND Shipments_Type = 'forward' LIMIT 1";
+            $stmtShip = $conn->prepare($checkShipSql);
+            $stmtShip->execute([$order_id]);
+            $shipment = $stmtShip->fetch(PDO::FETCH_ASSOC);
+
+            // 如果没有发货记录，或者单号为空，禁止提交“退货退款”
+            if (!$shipment || empty($shipment['Shipments_Tracking_Number'])) {
+                throw new Exception("Item not shipped yet. Please choose 'Refund Only'.");
+            }
+        }
+    }
+    // =================================================================
+
     // (B) 检查是否已有退款申请
     $checkDup = "SELECT Refund_ID, Refund_Status, Request_Attempt FROM Refund_Requests WHERE Order_ID = ?";
     $stmtDup = $conn->prepare($checkDup);
@@ -97,17 +120,15 @@ try {
     $existingRefund = $stmtDup->fetch(PDO::FETCH_ASSOC);
 
     // ✅ 新规则：同一订单允许最多提交两次。
-    // - 第一次：INSERT
-    // - 第二次：UPDATE 现有记录，Request_Attempt + 1，并把状态重置为 pending_approval
-    // - 第三次：拒绝
     if ($existingRefund) {
-        // 如果数据库还没有 Request_Attempt 字段，这里会是 null。
-        // 为了不让旧库直接崩溃，我们按“旧逻辑”处理。
+        // 兼容性处理
         if (!array_key_exists('Request_Attempt', $existingRefund) || $existingRefund['Request_Attempt'] === null) {
-            throw new Exception("A refund request already exists for this order. (DB not patched for multi-attempt)");
+            // 如果老数据没有 Attempt 字段，视为第一次
+            $attempt = 1;
+        } else {
+            $attempt = intval($existingRefund['Request_Attempt']);
         }
 
-        $attempt = intval($existingRefund['Request_Attempt']);
         if ($attempt >= 2) {
             throw new Exception("Refund request limit reached (max 2 attempts). Please proceed to dispute.");
         }
@@ -159,7 +180,6 @@ try {
     // =================================================================
     // 🔥🔥🔥 核心修改：同步更新 Orders 表状态 🔥🔥🔥
     // =================================================================
-    // 你的 Orders_Status 是 varchar(20)，'pending_approval' 长度为 16，完全可以存入。
     $updateOrderSql = "UPDATE Orders SET Orders_Status = 'After Sales Processing' WHERE Orders_Order_ID = ?";
     $stmtUpdateOrder = $conn->prepare($updateOrderSql);
 
