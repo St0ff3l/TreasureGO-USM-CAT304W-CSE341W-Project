@@ -119,7 +119,7 @@ function getOrders($conn, $request) {
 
 /**
  * Get order by ID
- * 🔥🔥 MODIFIED: Joined Product & Product_Images tables to fetch details 🔥🔥
+ * 🔥🔥 MODIFIED: Joined Product, Images, AND Shipments to support Refund Logic 🔥🔥
  */
 function getOrderById($conn, $request) {
     try {
@@ -129,8 +129,10 @@ function getOrderById($conn, $request) {
             sendResponse(false, 'Missing required field: order_id', null, 400);
         }
 
-        // Updated SQL query to fetch Product Title and Image URL
-        // We use a subquery for the image to ensure we only get one (prioritizing primary)
+        // Updated SQL query to fetch:
+        // 1. Address_ID (to detect meetup)
+        // 2. Shipments_Tracking_Number (to detect if shipped)
+        // 3. Delivery_Method (helper field)
         $sql = "SELECT 
                     o.Orders_Order_ID, 
                     o.Orders_Buyer_ID, 
@@ -139,10 +141,21 @@ function getOrderById($conn, $request) {
                     o.Orders_Platform_Fee, 
                     o.Orders_Status, 
                     o.Orders_Created_AT,
+                    o.Address_ID,  /* Added for frontend logic */
+                    
                     p.Product_Title,
+                    
+                    /* Added Shipment Info */
+                    s.Shipments_Tracking_Number,
+                    
+                    /* Helper: Determine Delivery Method */
+                    (CASE WHEN o.Address_ID IS NULL THEN 'meetup' ELSE 'shipping' END) AS Delivery_Method,
+
                     (SELECT Image_URL FROM Product_Images pi WHERE pi.Product_ID = p.Product_ID ORDER BY Image_is_primary DESC LIMIT 1) AS Main_Image
                 FROM Orders o
                 JOIN Product p ON o.Product_ID = p.Product_ID
+                /* Left Join Shipments to get tracking info if exists */
+                LEFT JOIN Shipments s ON o.Orders_Order_ID = s.Order_ID AND s.Shipments_Type = 'forward'
                 WHERE o.Orders_Order_ID = :order_id";
 
         $stmt = $conn->prepare($sql);

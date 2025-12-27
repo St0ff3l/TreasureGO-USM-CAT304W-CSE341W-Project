@@ -420,6 +420,9 @@
       if (result.success && result.data) {
         const data = result.data;
 
+        // 🛠️ 调试日志：按 F12 查看控制台，检查 Tracking_Number 和 Address_ID 是否有值
+        console.log("🔥 Order Data Received:", data);
+
         // A. Update Image
         const imgEl = document.querySelector('.item-thumb');
         if (data.Main_Image) {
@@ -444,6 +447,50 @@
 
         document.getElementById('maxRefundDisplay').innerText = `$${amount.toFixed(2)}`;
         document.getElementById('maxAmountHint').innerHTML = `Maximum refundable amount: <b>$${amount.toFixed(2)}</b>`;
+
+        // ----------------------------------------------------
+        // 🔥🔥 E. 核心修改：根据发货状态限制退款类型 🔥🔥
+        // ----------------------------------------------------
+        const refundTypeSelect = document.getElementById('refundType');
+        const returnOption = refundTypeSelect.querySelector('option[value="return_refund"]');
+
+        // 1. 尝试多种方式获取 Tracking Number (兼容大小写和嵌套)
+        const trackingNumber = data.Tracking_Number ||
+                data.Shipments_Tracking_Number ||
+                data.tracking_number ||
+                '';
+
+        // 2. 严谨判断 Address_ID (null, undefined, 0 都视为面交)
+        // 注意：API 返回的可能是字符串 "1" 或 数字 1，所以这里判断是否存在值
+        const hasAddress = (data.Address_ID !== null && data.Address_ID !== undefined && data.Address_ID !== 0 && data.Address_ID !== '0');
+
+        // 3. 判断是否为面交
+        // 只要没有 Address_ID，或者 Delivery_Method 显式为 meetup，都算是面交
+        const isMeetup = (data.Delivery_Method === 'meetup') || !hasAddress;
+
+        console.log(`🔍 Debug Check: Tracking=[${trackingNumber}], HasAddress=[${hasAddress}], IsMeetup=[${isMeetup}]`);
+
+        // 逻辑：如果是快递模式 (不是面交) 且 没有追踪单号 => 说明卖家没发货
+        if (!isMeetup && !trackingNumber) {
+          console.warn("⛔ Restriction Active: Item not shipped yet.");
+
+          // 1. 强制选中 'Refund Only'
+          refundTypeSelect.value = 'refund_only';
+
+          // 2. 禁用 'Return & Refund' 选项
+          if (returnOption) {
+            returnOption.disabled = true;
+            returnOption.innerText = "Return & Refund (Not Shipped Yet)";
+          }
+        } else {
+          console.log("✅ Options Unrestricted: Shipped or Meetup.");
+          // 如果已发货或面交，确保选项可用
+          if (returnOption) {
+            returnOption.disabled = false;
+            returnOption.innerText = "Return & Refund";
+          }
+        }
+
       } else {
         throw new Error(result.message || "API returned failure");
       }
