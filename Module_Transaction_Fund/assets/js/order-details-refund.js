@@ -1,18 +1,10 @@
 /*
  * Order Details - Refund/After-sales module
- * Responsibilities:
- * - render refund status card HTML
- * - seller actions (approve/reject, confirm return received, refuse and dispute)
- * - buyer return tracking / meetup handover confirmations
- * - seller dispute statement modal submit
+ * Updated: Supports Admin Dispute Status (Open, In Review, Resolved) & Admin Replies
  */
 
 (function (global) {
   'use strict';
-
-  const API_SELLER_DISPUTE_SUBMIT = '../../Module_After_Sales_Dispute/api/dispute_seller_submit.php';
-
-  let __sellerDisputeOrderId = null;
 
   function escapeHtml(value) {
     return global.OrderDetailsOrder?.escapeHtml ? global.OrderDetailsOrder.escapeHtml(value) : String(value ?? '');
@@ -22,15 +14,43 @@
     window.location.href = `../../Module_After_Sales_Dispute/pages/Refund_Details.html?order_id=${encodeURIComponent(orderId)}`;
   }
 
+  function goToBuyerDispute(orderId, hasBuyerReturnTracking) {
+    const oid = encodeURIComponent(orderId);
+    const url = Number(hasBuyerReturnTracking)
+        ? `../../Module_After_Sales_Dispute/pages/Dispute_Reject_After_Receive_Return.html?order_id=${oid}`
+        : `../../Module_After_Sales_Dispute/pages/Dispute_Reject_Return.html?order_id=${oid}`;
+    window.location.href = url;
+  }
+
+  function goToSellerStatement(orderId) {
+    window.location.href = `../../Module_After_Sales_Dispute/pages/Dispute_Seller_Statement.html?order_id=${encodeURIComponent(orderId)}`;
+  }
+
+  // ============================================================
+  // 🔥 核心函数：渲染退款/争议状态卡片
+  // ============================================================
   function renderRefundStatusCard(order, isBuyer) {
-    const status = order.Refund_Status;
+    let status = order.Refund_Status; // 可能为空
     const type = order.Refund_Type;
     const deliveryMethod = String(order.Delivery_Method || 'shipping').toLowerCase().trim();
+
+    // 获取争议相关字段
+    const disputeStatus = order.Dispute_Status;
+    const disputeOutcome = order.Dispute_Resolution_Outcome; // refund_buyer, refund_seller, partial
+    const adminReply = isBuyer ? order.Dispute_Admin_Reply_To_Buyer : order.Dispute_Admin_Reply_To_Seller;
+
+    // 🔥 关键修复：如果 Refund_Status 为空，但有 Dispute_Status，强制视为 'dispute_in_progress'
+    if (!status && disputeStatus && disputeStatus !== 'Closed' && disputeStatus !== 'None') {
+      status = 'dispute_in_progress';
+    }
+
     if (!status) return '';
 
     const typeText = type === 'refund_only' ? 'Refund Only' : 'Return & Refund';
 
-    // 1. Pending Approval (Seller needs to approve)
+    // -------------------------------------------------------------
+    // 1. Pending Approval (等待卖家处理)
+    // -------------------------------------------------------------
     if (status === 'pending_approval') {
       const reasonMap = {
         damaged: 'Item Damaged / Defective',
@@ -73,30 +93,28 @@
               <h4>${typeText}</h4>
               <p><strong>Reason:</strong> ${escapeHtml(readableReason)}</p>
             </div>
-
-            <div class="seller-actions-row" id="action-btns-${Number(order.Orders_Order_ID)}">
+            <div class="seller-actions-row">
               <button class="btn btn-confirm" onclick="sellerProcessRefund(${Number(order.Orders_Order_ID)}, 'approve', '${escapeHtml(type)}')">Approve</button>
               <button class="btn btn-warn" onclick="sellerProcessRefund(${Number(order.Orders_Order_ID)}, 'reject', '${escapeHtml(type)}')">Reject</button>
             </div>
-
             <div id="addr-container-${Number(order.Orders_Order_ID)}" class="inline-addr-box" style="display:none;"></div>
           </div>
         </div>
       `;
     }
 
-    // 2. Awaiting Return / Confirm (Return Process)
+    // -------------------------------------------------------------
+    // 2. Awaiting Return (退货中)
+    // -------------------------------------------------------------
     if (status === 'awaiting_return' || status === 'awaiting_confirm') {
-
-      // 🔥 FIX: Check if tracking number exists in DB response
       const returnTracking = order.Return_Tracking_Number || order.return_tracking_number || '';
 
-      // A) Meet-up Logic
+      // Meet-up Logic
       if (deliveryMethod === 'meetup') {
         return `
           <div class="refund-status-card status-return">
             <div class="refund-status-header">
-              <div class="refund-status-label"><i class="ri-exchange-line"></i> Return in Progress</div>
+              <div class="refund-status-label"><i class="ri-exchange-line"></i> Return in Progress (Meet-up)</div>
               <a class="btn-view-details" href="javascript:void(0)" onclick="goToRefundDetail(${Number(order.Orders_Order_ID)})">View</a>
             </div>
             <div class="refund-status-body">
@@ -105,25 +123,16 @@
                 <p>Please arrange a meet-up handover.</p>
               </div>
               <div class="btn-group">
-                ${
-            isBuyer
-                ? `<button class="btn btn-confirm" onclick="confirmReturnHandover(${Number(order.Orders_Order_ID)})">I Handed Over</button>`
-                : ''
-        }
-                ${
-            !isBuyer
-                ? `<button class="btn btn-confirm" onclick="sellerConfirmReturnReceived(${Number(order.Orders_Order_ID)})">Received Item</button>`
-                : ''
-        }
+                ${isBuyer ? `<button class="btn btn-confirm" onclick="confirmReturnHandover(${Number(order.Orders_Order_ID)})">I Handed Over</button>` : ''}
+                ${!isBuyer ? `<button class="btn btn-confirm" onclick="sellerConfirmReturnReceived(${Number(order.Orders_Order_ID)})">Received Item</button>` : ''}
               </div>
             </div>
           </div>
         `;
       }
 
-      // B) Shipping Logic (Buyer Side)
+      // Shipping Logic (Buyer)
       if (isBuyer) {
-        // If tracking already submitted -> Show info instead of input
         if (returnTracking) {
           return `
             <div class="refund-status-card status-return">
@@ -134,26 +143,15 @@
               <div class="refund-status-body">
                 <div class="refund-info-text" style="width:100%;">
                   <h4>Waiting for Seller</h4>
-                  <p>You have submitted the return tracking.</p>
-                  
-                  <div style="margin-top:15px; padding:12px; background:#F3F4F6; border-radius:8px; display:flex; align-items:center; gap:10px;">
-                    <i class="ri-barcode-box-line" style="color:#6B7280; font-size:1.2rem;"></i>
-                    <div>
-                      <div style="font-size:0.75rem; color:#9CA3AF; text-transform:uppercase;">Tracking Number</div>
-                      <div style="font-size:1.1rem; font-weight:700; color:#374151; font-family:monospace;">${escapeHtml(returnTracking)}</div>
-                    </div>
-                  </div>
-                  
-                  <div style="margin-top:10px; color:#F59E0B; font-size:0.9rem; font-weight:600;">
-                    ⏳ Seller will confirm receipt shortly.
+                  <div style="margin-top:10px; padding:10px; background:#F3F4F6; border-radius:8px;">
+                    <div style="font-size:0.75rem; color:#9CA3AF;">TRACKING NUMBER</div>
+                    <div style="font-weight:700; color:#374151;">${escapeHtml(returnTracking)}</div>
                   </div>
                 </div>
               </div>
             </div>
           `;
-        }
-        // If no tracking yet -> Show input
-        else {
+        } else {
           return `
             <div class="refund-status-card status-return">
               <div class="refund-status-header">
@@ -163,11 +161,11 @@
               <div class="refund-status-body">
                 <div class="refund-info-text">
                   <h4>Awaiting Return</h4>
-                  <p>Please ship the item back and upload tracking no.</p>
+                  <p>Please ship back and upload tracking.</p>
                 </div>
                 <div class="btn-group">
                   <div class="tracking-group">
-                    <input id="returnTrackingInput" class="tracking-input" placeholder="Tracking Number e.g. JNT..." />
+                    <input id="returnTrackingInput" class="tracking-input" placeholder="Tracking Number..." />
                     <button class="btn-small-upload" onclick="submitReturnTracking(${Number(order.Orders_Order_ID)})">Upload</button>
                   </div>
                 </div>
@@ -177,7 +175,7 @@
         }
       }
 
-      // C) Shipping Logic (Seller Side)
+      // Shipping Logic (Seller)
       return `
         <div class="refund-status-card status-return">
           <div class="refund-status-header">
@@ -187,8 +185,7 @@
           <div class="refund-status-body">
             <div class="refund-info-text">
               <h4>Awaiting Return</h4>
-              <p>Buyer is returning the item.</p>
-              ${returnTracking ? `<p style="margin-top:5px;"><strong>Tracking:</strong> ${escapeHtml(returnTracking)}</p>` : ''}
+              ${returnTracking ? `<p>Tracking: <strong>${escapeHtml(returnTracking)}</strong></p>` : '<p>Buyer has not shipped yet.</p>'}
             </div>
             <div class="btn-group">
               <button class="btn btn-confirm" onclick="sellerConfirmReturnReceived(${Number(order.Orders_Order_ID)})">Confirm Received</button>
@@ -199,114 +196,189 @@
       `;
     }
 
-    // 3. Completed
+    // -------------------------------------------------------------
+    // 🔥 3. Completed (Refund Successful or Dispute Won by Buyer)
+    // -------------------------------------------------------------
     if (status === 'completed') {
-      const msg = isBuyer ? 'Refund returned to wallet.' : 'Refund returned to buyer.';
+      let title = 'Refund Completed';
+      let msg = isBuyer ? 'Refund returned to wallet.' : 'Refund deducted from earnings.';
+      let adminHtml = '';
+
+      if (disputeOutcome === 'refund_buyer' || disputeOutcome === 'partial') {
+        title = 'Dispute Resolved: Refund Approved';
+        msg = `Platform decided to refund the buyer (Amount: RM ${order.Refund_Amount || '?'}).`;
+        if (adminReply) {
+          adminHtml = `
+            <div class="reason-box" style="margin-top:12px; background:#F0FDF4; border-color:#86EFAC; color:#166534;">
+              <div style="display:flex; gap:6px; align-items:center; margin-bottom:4px; font-weight:700;">
+                <i class="ri-admin-line"></i> Admin Message:
+              </div>
+              ${escapeHtml(adminReply)}
+            </div>`;
+        }
+      }
+
       return `
         <div class="refund-success-card">
-          <div class="refund-success-icon"><i class="ri-check-line"></i></div>
-          <div class="refund-success-content">
-            <h3>Refund Completed</h3>
+          <div class="refund-success-icon"><i class="ri-check-double-line"></i></div>
+          <div class="refund-success-content" style="flex:1;">
+            <h3>${title}</h3>
             <p>${escapeHtml(msg)}</p>
+            ${adminHtml}
           </div>
         </div>
       `;
     }
 
-    // 4. Rejected
-    if (status === 'rejected') {
+    // -------------------------------------------------------------
+    // 🔥 4. Rejected / Closed (Seller Rejected OR Dispute Won by Seller)
+    // -------------------------------------------------------------
+    if (status === 'rejected' || status === 'closed' || status === 'goods_rejected' || status === 'cancelled') {
       const attempt = parseInt(order.Request_Attempt || '1', 10);
-      const canResubmit = isBuyer && attempt < 2;
+      const canResubmit = isBuyer && attempt < 2 && status !== 'closed' && status !== 'cancelled';
 
-      const rejectMsg =
-          order.Seller_Reject_Reason_Text || order.Seller_Reject_Reason_Code
-              ? `<div class="reason-box"><strong>Seller Rejection Reason:</strong><br>${escapeHtml(
-                  order.Seller_Reject_Reason_Text || order.Seller_Reject_Reason_Code,
-              )}</div>`
-              : '';
+      // 🔥🔥🔥 核心修改：如果已是第二次拒绝 (attempt >= 2)，无论当前 Refund_Status 是 rejected 还是 closed，
+      // 我们都视为“自动进入争议”或“平台已介入”，显示争议卡片。
+      if (isBuyer && !canResubmit && status === 'rejected') {
+        return renderDisputeCard(order, isBuyer, 'Platform Intervention', 'Request rejected twice. Platform support team has been notified.');
+      }
+
+      let title = 'Refund Request Rejected';
+      let subMsg = 'The request was rejected.';
+      let reasonHtml = '';
+
+      if (status === 'cancelled') {
+        title = 'Refund Cancelled';
+        subMsg = 'You cancelled this request.';
+      } else if (disputeOutcome === 'refund_seller') {
+        title = 'Dispute Resolved: Refund Denied';
+        subMsg = 'Platform decided to release funds to seller.';
+        if (adminReply) {
+          reasonHtml = `
+            <div class="reason-box" style="margin-top:12px; background:#EFF6FF; border-color:#BFDBFE; color:#1E40AF;">
+              <div style="display:flex; gap:6px; align-items:center; margin-bottom:4px; font-weight:700;">
+                <i class="ri-admin-line"></i> Admin Message:
+              </div>
+              ${escapeHtml(adminReply)}
+            </div>`;
+        }
+      } else {
+        if (order.Seller_Reject_Reason_Text || order.Seller_Reject_Reason_Code) {
+          reasonHtml = `<div class="reason-box"><strong>Seller Reason:</strong><br>${escapeHtml(
+              order.Seller_Reject_Reason_Text || order.Seller_Reject_Reason_Code
+          )}</div>`;
+        }
+      }
 
       return `
         <div class="refund-status-card status-closed">
           <div class="refund-status-header">
-            <div class="refund-status-label"><i class="ri-close-circle-line"></i> Refund Rejected</div>
+            <div class="refund-status-label"><i class="ri-close-circle-line"></i> ${title}</div>
             <a class="btn-view-details" href="javascript:void(0)" onclick="goToRefundDetail(${Number(order.Orders_Order_ID)})">View</a>
           </div>
           <div class="refund-status-body">
-            <div class="refund-info-text">
+            <div class="refund-info-text" style="width:100%">
               <h4>${typeText}</h4>
-              <p>The seller rejected your request.</p>
-              ${rejectMsg}
+              <p>${subMsg}</p>
+              ${reasonHtml}
             </div>
+            ${canResubmit ? `
             <div class="btn-group" style="margin-top:15px;">
-              ${canResubmit ? `<button class="btn btn-refund" onclick="openRefundModal(${Number(order.Orders_Order_ID)})">Resubmit</button>` : ''}
-              <button class="btn btn-warn" onclick="goToRefundDetail(${Number(order.Orders_Order_ID)})">Open Dispute</button>
-            </div>
+              <button class="btn btn-refund" onclick="openRefundModal(${Number(order.Orders_Order_ID)})">Resubmit</button>
+            </div>` : ''}
           </div>
         </div>
       `;
     }
 
-    // 5. Dispute
+    // -------------------------------------------------------------
+    // 🔥 5. Dispute In Progress (争议状态)
+    // -------------------------------------------------------------
     if (status === 'dispute_in_progress') {
-      // We keep users on Order Details. Buyer and Seller enter different dispute flows.
-
-      const hasBuyerReturnTracking = !!(order.Return_Tracking_Number || order.return_tracking_number);
-
-      const disputeBtn = isBuyer
-        ? `<button class="btn" style="background:#111827; color:white; justify-content:center;" onclick="goToBuyerDispute(${Number(
-            order.Orders_Order_ID,
-        )}, ${Number(hasBuyerReturnTracking)})">Dispute to Platform Support</button>`
-        : `<button class="btn" style="background:#111827; color:white; justify-content:center;" onclick="goToSellerStatement(${Number(
-            order.Orders_Order_ID,
-        )})">Dispute to Platform Support</button>`;
-
-      return `
-        <div class="refund-status-card status-closed">
-          <div class="refund-status-header">
-            <div class="refund-status-label"><i class="ri-alert-line"></i> Dispute In Progress</div>
-            <a class="btn-view-details" href="javascript:void(0)" onclick="goToRefundDetail(${Number(order.Orders_Order_ID)})">View Details</a>
-          </div>
-          <div class="refund-status-body">
-            <div class="refund-info-text">
-              <h4>Under Review</h4>
-              <p>Please wait for the dispute decision.</p>
-            </div>
-            <div class="btn-group">
-              ${disputeBtn}
-            </div>
-          </div>
-        </div>
-      `;
+      return renderDisputeCard(order, isBuyer);
     }
 
     return '';
   }
 
-  function goToBuyerDispute(orderId, hasBuyerReturnTracking) {
-    const oid = encodeURIComponent(orderId);
-    // If buyer has uploaded a return tracking number, it means goods were shipped back.
-    // Dispute page for "after receive return" stage should be used.
-    const url = Number(hasBuyerReturnTracking)
-      ? `../../Module_After_Sales_Dispute/pages/Dispute_Reject_After_Receive_Return.html?order_id=${oid}`
-      : `../../Module_After_Sales_Dispute/pages/Dispute_Reject_Return.html?order_id=${oid}`;
-    window.location.href = url;
-  }
+  // 🔥 辅助函数：专门渲染争议卡片
+  function renderDisputeCard(order, isBuyer, overrideTitle, overrideDesc) {
+    const hasBuyerReturnTracking = !!(order.Return_Tracking_Number || order.return_tracking_number);
+    const step = order.Dispute_Status || 'Open';
 
-  function goToSellerStatement(orderId) {
-    window.location.href = `../../Module_After_Sales_Dispute/pages/Dispute_Seller_Statement.html?order_id=${encodeURIComponent(orderId)}`;
+    let displayStatus = overrideTitle || "Dispute Submitted";
+    let displayDesc = overrideDesc || "Waiting for admin assignment.";
+    let statusIcon = "ri-send-plane-fill";
+    let headerColorClass = "status-pending";
+
+    // 如果没有强制覆盖文案，则根据步骤显示
+    if (!overrideTitle) {
+      switch (step) {
+        case 'In Review':
+          displayStatus = "Under Review";
+          displayDesc = "Admin is investigating the case.";
+          statusIcon = "ri-search-eye-line";
+          headerColorClass = "status-return"; // Blue
+          break;
+        case 'Pending Info':
+        case 'Action Required':
+          displayStatus = "Action Required";
+          displayDesc = "Please provide more info.";
+          statusIcon = "ri-alarm-warning-line";
+          headerColorClass = "status-closed"; // Red
+          break;
+        case 'Negotiation':
+          displayStatus = "Negotiation Stage";
+          displayDesc = "Platform is mediating.";
+          statusIcon = "ri-discuss-line";
+          headerColorClass = "status-return";
+          break;
+        case 'Resolved':
+          displayStatus = "Dispute Resolved";
+          displayDesc = "Verdict reached.";
+          statusIcon = "ri-check-double-line";
+          headerColorClass = "status-success"; // Green
+          break;
+      }
+    }
+
+    const disputeBtn = isBuyer
+        ? `<button class="btn" style="background:#1F2937; color:white;" onclick="goToBuyerDispute(${Number(order.Orders_Order_ID)}, ${Number(hasBuyerReturnTracking)})">View Progress</button>`
+        : `<button class="btn" style="background:#1F2937; color:white;" onclick="goToSellerStatement(${Number(order.Orders_Order_ID)})">Respond</button>`;
+
+    return `
+        <div class="refund-status-card ${headerColorClass}">
+          <div class="refund-status-header">
+            <div class="refund-status-label"><i class="${statusIcon}"></i> ${displayStatus}</div>
+            <a class="btn-view-details" href="javascript:void(0)" onclick="goToRefundDetail(${Number(order.Orders_Order_ID)})">Request Details</a>
+          </div>
+          <div class="refund-status-body">
+            <div class="refund-info-text">
+              <h4>Platform Intervention</h4>
+              <p>${displayDesc}</p>
+              ${!overrideTitle ? `
+              <div style="margin-top:8px;">
+                 <span style="font-size:0.75rem; font-weight:700; color:#6B7280; background:#F3F4F6; padding:4px 8px; border-radius:4px; text-transform:uppercase;">
+                   STEP: ${step}
+                 </span>
+              </div>` : ''}
+            </div>
+            <div class="btn-group">${disputeBtn}</div>
+          </div>
+        </div>
+      `;
   }
 
   // =========================================
-  // Seller Actions
+  // Seller Actions & Helpers
   // =========================================
 
   async function sellerProcessRefund(orderId, action, type) {
     let confirmMsg = '';
     if (action === 'approve') {
-      confirmMsg =
-          type === 'refund_only'
-              ? '⚠️ Approve Refund Only?\nMoney will be refunded to buyer immediately.'
-              : '⚠️ Accept Return?\nBuyer will be notified to return the item.';
+      confirmMsg = type === 'refund_only'
+          ? '⚠️ Approve Refund Only?\nMoney will be refunded to buyer immediately.'
+          : '⚠️ Accept Return?\nBuyer will be notified to return the item.';
     } else {
       confirmMsg = '❌ Reject this refund request?';
     }
@@ -355,7 +427,6 @@
 
   async function sellerConfirmReturnReceived(orderId) {
     if (!confirm('⚠️ Confirm received the returned item?\n\nThis will release the refund immediately.')) return;
-
     try {
       const response = await fetch('../api/Refund_Actions.php', {
         method: 'POST',
@@ -372,8 +443,6 @@
   }
 
   async function sellerRefuseReturnReceived(orderId) {
-    const preset = prompt('Refuse reason (short code):', 'other');
-    if (preset === null) return;
     const detail = prompt('Please describe why you refuse:', '');
     if (detail === null) return;
     if (!confirm('Confirm refuse and open dispute?')) return;
@@ -386,7 +455,7 @@
         body: JSON.stringify({
           action: 'seller_refuse_return_received',
           order_id: orderId,
-          reason_code: preset,
+          reason_code: 'other',
           reason_text: detail,
         }),
       });
@@ -420,7 +489,6 @@
 
   async function confirmReturnHandover(orderId) {
     if (!confirm('Have you handed over the item?')) return;
-
     try {
       const res = await fetch('../api/Refund_Actions.php', {
         method: 'POST',
@@ -436,17 +504,12 @@
     }
   }
 
-  // =========================================
-  // Seller Dispute Statement
-  // =========================================
-  // (Moved to a dedicated page: Module_After_Sales_Dispute/pages/Dispute_Seller_Statement.html)
-
+  // Exports
   global.OrderDetailsRefund = {
     renderRefundStatusCard,
     goToRefundDetail,
     goToSellerStatement,
     goToBuyerDispute,
-
     sellerProcessRefund,
     sellerConfirmReturnReceived,
     sellerRefuseReturnReceived,
@@ -454,7 +517,7 @@
     confirmReturnHandover,
   };
 
-  // legacy globals
+  // legacy globals support
   global.goToRefundDetail = goToRefundDetail;
   global.sellerProcessRefund = sellerProcessRefund;
   global.sellerConfirmReturnReceived = sellerConfirmReturnReceived;

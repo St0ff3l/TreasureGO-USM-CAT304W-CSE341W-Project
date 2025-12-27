@@ -28,11 +28,11 @@
   function escapeHtml(value) {
     if (value === null || value === undefined) return '';
     return String(value)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/\"/g, '&quot;')
-      .replace(/'/g, '&#39;');
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
   }
 
   function capitalizeFirst(str) {
@@ -90,9 +90,9 @@
 
         if (s.includes(',')) {
           s.split(',')
-            .map((x) => x.trim())
-            .filter(Boolean)
-            .forEach((x) => images.push(x.startsWith('..') ? x : `../../${x}`));
+              .map((x) => x.trim())
+              .filter(Boolean)
+              .forEach((x) => images.push(x.startsWith('..') ? x : `../../${x}`));
           continue;
         }
 
@@ -123,11 +123,11 @@
     `;
 
     thumbContainer.innerHTML = state.globalOrderImages
-      .map((src, idx) => {
-        const active = idx === state.currentOrderImageIndex ? 'active' : '';
-        return `<div class="thumb ${active}" onclick="setOrderImage(${idx})"><img src="${src}" alt="thumb" /></div>`;
-      })
-      .join('');
+        .map((src, idx) => {
+          const active = idx === state.currentOrderImageIndex ? 'active' : '';
+          return `<div class="thumb ${active}" onclick="setOrderImage(${idx})"><img src="${src}" alt="thumb" /></div>`;
+        })
+        .join('');
 
     const mainImg = document.getElementById('mainOrderImage');
     if (mainImg) {
@@ -138,11 +138,11 @@
 
     thumbContainer.querySelectorAll('img').forEach((img) => {
       img.addEventListener(
-        'error',
-        () => {
-          img.src = '../../Public_Assets/images/placeholder.png';
-        },
-        { once: true },
+          'error',
+          () => {
+            img.src = '../../Public_Assets/images/placeholder.png';
+          },
+          { once: true },
       );
     });
   }
@@ -278,7 +278,7 @@
       } else {
         if (isBuyer) {
           autoConfirmHtml =
-            '<div class="auto-confirm-text" style="background:#EEF2FF; color:#4F46E5; border-color:#C7D2FE;">📦 Waiting for seller to ship. 7-day timer starts after shipment.</div>';
+              '<div class="auto-confirm-text" style="background:#EEF2FF; color:#4F46E5; border-color:#C7D2FE;">📦 Waiting for seller to ship. 7-day timer starts after shipment.</div>';
         }
       }
 
@@ -291,7 +291,7 @@
           autoConfirmHtml = `<div class="auto-confirm-text">⏳ ${msgPrefix} <strong>${daysLeft} days</strong> (${autoConfirmDate.toLocaleDateString()}).</div>`;
         } else {
           autoConfirmHtml =
-            '<div class="auto-confirm-text" style="color:#EF4444; border-color:#EF4444; background:#FEF2F2;">⏳ Time\'s up. Please confirm receipt.</div>';
+              '<div class="auto-confirm-text" style="color:#EF4444; border-color:#EF4444; background:#FEF2F2;">⏳ Time\'s up. Please confirm receipt.</div>';
         }
       }
     }
@@ -299,9 +299,13 @@
     // 3) refund / actions
     let actionButtons = '';
 
-    if (order.Refund_Status && global.OrderDetailsRefund && typeof global.OrderDetailsRefund.renderRefundStatusCard === 'function') {
+    // 🔥🔥【关键修改】🔥🔥：只要有 Refund_Status 或者 Dispute_Status，就视为进入售后流程
+    const hasRefundOrDispute = order.Refund_Status || (order.Dispute_Status && order.Dispute_Status !== 'None');
+
+    if (hasRefundOrDispute && global.OrderDetailsRefund && typeof global.OrderDetailsRefund.renderRefundStatusCard === 'function') {
       actionButtons = global.OrderDetailsRefund.renderRefundStatusCard(order, isBuyer);
     } else if (isBuyer && orderStatus !== 'completed' && orderStatus !== 'cancelled') {
+      // 只有在完全没有售后状态时，才显示默认的 Action 按钮
       actionButtons = `
         <div class="actions-box">
           <div style="font-weight:700; margin-bottom:10px;">⚡ Actions</div>
@@ -349,14 +353,14 @@
     const category = order.Category_Name || order.Category || '-';
     const otherPartyLabel = isBuyer ? 'Seller' : 'Buyer';
     const otherPartyName = isBuyer
-      ? order.Seller_Username || `ID: ${escapeHtml(order.Orders_Seller_ID)}`
-      : order.Buyer_Username || `ID: ${escapeHtml(order.Orders_Buyer_ID)}`;
+        ? order.Seller_Username || `ID: ${escapeHtml(order.Orders_Seller_ID)}`
+        : order.Buyer_Username || `ID: ${escapeHtml(order.Orders_Buyer_ID)}`;
 
     // 6) address block: delegate to address module but match old layout styles
     const addressBlockHtml =
-      global.OrderDetailsAddress && typeof global.OrderDetailsAddress.renderAddressBlock === 'function'
-        ? global.OrderDetailsAddress.renderAddressBlock(order)
-        : '';
+        global.OrderDetailsAddress && typeof global.OrderDetailsAddress.renderAddressBlock === 'function'
+            ? global.OrderDetailsAddress.renderAddressBlock(order)
+            : '';
 
     // 7) render old-style HTML template
     const createdAt = order.Orders_Created_AT ? new Date(order.Orders_Created_AT).toLocaleString() : '-';
@@ -421,24 +425,18 @@
     const el = document.getElementById('detailContent');
     if (el) el.innerHTML = html;
 
-    // Diagnostics + fallback: ensure address section exists if we have address data
+    // Diagnostics + fallback
     try {
       const hasAddressSection = !!document.querySelector('#detailContent .info-section .address-item');
       const addrObj = global.OrderDetailsAddress?.getCurrentOrderAddress?.();
-      console.log('[OrderDetails] addressBlockHtml length=', addressBlockHtml?.length || 0, 'hasAddressSection=', hasAddressSection);
-
-      // If block is missing but we do have an address, inject it right after specs grid.
       if (!hasAddressSection && addrObj) {
         const specGrid = document.querySelector('#detailContent .specs-grid');
         if (specGrid) {
           specGrid.insertAdjacentHTML('afterend', addressBlockHtml);
-          console.warn('[OrderDetails] Address block was missing; injected fallback after specs-grid.');
-        } else {
-          console.warn('[OrderDetails] Could not find specs-grid for fallback injection.');
         }
       }
     } catch (e) {
-      console.warn('[OrderDetails] post-render address diagnostic failed:', e);
+      // ignore
     }
 
     updateGalleryDisplay();
@@ -529,45 +527,17 @@
     if (!reason) return alert('Please select a refund reason.');
 
     const targetUrl = `../../Module_After_Sales_Dispute/pages/Refund_Request.html?order_id=${encodeURIComponent(
-      currentRefundOrderId,
+        currentRefundOrderId,
     )}&reason=${encodeURIComponent(reason)}`;
     window.location.href = targetUrl;
   }
 
-  // Defensive: some older HTML might call this; keep as a compatibility stub.
-  // (replaced by real implementation above)
-
   function bindSafetyNet() {
     window.addEventListener('error', (event) => {
-      try {
-        const el = document.getElementById('detailContent');
-        if (!el) return;
-        const msg = event?.error?.message || event?.message || 'Unknown runtime error';
-        el.innerHTML = `
-          <div style="text-align:center; padding:50px;">
-            <h2 style="color:red; margin-bottom:10px;">Runtime error</h2>
-            <div style="color:#6B7280; font-size:0.95rem;">${escapeHtml(msg)}</div>
-          </div>
-        `;
-      } catch (_) {
-        // ignore
-      }
+      // ignore or log
     });
-
     window.addEventListener('unhandledrejection', (event) => {
-      try {
-        const el = document.getElementById('detailContent');
-        if (!el) return;
-        const msg = event?.reason?.message || String(event.reason || 'Unknown rejection');
-        el.innerHTML = `
-          <div style="text-align:center; padding:50px;">
-            <h2 style="color:red; margin-bottom:10px;">Request failed</h2>
-            <div style="color:#6B7280; font-size:0.95rem;">${escapeHtml(msg)}</div>
-          </div>
-        `;
-      } catch (_) {
-        // ignore
-      }
+      // ignore
     });
   }
 
@@ -575,26 +545,16 @@
   global.OrderDetailsOrder = {
     init,
     renderOrder,
-
-    // helpers used by other modules
     escapeHtml,
     capitalizeFirst,
     getStatusClass,
-
-    // gallery
     setOrderImage,
     changeOrderImage,
-
-    // confirm receipt
     openConfirmDialog,
     closeSecondaryModal,
-
-    // refund reason modal
     openRefundModal,
     closeRefundModal,
     processRefundSelection,
-
-    // misc
     submitTracking,
     bindSafetyNet,
   };

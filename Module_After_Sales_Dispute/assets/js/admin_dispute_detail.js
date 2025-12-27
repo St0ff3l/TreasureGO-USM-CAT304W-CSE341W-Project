@@ -44,11 +44,29 @@ async function init() {
 
 // ================= 页面渲染 =================
 function render(d) {
-    // 1. 基础数据
+    // 🔥🔥🔥 1. 定义翻译字典 (新增) 🔥🔥🔥
+    const reasonMap = {
+        // --- 退款理由 ---
+        'damaged': 'Item Damaged / Defective',
+        'wrong_item': 'Received Wrong Item',
+        'not_described': 'Item Not As Described',
+        'missing_parts': 'Missing Parts / Accessories',
+        'fake': 'Counterfeit / Fake Item',
+        'other': 'Other',
+
+        // --- 争议理由 (根据实际情况扩展) ---
+        'seller_wrongly_rejected': 'Seller wrongly rejected request',
+        'seller_unresponsive': 'Seller is unresponsive',
+        'did_not_receive_refund': 'Did not receive refund after return',
+        'goods_rejected_by_buyer': 'Buyer returned damaged/wrong item',
+        'buyer_misuse': 'Buyer misused the product'
+    };
+
+    // 2. 基础数据
     orderTotalAmount = parseFloat(d.Orders_Total_Amount || 0);
     document.getElementById('orderTotalHidden').value = orderTotalAmount;
 
-    // 2. 状态回显
+    // 3. 状态回显
     const st = d.Dispute_Status;
     const stClean = st.replace(/\s+/g, '');
     const stEl = document.getElementById('statusDisplay');
@@ -56,11 +74,11 @@ function render(d) {
     stEl.className = `status-badge st-${stClean}`;
     document.getElementById('updateStatus').value = st;
 
-    // 3. 判决回显
+    // 4. 判决回显
     document.getElementById('drOutcome').value = d.Dispute_Resolution_Outcome || '';
     if(d.Dispute_Refund_Amount) document.getElementById('drAmount').value = d.Dispute_Refund_Amount;
 
-    // 🔥 4. 新增：填充退款申请详情卡片 🔥
+    // 5. 填充退款申请详情卡片
     const typeEl = document.getElementById('rrType');
     const trackBox = document.getElementById('returnTrackingBox');
 
@@ -84,31 +102,37 @@ function render(d) {
     const refStatus = (d.Refund_Status || 'Unknown').replace(/_/g, ' ').toUpperCase();
     document.getElementById('rrStatusBadge').textContent = refStatus;
 
-    document.getElementById('rrReasonText').textContent = d.Refund_Reason || 'No reason category selected';
+    // 🔥🔥🔥 修改点：使用字典翻译 Refund Reason 🔥🔥🔥
+    const rawReason = d.Refund_Reason || 'No reason category selected';
+    document.getElementById('rrReasonText').textContent = reasonMap[rawReason] || rawReason;
+
     document.getElementById('rrDesc').textContent = d.Refund_Description || 'No detailed description provided.';
 
-    // 5. 更新计算UI
+    // 6. 更新计算UI
     handleOutcomeChange();
 
-    // 6. 用户信息
+    // 7. 用户信息
     document.getElementById('buyerName').textContent = d.Reporting_Username || 'Unknown';
     document.getElementById('buyerId').textContent = `ID: ${d.Reporting_User_ID}`;
     document.getElementById('sellerName').textContent = d.Reported_Username || 'Unknown';
     document.getElementById('sellerId').textContent = `ID: ${d.Reported_User_ID}`;
 
-    // 7. 设置智能头像
+    // 8. 设置智能头像
     setAvatar('buyerAvatar', d.Reporting_User_Avatar, d.Reporting_Username);
     setAvatar('sellerAvatar', d.Reported_User_Avatar, d.Reported_Username);
 
-    // 8. 详情与回复
-    document.getElementById('dReason').textContent = d.Dispute_Reason;
+    // 9. 详情与回复
+    // 🔥🔥🔥 修改点：使用字典翻译 Dispute Reason 🔥🔥🔥
+    const rawDisputeReason = d.Dispute_Reason || '';
+    document.getElementById('dReason').textContent = reasonMap[rawDisputeReason] || rawDisputeReason;
+
     document.getElementById('dDetails').textContent = d.Dispute_Details;
     if(d.Dispute_Seller_Response) document.getElementById('sellerResponse').textContent = d.Dispute_Seller_Response;
 
     document.getElementById('drReplyBuyer').value = d.Dispute_Admin_Reply_To_Buyer || '';
     document.getElementById('drReplySeller').value = d.Dispute_Admin_Reply_To_Seller || '';
 
-    // 9. 证据图片
+    // 10. 证据图片
     renderImgs(d.Dispute_Evidence_Image, 'buyerEvidence');
     renderImgs(d.Dispute_Seller_Evidence_Image, 'sellerEvidence');
 }
