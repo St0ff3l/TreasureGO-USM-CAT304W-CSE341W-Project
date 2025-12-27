@@ -573,30 +573,31 @@
         <div class="settings-header">
           <h2><i class="ri-user-settings-line"></i> Personal Information</h2>
         </div>
-        <form onsubmit="event.preventDefault(); StatusDialog.warning('Info','Feature not ready','OK');">
+        <form id="personal-form" onsubmit="handlePersonalSave(event)">
           <div class="form-grid">
-            <div class="form-group">
+            <div class="form-group full-width">
               <label class="form-label">Username</label>
-              <input type="text" class="form-input" id="input_username" readonly style="background:#f3f4f6; cursor:not-allowed;">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Email</label>
-              <input type="email" class="form-input" id="input_email" readonly style="background:#f3f4f6; cursor:not-allowed;">
-            </div>
-            <div class="form-group">
-              <label class="form-label">First Name</label>
-              <input type="text" class="form-input" placeholder="Enter first name">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Last Name</label>
-              <input type="text" class="form-input" placeholder="Enter last name">
+              <input type="text" class="form-input" id="input_username" placeholder="Enter username">
             </div>
             <div class="form-group full-width">
-              <label class="form-label">Bio</label>
-              <textarea class="form-input" rows="4" placeholder="Tell us about yourself..."></textarea>
+              <label class="form-label">Email</label>
+              <div style="display: flex; gap: 10px;">
+                  <input type="email" class="form-input" id="input_email" placeholder="Enter email" oninput="handleEmailChange()">
+                  <button type="button" id="btn-verify-email" class="btn-save" style="background: #10B981; display: none;" onclick="sendEmailVerification()">Verify</button>
+              </div>
             </div>
+            
+            <!-- Verification Code Input (Hidden by default) -->
+            <div class="form-group full-width" id="group-verify-code" style="display: none;">
+                <label class="form-label">Verification Code</label>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" class="form-input" id="input_verify_code" placeholder="Enter 6-digit code">
+                    <span style="font-size: 0.85rem; color: #6B7280; align-self: center;">Code sent to new email</span>
+                </div>
+            </div>
+
           </div>
-          <button class="btn-save">Save Changes</button>
+          <button type="submit" class="btn-save">Save Changes</button>
         </form>
       </div>
     </div>
@@ -616,15 +617,7 @@
             <h4>Password</h4>
             <p>Last changed 3 months ago</p>
           </div>
-          <button class="btn-outline">Change Password</button>
-        </div>
-
-        <div class="security-item">
-          <div class="security-info">
-            <h4>Two-Factor Authentication</h4>
-            <p>Add an extra layer of security to your account</p>
-          </div>
-          <div style="font-size: 1.5rem; color: #E5E7EB; cursor: pointer;"><i class="ri-toggle-line"></i></div>
+          <a href="forgot_password.php" class="btn-outline" style="text-decoration: none; color: inherit;">Change Password</a>
         </div>
 
         <div class="security-item" style="border-bottom: none;">
@@ -1204,6 +1197,9 @@
     } catch (err) { console.error("API Error:", err); }
   }
 
+  // --- Personal Info Logic ---
+  let originalEmail = '';
+
   function renderProfile(user) {
     setText('u_name', user.User_Username);
     setText('u_email', user.User_Email);
@@ -1234,7 +1230,10 @@
     const inputUser = document.getElementById('input_username');
     const inputEmail = document.getElementById('input_email');
     if(inputUser) inputUser.value = user.User_Username;
-    if(inputEmail) inputEmail.value = user.User_Email;
+    if(inputEmail) {
+        inputEmail.value = user.User_Email;
+        originalEmail = user.User_Email; // Store original email
+    }
 
     const avatarEl = document.getElementById('u_avatar');
     if (user.User_Profile_image) {
@@ -1247,6 +1246,93 @@
     } else if (user.User_Username) {
       avatarEl.innerText = user.User_Username.charAt(0).toUpperCase();
     }
+  }
+
+  function handleEmailChange() {
+      const currentEmail = document.getElementById('input_email').value.trim();
+      const btnVerify = document.getElementById('btn-verify-email');
+      const groupVerify = document.getElementById('group-verify-code');
+      
+      if (currentEmail !== originalEmail && currentEmail.length > 0) {
+          btnVerify.style.display = 'block';
+      } else {
+          btnVerify.style.display = 'none';
+          groupVerify.style.display = 'none';
+      }
+  }
+
+  async function sendEmailVerification() {
+      const email = document.getElementById('input_email').value.trim();
+      if (!email) return;
+      
+      // Basic email validation
+      if (!email.includes('@')) {
+          StatusDialog.warning('Invalid Email', 'Please enter a valid email address.', 'OK');
+          return;
+      }
+
+      try {
+          const res = await fetch('../api/send_verify_code.php', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email: email, purpose: 'update_email' })
+          });
+          const json = await res.json();
+          
+          if (json.success) {
+              StatusDialog.success('Code Sent', 'Verification code sent to ' + email, 'OK');
+              document.getElementById('group-verify-code').style.display = 'block';
+          } else {
+              StatusDialog.fail('Error', json.message);
+          }
+      } catch (err) {
+          console.error(err);
+          StatusDialog.fail('Error', 'Network error.');
+      }
+  }
+
+  async function handlePersonalSave(e) {
+      e.preventDefault();
+      const username = document.getElementById('input_username').value.trim();
+      const email = document.getElementById('input_email').value.trim();
+      const code = document.getElementById('input_verify_code').value.trim();
+      
+      if (!username) {
+          StatusDialog.warning('Required', 'Username cannot be empty.', 'OK');
+          return;
+      }
+
+      const payload = { username: username };
+      
+      if (email !== originalEmail) {
+          if (!code) {
+              StatusDialog.warning('Verification Required', 'Please verify your new email address.', 'OK');
+              return;
+          }
+          payload.email = email;
+          payload.verification_code = code;
+      }
+
+      try {
+          const res = await fetch('../api/update_profile.php', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+          });
+          const json = await res.json();
+          
+          if (json.success) {
+              StatusDialog.success('Success', 'Profile updated successfully!', 'OK', () => {
+                  // Reload page to reflect changes (especially if email changed)
+                  window.location.reload();
+              });
+          } else {
+              StatusDialog.fail('Update Failed', json.message);
+          }
+      } catch (err) {
+          console.error(err);
+          StatusDialog.fail('Error', 'Network error.');
+      }
   }
 
   // --- View Switching Logic ---

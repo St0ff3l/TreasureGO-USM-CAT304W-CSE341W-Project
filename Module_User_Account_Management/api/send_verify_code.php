@@ -53,7 +53,53 @@ try {
     } 
     
     // =================================================
-    // 场景 B: 重置密码 (Reset Password) - 用户必须存在
+    // 场景 B: 更新邮箱 (Update Email) - 用户必须登录
+    // =================================================
+    elseif ($purpose === 'update_email') {
+        if (!isset($_SESSION['user_id'])) {
+            jsonResponse(false, 'Please login first.');
+        }
+        $userId = $_SESSION['user_id'];
+
+        // 1. 检查邮箱是否已被其他用户注册
+        $stmt = $pdo->prepare("SELECT User_ID FROM User WHERE User_Email = ? LIMIT 1");
+        $stmt->execute([$email]);
+        if ($stmt->fetch()) {
+            jsonResponse(false, 'Email already registered by another user.');
+        }
+
+        // 2. 限频检查 (60秒内不能重发)
+        $stmtCheck = $pdo->prepare("SELECT EV_Created_At FROM Email_Verification WHERE EV_Email = ? AND EV_Purpose = ? ORDER BY EV_Created_At DESC LIMIT 1");
+        $stmtCheck->execute([$email, $purpose]);
+        $lastEv = $stmtCheck->fetch();
+
+        if ($lastEv && (time() - strtotime($lastEv['EV_Created_At']) < 60)) {
+            jsonResponse(false, 'Please wait 60 seconds before resending.');
+        }
+
+        // 3. 生成新码
+        $code = generateVerificationCode();
+        $codeHash = password_hash($code, PASSWORD_BCRYPT);
+        $expiresAt = date('Y-m-d H:i:s', strtotime('+10 minutes'));
+
+        // 4. 存入数据库
+        $sqlEV = "INSERT INTO Email_Verification (User_ID, EV_Email, EV_Code, EV_Purpose, EV_Expires_At) VALUES (?, ?, ?, ?, ?)";
+        $stmtEV = $pdo->prepare($sqlEV);
+        $stmtEV->execute([$userId, $email, $codeHash, $purpose, $expiresAt]);
+
+        // 5. 发送邮件
+        $subject = "Verify Your New Email - TreasureGo";
+        $body = "<p>You are updating your email address.</p><p>Your verification code is: <b style='font-size: 24px;'>$code</b></p><p>Expires in 10 minutes.</p>";
+
+        if (sendEmail($email, $subject, $body)) {
+            jsonResponse(true, 'Verification code sent to new email.');
+        } else {
+            jsonResponse(false, 'Failed to send email.');
+        }
+    }
+
+    // =================================================
+    // 场景 C: 重置密码 (Reset Password) - 用户必须存在
     // =================================================
     else {
         // 1. 确认用户存在

@@ -843,13 +843,40 @@
             const roleClass = user.User_Role === 'admin' ? 'badge-admin' : 'badge-user';
             const createdDate = new Date(user.User_Created_At).toLocaleDateString();
 
+            // 计算封禁剩余时间
+            let banInfo = '';
+            if (user.User_Status === 'banned') {
+                if (user.Ban_End_Date) {
+                    const endDate = new Date(user.Ban_End_Date);
+                    const now = new Date();
+                    const diffTime = endDate - now;
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    
+                    if (diffDays > 0) {
+                        // 使用 min-width 和 padding 实现胶囊状自适应 (Pill shape)
+                        banInfo = `<span style="display:inline-flex; align-items:center; justify-content:center; min-width:20px; height:20px; padding:0 6px; background:#EF4444; color:white; border-radius:10px; font-size:0.7rem; font-weight:bold; margin-left:5px;" title="${diffDays} days left">${diffDays}</span>`;
+                    } else {
+                        // Expired
+                        banInfo = `<span style="display:inline-flex; align-items:center; justify-content:center; min-width:20px; height:20px; padding:0 6px; background:#9CA3AF; color:white; border-radius:10px; font-size:0.7rem; font-weight:bold; margin-left:5px;" title="Expired">E</span>`;
+                    }
+                } else {
+                    // Permanent
+                    banInfo = `<span style="display:inline-flex; align-items:center; justify-content:center; min-width:20px; height:20px; padding:0 6px; background:#EF4444; color:white; border-radius:10px; font-size:0.7rem; font-weight:bold; margin-left:5px;" title="Permanent">P</span>`;
+                }
+            }
+
             return `
         <tr>
           <td data-label="ID">#${user.User_ID}</td>
           <td data-label="Username"><strong>${escapeHtml(user.User_Username)}</strong></td>
           <td data-label="Email">${escapeHtml(user.User_Email)}</td>
           <td data-label="Role"><span class="badge ${roleClass}">${user.User_Role}</span></td>
-          <td data-label="Status"><span class="badge ${statusClass}">${user.User_Status}</span></td>
+          <td data-label="Status">
+              <div style="display:flex; align-items:center;">
+                  <span class="badge ${statusClass}">${user.User_Status}</span>
+                  ${banInfo}
+              </div>
+          </td>
           <td data-label="Created At">${createdDate}</td>
           <td data-label="Actions">
             <button class="btn-outline" onclick="editUserRole(${user.User_ID}, '${user.User_Role}')" style="margin-right:5px;">Edit</button>

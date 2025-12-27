@@ -14,9 +14,26 @@ if (!is_admin()) {
 
 try {
     $pdo = getDBConnection();
-    $stmt = $pdo->prepare("SELECT User_ID, User_Username, User_Email, User_Role, User_Status, User_Created_At 
-                           FROM User 
-                           ORDER BY User_Created_At DESC");
+    // 修改查询，关联获取最新的封禁结束时间
+    $sql = "SELECT 
+                u.User_ID, 
+                u.User_Username, 
+                u.User_Email, 
+                u.User_Role, 
+                u.User_Status, 
+                u.User_Created_At,
+                (
+                    SELECT Admin_Action_End_Date 
+                    FROM Administrative_Action aa 
+                    WHERE aa.Target_User_ID = u.User_ID 
+                      AND aa.Admin_Action_Type = 'Ban' 
+                    ORDER BY aa.Admin_Action_Start_Date DESC 
+                    LIMIT 1
+                ) as Ban_End_Date
+            FROM User u
+            ORDER BY u.User_Created_At DESC";
+            
+    $stmt = $pdo->prepare($sql);
     $stmt->execute();
     $users = $stmt->fetchAll();
 

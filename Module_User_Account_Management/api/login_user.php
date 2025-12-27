@@ -26,6 +26,50 @@ try {
 
     // 3. 验证密码
     if ($user && password_verify($password, $user['User_Password_Hash'])) {
+        
+        // --- 新增：封禁状态检查与自动解封逻辑 ---
+        $stmtStatus = $pdo->prepare("SELECT User_Status FROM User WHERE User_ID = ?");
+        $stmtStatus->execute([$user['User_ID']]);
+        $currentStatus = $stmtStatus->fetchColumn();
+
+        if ($currentStatus === 'banned') {
+            // 检查是否到期，尝试自动解封
+            $stmtBan = $pdo->prepare("
+                SELECT Admin_Action_End_Date 
+                FROM Administrative_Action 
+                WHERE Target_User_ID = ? AND Admin_Action_Type = 'Ban' 
+                ORDER BY Admin_Action_Start_Date DESC LIMIT 1
+            ");
+            $stmtBan->execute([$user['User_ID']]);
+            $banInfo = $stmtBan->fetch();
+
+            $isBanned = true;
+            $banMessage = "Your account has been suspended.";
+
+            if ($banInfo) {
+                $endDate = $banInfo['Admin_Action_End_Date'];
+                
+                // 如果有结束日期，且当前时间已经超过结束日期 -> 自动解封
+                if ($endDate && strtotime($endDate) < time()) {
+                    $pdo->prepare("UPDATE User SET User_Status = 'active' WHERE User_ID = ?")->execute([$user['User_ID']]);
+                    $isBanned = false; // 解封成功，允许继续登录
+                } elseif ($endDate) {
+                    $banMessage .= " Suspension ends on: " . $endDate;
+                } else {
+                    $banMessage .= " This suspension is permanent.";
+                }
+            } else {
+                $banMessage .= " Please contact support for more details.";
+            }
+
+            if ($isBanned) {
+                $banMessage .= ' If you have any questions, please contact "TreasureGO@daombledore.fun".';
+                echo json_encode(['status' => 'error', 'message' => $banMessage]);
+                exit();
+            }
+        }
+        // ---------------------------------------
+
         // 4. 写入 Session
         $_SESSION['user_id'] = $user['User_ID'];
         $_SESSION['user_role'] = $user['User_Role'];
