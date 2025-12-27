@@ -470,27 +470,14 @@
 
 <div id="floating-container"></div>
 
-<nav class="navbar">
-    <a href="../../index.html" class="logo">
-        <img src="../../Public_Assets/images/TreasureGo_Logo.png" alt="TreasureGO Logo" class="logo-img">
-        Treasure<span>Go</span>
-    </a>
-    <div class="nav-actions">
-        <button onclick="window.location.href='../../index.html'">Market</button>
-        <button id="nav-login-btn" class="btn-primary" onclick="window.location.href='../../Module_User_Account_Management/pages/login.php'">Login</button>
-
-        <div id="nav-user-menu" class="menu-container" style="display: none;">
-            <div id="nav-avatar" class="avatar-btn">
-                👤
-            </div>
-            <div class="dropdown-content">
-                <a href="../../Module_User_Account_Management/pages/profile.php" class="dropdown-item">My Profile</a>
-                <a href="#" class="dropdown-item">Settings</a>
-                <a href="../../Module_User_Account_Management/api/logout.php" class="dropdown-item" style="color: #ef4444;">Log Out</a>
-            </div>
-        </div>
-    </div>
-</nav>
+<script src="../../Public_Assets/js/headerbar.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        TreasureGoHeaderbar.mount({
+            basePath: '../../'
+        });
+    });
+</script>
 
 <div class="main-container">
     <div class="page-header">

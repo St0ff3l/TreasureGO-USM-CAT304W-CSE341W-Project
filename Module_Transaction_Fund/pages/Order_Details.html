@@ -559,15 +559,14 @@
 </head>
 <body>
 
-<nav class="navbar">
-  <a href="../../index.html" class="logo">
-    <img src="../../Public_Assets/images/TreasureGo_Logo.png" alt="Logo" class="logo-img">
-    Treasure<span>Go</span>
-  </a>
-  <div class="nav-actions">
-    <button onclick="window.location.href='Orders_Management.html'">Back to Orders</button>
-  </div>
-</nav>
+<script src="../../Public_Assets/js/headerbar.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        TreasureGoHeaderbar.mount({
+            basePath: '../../'
+        });
+    });
+</script>
 
 <div class="main-container">
   <a href="Orders_Management.html" class="back-btn">← Back to Orders List</a>
