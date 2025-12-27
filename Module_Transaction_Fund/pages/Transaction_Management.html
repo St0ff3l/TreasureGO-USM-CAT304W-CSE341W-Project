@@ -470,27 +470,14 @@
 
 <div id="floating-container"></div>
 
-<nav class="navbar">
-    <a href="../../index.html" class="logo">
-        <img src="../../Public_Assets/images/TreasureGo_Logo.png" alt="TreasureGO Logo" class="logo-img">
-        Treasure<span>Go</span>
-    </a>
-    <div class="nav-actions">
-        <button onclick="window.location.href='../../index.html'">Market</button>
-        <button id="nav-login-btn" class="btn-primary" onclick="window.location.href='../../Module_User_Account_Management/pages/login.php'">Login</button>
-
-        <div id="nav-user-menu" class="menu-container" style="display: none;">
-            <div id="nav-avatar" class="avatar-btn">
-                👤
-            </div>
-            <div class="dropdown-content">
-                <a href="../../Module_User_Account_Management/pages/profile.php" class="dropdown-item">My Profile</a>
-                <a href="#" class="dropdown-item">Settings</a>
-                <a href="../../Module_User_Account_Management/api/logout.php" class="dropdown-item" style="color: #ef4444;">Log Out</a>
-            </div>
-        </div>
-    </div>
-</nav>
+<script src="../../Public_Assets/js/headerbar.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        TreasureGoHeaderbar.mount({
+            basePath: '../../'
+        });
+    });
+</script>
 
 <div class="main-container">
     <div class="page-header">
@@ -712,7 +699,7 @@
             // Update statistics cards
             document.getElementById('completedTransactions').textContent = stats.total_transactions || 0;
             if(document.getElementById('currentBalance')) {
-                document.getElementById('currentBalance').textContent = '$' + parseFloat(stats.balance || 0).toFixed(2);
+                document.getElementById('currentBalance').textContent = 'RM ' + parseFloat(stats.balance || 0).toFixed(2);
             }
         } catch (error) {
             console.error('Failed to load statistics:', error);
@@ -766,8 +753,8 @@
         row.innerHTML = `
             <td>#TXN${transaction.Log_ID}</td>
             <td style="font-weight: 500;">${transaction.Description || 'Transaction'}</td>
-            <td><strong style="color: ${amountColor};">${amountSign}$${Math.abs(amount).toFixed(2)}</strong></td>
-            <td>$${balance.toFixed(2)}</td> <td>${refHtml}</td>
+            <td><strong style="color: ${amountColor};">${amountSign}RM ${Math.abs(amount).toFixed(2)}</strong></td>
+                                <td>RM ${balance.toFixed(2)}</td> <td>${refHtml}</td>
             <td><span class="status-badge ${statusClass}">Completed</span></td>
             <td>${formatDateTime(transaction.Created_AT)}</td>
             <td>
@@ -862,11 +849,11 @@
                 </div>
                 <div class="detail-row">
                     <span class="detail-label">Amount:</span>
-                    <span class="detail-value" style="color: ${amountColor}; font-weight: 700;">${amountSign}$${Math.abs(amount).toFixed(2)}</span>
+                    <span class="detail-value" style="color: ${amountColor}; font-weight: 700;">${amountSign}RM ${Math.abs(amount).toFixed(2)}</span>
                 </div>
                 <div class="detail-row">
                     <span class="detail-label">Balance After:</span>
-                    <span class="detail-value">$${balance.toFixed(2)}</span>
+                    <span class="detail-value">RM ${balance.toFixed(2)}</span>
                 </div>
                 <div class="detail-row">
                     <span class="detail-label">Reference Type:</span>

@@ -6,6 +6,7 @@
     <title>TreasureGO - Admin Deposit Management</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
     <script src="../../Public_Assets/js/admin_guard.js"></script>
+    <script src="../../Public_Assets/js/status_dialog.js"></script>
     <style>
         /* ========================================= */
         /* 核心样式 & 变量 (Core Styles)        */
@@ -638,33 +639,8 @@
             background: #DC2626;
         }
 
-        /* Toast notification */
-        .toast {
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%) translateY(100px);
-            background: var(--text-dark);
-            color: white;
-            padding: 15px 25px;
-            border-radius: 12px;
-            font-weight: 500;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            transition: transform 0.3s ease;
-            z-index: 3000;
-        }
+        /* Toast notification - REMOVED */
 
-        .toast.show {
-            transform: translateX(-50%) translateY(0);
-        }
-
-        .toast.success {
-            background: var(--success);
-        }
-
-        .toast.error {
-            background: var(--danger);
-        }
 
         /* ========================================= */
         /* 手机端适配 (Mobile Responsive)     */
@@ -721,28 +697,14 @@
 
 <div id="floating-container"></div>
 
-<nav class="navbar">
-    <a href="../../index.html" class="logo">
-        <img src="../../Public_Assets/images/TreasureGo_Logo.png" alt="Logo" class="logo-img">
-        Treasure<span>Go</span>
-    </a>
-
-    <div class="nav-actions">
-        <button class="nav-btn" onclick="window.location.href='../../Module_User_Account_Management/pages/admin_dashboard.php'">Admin Dashboard</button>
-        <button class="nav-btn" onclick="window.location.href='../../index.html'">Home</button>
-
-        <div id="nav-user-menu" class="menu-container">
-            <div id="nav-avatar" class="dots-btn">
-                👤
-            </div>
-            <div class="dropdown-content">
-                <a href="../../Module_User_Account_Management/pages/profile.php" class="dropdown-item">My Profile</a>
-                <a href="../../Module_User_Account_Management/pages/admin_dashboard.php" class="dropdown-item">Admin Dashboard</a>
-                <a href="../../Module_User_Account_Management/api/logout.php" class="dropdown-item" style="color: #ef4444;">Log Out</a>
-            </div>
-        </div>
-    </div>
-</nav>
+<script src="../../Public_Assets/js/headerbar.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        TreasureGoHeaderbar.mount({
+            basePath: '../../'
+        });
+    });
+</script>
 
 <section class="page-header">
     <h1 class="page-title">💰 Deposit Management</h1>
@@ -860,8 +822,8 @@
     </div>
 </div>
 
-<!-- Toast 通知 -->
-<div id="toast" class="toast"></div>
+<!-- Toast 通知 - REMOVED -->
+
 
 <script>
     // API 配置
@@ -1045,7 +1007,7 @@
         const request = allRequests.find(r => String(r.REQUEST_ID) === String(requestId));
         if (!request) {
             console.error('Request not found:', requestId);
-            showToast('Error: Request not found', 'error');
+            StatusDialog.fail('Error', 'Request not found');
             return;
         }
 
@@ -1114,49 +1076,27 @@
             const data = await res.json();
 
             if (data.success) {
-                showToast(
-                    currentAction === 'approve'
-                        ? '✅ Deposit approved! User balance updated.'
-                        : '❌ Deposit rejected.',
-                    currentAction === 'approve' ? 'success' : 'error'
+                StatusDialog.success(
+                    'Success',
+                    currentAction === 'approve' ? 'Deposit approved! User balance updated.' : 'Deposit rejected.'
                 );
                 closeActionModal();
                 loadStatistics();
                 loadRequests();
             } else {
-                showToast('Failed to process request: ' + data.message, 'error');
+                StatusDialog.fail('Error', 'Failed to process request: ' + data.message);
             }
         } catch (err) {
             console.error('Failed to process request:', err);
-            showToast('Network error. Please try again.', 'error');
+            StatusDialog.fail('Error', 'Network error. Please try again.');
         }
     }
 
     // 工具函数
-    // 🔥 修改为马来西亚时区
+    // 直接显示数据库中的时间字符串，不做任何时区转换
     function formatDate(dateStr) {
         if (!dateStr) return '-';
-
-        // 处理没有时区信息的时间戳
-        let dateString = dateStr;
-        if (!dateStr.includes('Z') && !dateStr.includes('+') && !dateStr.includes('T')) {
-            // 格式: "2025-12-22 06:07:45" -> "2025-12-22T06:07:45Z"
-            dateString = dateStr.replace(' ', 'T') + 'Z';
-        }
-
-        const date = new Date(dateString);
-
-        // 显示马来西亚本地时间
-        return date.toLocaleString('en-MY', {
-            timeZone: 'Asia/Kuala_Lumpur',
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-            hour12: false
-        });
+        return dateStr;
     }
 
 
@@ -1174,16 +1114,6 @@
         return status.charAt(0).toUpperCase() + status.slice(1);
     }
 
-    function showToast(message, type = '') {
-        const toast = document.getElementById('toast');
-        toast.textContent = message;
-        toast.className = 'toast ' + type + ' show';
-
-        setTimeout(() => {
-            toast.classList.remove('show');
-        }, 3000);
-    }
-
     // 点击弹窗外部关闭
     document.querySelectorAll('.modal-overlay').forEach(modal => {
         modal.addEventListener('click', (e) => {
@@ -1198,7 +1128,7 @@
         const request = allRequests.find(r => String(r.REQUEST_ID) === String(requestId));
         if (!request) {
             console.error('Request not found:', requestId);
-            showToast('Error: Request not found', 'error');
+            StatusDialog.fail('Error', 'Request not found');
             return;
         }
 

@@ -29,8 +29,8 @@
             min-height: 100vh;
             overflow-x: hidden;
             background-image:
-                radial-gradient(circle at 10% 20%, rgba(79, 70, 229, 0.05) 0%, transparent 40%),
-                radial-gradient(circle at 90% 80%, rgba(245, 158, 11, 0.05) 0%, transparent 40%);
+                    radial-gradient(circle at 10% 20%, rgba(79, 70, 229, 0.05) 0%, transparent 40%),
+                    radial-gradient(circle at 90% 80%, rgba(245, 158, 11, 0.05) 0%, transparent 40%);
         }
 
         #floating-container {
@@ -415,6 +415,8 @@
             gap: 10px;
             margin-top: 1.5rem;
             flex-wrap: wrap;
+            /* Update alignment to accommodate fewer buttons */
+            justify-content: flex-start;
         }
 
         /* Modal */
@@ -564,28 +566,14 @@
 
 <div id="floating-container"></div>
 
-<nav class="navbar">
-    <a href="../../index.html" class="logo">
-        <img src="../../Public_Assets/images/TreasureGo_Logo.png" alt="TreasureGO Logo" class="logo-img">
-        Treasure<span>Go</span>
-    </a>
-    <div class="nav-actions">
-        <button onclick="window.location.href='../../index.html'">Market</button>
-        <button id="nav-login-btn" class="btn-primary" onclick="window.location.href='../../Module_User_Account_Management/pages/login.php'">Login</button>
-
-        <!-- User Avatar Menu (hidden by default, shown when logged in) -->
-        <div id="nav-user-menu" class="menu-container" style="display: none;">
-            <div id="nav-avatar" class="avatar-btn">
-                👤
-            </div>
-            <div class="dropdown-content">
-                <a href="../../Module_User_Account_Management/pages/profile.php" class="dropdown-item">My Profile</a>
-                <a href="#" class="dropdown-item">Settings</a>
-                <a href="../../Module_User_Account_Management/api/logout.php" class="dropdown-item" style="color: #ef4444;">Log Out</a>
-            </div>
-        </div>
-    </div>
-</nav>
+<script src="../../Public_Assets/js/headerbar.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        TreasureGoHeaderbar.mount({
+            basePath: '../../'
+        });
+    });
+</script>
 
 <div class="main-container">
     <div class="page-header">
@@ -593,7 +581,6 @@
         <p class="page-subtitle">Manage your fund requests and balance</p>
     </div>
 
-    <!-- Statistics Dashboard -->
     <div class="stats-grid">
         <div class="stat-card" style="position: relative;">
             <div class="stat-icon">💰</div>
@@ -613,7 +600,6 @@
 
 
 
-    <!-- Fund Requests Table -->
     <div class="table-container">
         <h2 class="section-title">
             <span>📋</span>
@@ -621,52 +607,51 @@
         </h2>
         <table id="fundRequestsTable">
             <thead>
-                <tr>
-                    <th>Request ID</th>
-                    <th>
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            Type
-                            <select id="typeFilter" class="filter-select-small" onchange="filterFundRequests()" title="Filter by Type">
-                                <option value="all">All</option>
-                                <option value="deposit">Deposit</option>
-                                <option value="withdrawal">Withdrawal</option>
-                                <option value="purchase">Purchase</option>
-                                <option value="sale">Sale</option>
-                            </select>
-                        </div>
-                    </th>
-                    <th>Amount</th>
-                    <th>
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            Status
-                            <select id="statusFilter" class="filter-select-small" onchange="filterFundRequests()" title="Filter by Status">
-                                <option value="all">All</option>
-                                <option value="pending">Pending</option>
-                                <option value="approved">Approved</option>
-                                <option value="processing">Processing</option>
-                                <option value="completed">Completed</option>
-                                <option value="rejected">Rejected</option>
-                                <option value="cancelled">Cancelled</option>
-                            </select>
-                        </div>
-                    </th>
-                    <th>Created At</th>
-                    <th>Processed At</th>
-                    <th>Actions</th>
-                </tr>
+            <tr>
+                <th>Request ID</th>
+                <th>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        Type
+                        <select id="typeFilter" class="filter-select-small" onchange="filterFundRequests()" title="Filter by Type">
+                            <option value="all">All</option>
+                            <option value="deposit">Deposit</option>
+                            <option value="withdrawal">Withdrawal</option>
+                            <option value="purchase">Purchase</option>
+                            <option value="sale">Sale</option>
+                        </select>
+                    </div>
+                </th>
+                <th>Amount</th>
+                <th>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        Status
+                        <select id="statusFilter" class="filter-select-small" onchange="filterFundRequests()" title="Filter by Status">
+                            <option value="all">All</option>
+                            <option value="pending">Pending</option>
+                            <option value="approved">Approved</option>
+                            <option value="processing">Processing</option>
+                            <option value="completed">Completed</option>
+                            <option value="rejected">Rejected</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                    </div>
+                </th>
+                <th>Created At</th>
+                <th>Processed At</th>
+                <th>Actions</th>
+            </tr>
             </thead>
             <tbody id="fundRequestsBody">
-                <tr>
-                    <td colspan="7" style="text-align: center; padding: 2rem; color: var(--text-gray);">
-                        Loading fund requests...
-                    </td>
-                </tr>
+            <tr>
+                <td colspan="7" style="text-align: center; padding: 2rem; color: var(--text-gray);">
+                    Loading fund requests...
+                </td>
+            </tr>
             </tbody>
         </table>
     </div>
 </div>
 
-<!-- Detail Modal -->
 <div id="detailModal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
@@ -674,7 +659,6 @@
             <button class="close-btn" onclick="closeModal()">&times;</button>
         </div>
         <div id="modalBody">
-            <!-- Dynamic content will be inserted here -->
         </div>
     </div>
 </div>
@@ -742,33 +726,10 @@
             const res = await fetch('../../Module_User_Account_Management/api/session_status.php');
             const data = await res.json();
 
-            const loginBtn = document.getElementById('nav-login-btn');
-            const userMenu = document.getElementById('nav-user-menu');
-            const avatarBtn = document.getElementById('nav-avatar');
-
             if (data.is_logged_in) {
                 isUserLoggedIn = true;
                 if (data.user && data.user.user_id) {
                     CURRENT_USER_ID = data.user.user_id;
-                }
-
-                // Update navbar UI
-                if (loginBtn) loginBtn.style.display = 'none';
-                if (userMenu) userMenu.style.display = 'inline-block';
-
-                // Set user avatar
-                if (avatarBtn && data.user) {
-                    if (data.user.avatar_url) {
-                        avatarBtn.innerHTML = `<img src="${data.user.avatar_url}" alt="Avatar" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
-                        avatarBtn.style.background = 'transparent';
-                        avatarBtn.style.border = '2px solid #fff';
-                        avatarBtn.style.boxShadow = '0 4px 10px rgba(79, 70, 229, 0.2)';
-                    } else if (data.user.username) {
-                        avatarBtn.innerText = data.user.username.charAt(0).toUpperCase();
-                        avatarBtn.style.background = '#EEF2FF';
-                        avatarBtn.style.color = '#4F46E5';
-                        avatarBtn.style.border = '2px solid #fff';
-                    }
                 }
 
                 // Load data after login is confirmed
@@ -777,16 +738,10 @@
 
             } else {
                 isUserLoggedIn = false;
-                if (loginBtn) loginBtn.style.display = 'inline-block';
-                if (userMenu) userMenu.style.display = 'none';
                 AuthModal.show();
             }
         } catch (error) {
             console.error('Error checking login status:', error);
-            const loginBtn = document.getElementById('nav-login-btn');
-            const userMenu = document.getElementById('nav-user-menu');
-            if (loginBtn) loginBtn.style.display = 'inline-block';
-            if (userMenu) userMenu.style.display = 'none';
             AuthModal.show();
         }
     });
@@ -957,31 +912,10 @@
         return str.charAt(0).toUpperCase() + str.slice(1);
     }
 
-    // 🔥 修改这个函数 - 显示马来西亚本地时间
-    // 🔥 改进版 - 处理没有时区信息的时间戳
+    // 直接显示数据库中的时间字符串，不做任何时区转换
     function formatDateTime(dateStr) {
         if (!dateStr) return '-';
-
-        // 如果时间字符串没有时区信息，添加 'Z' 表示UTC时间
-        let dateString = dateStr;
-        if (!dateStr.includes('Z') && !dateStr.includes('+') && !dateStr.includes('T')) {
-            // 格式: "2025-12-22 06:07:45" -> "2025-12-22T06:07:45Z"
-            dateString = dateStr.replace(' ', 'T') + 'Z';
-        }
-
-        const date = new Date(dateString);
-
-        // 转换为马来西亚时区显示
-        return date.toLocaleString('en-MY', {
-            timeZone: 'Asia/Kuala_Lumpur',
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-            hour12: false
-        });
+        return dateStr;
     }
 
 
@@ -1056,19 +990,12 @@
                     <span class="detail-value">${processedAt}</span>
                 </div>
                 <div class="detail-row">
-                    <span class="detail-label">Proof Image:</span>
-                    <span class="detail-value">${request.Proof_Image || 'N/A'}</span>
-                </div>
-                <div class="detail-row">
                     <span class="detail-label">Admin Remark:</span>
                     <span class="detail-value">${request.Admin_Remark || 'Pending verification'}</span>
                 </div>
                 <hr style="margin: 1.5rem 0; border: none; border-top: 2px solid #E5E7EB;">
                 <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 1rem; color: var(--text-dark);">📞 Contact & Support</h3>
                 <div class="modal-actions">
-                    <button class="btn btn-admin" onclick="contactAdmin()">
-                        👨‍💼 Contact Administrator
-                    </button>
                     <button class="btn btn-view" onclick="contactCustomerService()">
                         🎧 Customer Service
                     </button>
@@ -1125,9 +1052,6 @@
                 <span class="detail-value">Pending verification</span>
             </div>
             <div class="modal-actions">
-                <button class="btn btn-admin" onclick="contactAdmin()">
-                    👨‍💼 Contact Administrator
-                </button>
                 <button class="btn btn-view" onclick="contactCustomerService()">
                     🎧 Customer Service
                 </button>
@@ -1157,20 +1081,6 @@
         }
     });
 
-    // Contact Administrator (for fund requests)
-    function contactAdmin() {
-        // Close current modal first
-        closeModal();
-
-        alert(`👨‍💼 Contacting Administrator...\n\n📧 You can reach our admin team:\n• Email: admin@treasurego.com\n• Phone: +1-234-567-8900\n• Or submit a ticket through customer service\n\n🔄 Redirecting to admin contact page...`);
-
-        // In real application:
-        // window.location.href = '/contact-admin';
-        setTimeout(() => {
-            console.log('Redirecting to admin contact page');
-        }, 1000);
-    }
-
     // Contact Customer Service
     function contactCustomerService() {
         // Close current modal first
@@ -1192,6 +1102,3 @@
 
 </body>
 </html>
-
-
-
