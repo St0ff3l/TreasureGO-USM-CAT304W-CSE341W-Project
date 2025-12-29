@@ -9,6 +9,9 @@
     <script src="../../Public_Assets/js/status_dialog.js"></script>
     <script src="../../Public_Assets/js/auth_modal.js"></script>
 
+    <!-- uploader styles (from Module_After_Sales_Dispute) -->
+    <link rel="stylesheet" href="../../Module_After_Sales_Dispute/assets/css/upload_images.css">
+
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
       :root {
@@ -114,6 +117,12 @@
         color: #374151; font-size: 0.88rem; line-height: 1.45;
       }
       .locked-note strong { color: #3730a3; }
+
+      /* 微调上传组件在当前页面的显示，防止它太宽或背景不协调 */
+      .tg-upload-area {
+          background: rgba(255, 255, 255, 0.5); /* 让它稍微透一点背景 */
+          min-height: 200px; /* 稍微调小一点高度适应这个页面 */
+      }
     </style>
   </head>
   <body>
@@ -208,13 +217,10 @@
         </div>
 
         <div class="form-group">
-          <label for="reportImages">Evidence Images (optional)</label>
-          <input id="reportImages" type="file" accept="image/*" multiple />
+          <label>Evidence Images (optional)</label>
+          <div id="evidenceUploader"></div>
           <div class="hint">
             You may upload screenshots or photos as evidence (up to 3 images).
-          </div>
-          <div id="imagePreview"
-               style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;">
           </div>
         </div>
 
@@ -229,6 +235,9 @@
       <a href="javascript:void(0)" onclick="handleGoBack()" class="back-link">← Back</a>
     </div>
   </div>
+
+  <!-- uploader script (from Module_After_Sales_Dispute) -->
+  <script src="../../Module_After_Sales_Dispute/assets/js/upload_images.js"></script>
 
   <script>
     // ==========================================
@@ -395,56 +404,20 @@
       const reasonEl = document.getElementById('reason');
       const detailsEl = document.getElementById('details');
       const form = document.getElementById('reportForm');
-      const reportImagesEl = document.getElementById('reportImages');
-      const imagePreviewEl = document.getElementById('imagePreview');
+      // replaced native input with uploader component
+      // const reportImagesEl = document.getElementById('reportImages');
+      // const imagePreviewEl = document.getElementById('imagePreview');
 
-      let selectedFiles = [];
+      // Legacy preview/files handled by the uploader component; no local preview logic needed here
 
-      function renderPreview() {
-        if (!imagePreviewEl) return;
-        imagePreviewEl.innerHTML = '';
-
-        selectedFiles.forEach((file, idx) => {
-          const url = URL.createObjectURL(file);
-
-          const wrap = document.createElement('div');
-          wrap.style.position = 'relative';
-
-          const img = document.createElement('img');
-          img.src = url;
-          img.style.width = '90px';
-          img.style.height = '90px';
-          img.style.objectFit = 'cover';
-          img.style.borderRadius = '10px';
-          img.style.border = '1px solid #E5E7EB';
-
-          const btn = document.createElement('button');
-          btn.type = 'button';
-          btn.textContent = '×';
-          btn.style.position = 'absolute';
-          btn.style.top = '-6px';
-          btn.style.right = '-6px';
-          btn.style.border = 'none';
-          btn.style.borderRadius = '999px';
-          btn.style.cursor = 'pointer';
-
-          btn.onclick = () => {
-            selectedFiles.splice(idx, 1);
-            renderPreview();
-          };
-
-          wrap.appendChild(img);
-          wrap.appendChild(btn);
-          imagePreviewEl.appendChild(wrap);
-        });
-      }
-
-      if (reportImagesEl) {
-        reportImagesEl.addEventListener('change', () => {
-          const files = Array.from(reportImagesEl.files || []);
-          selectedFiles = files.slice(0, 3); // 最多 3 张
-          renderPreview();
-        });
+      // 初始化 uploader 组件 (来自 Module_After_Sales_Dispute)
+      let uploader = null;
+      try {
+          uploader = new TreasureGoUploader('#evidenceUploader', {
+              inputName: 'images[]'
+          });
+      } catch (e) {
+          console.error("Uploader init failed:", e);
       }
 
 
@@ -551,24 +524,38 @@
           }
 
           const type = normalizeType(reportTypeEl.value);
-          const payload = {
-            type,
-            reportReason: reasonEl.value,
-            details: detailsEl.value || '',
-            reportedUserId: reportedUserIdEl.value ? Number(reportedUserIdEl.value) : null,
-            reportedUserName: reportedUserNameEl.value ? reportedUserNameEl.value.trim() : null,
-            reportedItemId: null,
-            chatId: null,
-            contactEmail: (document.getElementById('contactEmail').value || '').trim() || null
-          };
+
+          // 使用 FormData（multipart）提交，以包含图片文件
+          const formData = new FormData();
+          formData.append('type', type);
+          formData.append('reportReason', reasonEl.value);
+          formData.append('details', detailsEl.value || '');
+
+          const rUserId = reportedUserIdEl.value ? reportedUserIdEl.value : '';
+          const rUserName = reportedUserNameEl.value ? reportedUserNameEl.value.trim() : '';
+          const rItemId = reportedItemIdEl && reportedItemIdEl.value ? reportedItemIdEl.value : '';
+          const email = (document.getElementById('contactEmail').value || '').trim();
+
+          if(rUserId) formData.append('reportedUserId', rUserId);
+          if(rUserName) formData.append('reportedUserName', rUserName);
+          if(email) formData.append('contactEmail', email);
 
           if (type === 'product') {
-            payload.reportedItemId = reportedItemIdEl.value ? Number(reportedItemIdEl.value) : null;
+             if(rItemId) formData.append('reportedItemId', rItemId);
           }
 
-          // 简单验证
-          if (!payload.reportReason) { if(typeof StatusDialog!=='undefined') StatusDialog.fail('Missing Info', 'Please select a reason.'); return; }
-          if (type === 'product' && !payload.reportedItemId) { if(typeof StatusDialog!=='undefined') StatusDialog.fail('Error', 'Product ID is missing.'); return; }
+          // 从 uploader 获取文件
+          if (uploader && typeof uploader.getFiles === 'function') {
+            const files = uploader.getFiles();
+            const maxFiles = 3;
+            for (let i = 0; i < Math.min(files.length, maxFiles); i++) {
+              formData.append('images[]', files[i]);
+            }
+          }
+
+          // 验证逻辑
+          if (!reasonEl.value) { if(typeof StatusDialog!=='undefined') StatusDialog.fail('Missing Info', 'Please select a reason.'); return; }
+          if (type === 'product' && !rItemId) { if(typeof StatusDialog!=='undefined') StatusDialog.fail('Error', 'Product ID is missing.'); return; }
 
           if(submitBtn) {
             submitBtn.disabled = true;
@@ -578,8 +565,7 @@
           try {
             const res = await fetch('../api/report_submit.php', {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(payload)
+              body: formData
             });
             const data = await res.json().catch(() => ({}));
 
@@ -591,7 +577,15 @@
               alert('Report Submitted!');
               handleGoBack();
             }
+            // 重置表单和上传器
             form.reset();
+            if(uploader && typeof uploader.reset === 'function') {
+               try { uploader.reset(); } catch(e) { /* ignore */ }
+            } else {
+               const clearBtn = document.querySelector('.tg-clear-btn');
+               if(clearBtn) clearBtn.click();
+            }
+
           } catch (err) {
             if(typeof StatusDialog !== 'undefined') StatusDialog.fail('Error', err.message || 'Failed to submit.');
             else alert('Error: ' + err.message);
