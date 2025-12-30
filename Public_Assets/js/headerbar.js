@@ -290,7 +290,17 @@
         }
     }
 
-    // --- 6. 挂载函数 ---
+    // --- 6. PWA & 挂载函数 ---
+    function registerServiceWorker(basePath) {
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register(basePath + 'sw.js')
+                    .then(reg => console.log('[PWA] ServiceWorker registered:', reg.scope))
+                    .catch(err => console.error('[PWA] ServiceWorker error:', err));
+            });
+        }
+    }
+
     function mount(options) {
         ensureAssets();
         const basePath = getBasePath(options);
@@ -304,7 +314,16 @@
             document.head.appendChild(link);
         }
 
-        // 6.2 预加载 AuthModal
+        // 6.2 自动注入 Manifest & 注册 SW
+        if (!document.querySelector("link[rel='manifest']")) {
+            const link = document.createElement('link');
+            link.rel = 'manifest';
+            link.href = basePath + 'manifest.json';
+            document.head.appendChild(link);
+        }
+        registerServiceWorker(basePath);
+
+        // 6.3 预加载 AuthModal
         loadAuthModal(basePath);
 
         const wrapper = document.createElement('div');
