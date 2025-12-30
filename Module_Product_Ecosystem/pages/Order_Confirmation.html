@@ -8,7 +8,6 @@
 
     <script src="../../Public_Assets/js/status_dialog.js"></script>
 
-    <!-- Add Remixicon so the confirm page can use the same icons as profile address cards -->
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
 
     <style>
@@ -238,7 +237,7 @@
         }
         .btn-cancel:hover { background: #F8FAFC; color: var(--text-dark); border-color: #CBD5E1; transform: translateY(-2px); }
 
-        /* --- Address card (match profile.html style) --- */
+        /* --- Address card --- */
         .addr-main-text {
             font-size: 1.05rem;
             font-weight: 700;
@@ -263,6 +262,40 @@
             border: 1px solid #FEE2E2;
             margin-left: 8px;
         }
+
+        /* --- Payment PIN Modal Styles --- */
+        .pin-modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(8px);
+            z-index: 2000; display: none; align-items: center; justify-content: center;
+            opacity: 0; transition: opacity 0.3s ease;
+        }
+        .pin-modal-overlay.active { opacity: 1; }
+
+        .pin-card {
+            background: #fff; width: 90%; max-width: 360px;
+            border-radius: 24px; padding: 30px; text-align: center;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            transform: scale(0.9); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .pin-modal-overlay.active .pin-card { transform: scale(1); }
+
+        .pin-input-container { margin: 24px 0; position: relative; }
+        .pin-real-input {
+            width: 100%; height: 50px; opacity: 0; position: absolute; top: 0; left: 0; z-index: 2;
+            cursor: text;
+        }
+
+        /* 6-box Styles */
+        .pin-boxes { display: flex; gap: 8px; justify-content: center; }
+        .pin-box {
+            width: 45px; height: 50px; border: 2px solid #E2E8F0; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.5rem; font-weight: 700; color: var(--text-dark);
+            background: #F8FAFC; transition: all 0.2s;
+        }
+        .pin-box.active { border-color: var(--primary); background: #fff; box-shadow: 0 0 0 4px var(--primary-light); }
+        .pin-box.filled { background: #fff; border-color: #CBD5E1; }
 
         @media (max-width: 768px) {
             .navbar { padding: 1rem 20px; }
@@ -314,7 +347,6 @@
             </div>
 
             <div id="shipping-form">
-                <!-- Shipping address pulled from Address book -->
                 <div class="input-group">
                     <label>Shipping Address</label>
                     <div id="shipping-address-box" style="background:#fff;border:1px solid #E5E7EB;border-radius:16px;padding:20px;">
@@ -363,20 +395,44 @@
     </div>
 </div>
 
+<div id="pin-modal" class="pin-modal-overlay">
+    <div class="pin-card">
+        <div style="font-size: 3rem; margin-bottom: 10px;">🔒</div>
+        <h3 style="margin: 0 0 8px 0; font-size: 1.25rem;">Enter Payment PIN</h3>
+        <p style="margin: 0 0 20px 0; color: #64748B; font-size: 0.9rem;">Please enter your 6-digit PIN to confirm.</p>
+
+        <div class="pin-input-container">
+            <input type="tel" maxlength="6" id="real-pin-input" class="pin-real-input" autocomplete="off" inputmode="numeric">
+
+            <div class="pin-boxes">
+                <div class="pin-box"></div><div class="pin-box"></div><div class="pin-box"></div>
+                <div class="pin-box"></div><div class="pin-box"></div><div class="pin-box"></div>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+            <button onclick="closePinModal()" class="btn-cancel" style="margin-top: 0; padding: 12px;">Cancel</button>
+            <button onclick="confirmPinPayment()" id="btn-confirm-pin" class="btn-pay" style="margin-top: 0; padding: 12px; font-size: 1rem; opacity: 0.5; pointer-events: none;">Confirm</button>
+        </div>
+    </div>
+</div>
+
 <script type="text/javascript">
     // ==============================================
-    // 1. 全局变量 (完全复用旧代码的初始逻辑)
+    // 1. Global Variables
     // ==============================================
     let currentProductPrice = 0;
     let currentShippingCost = 7.00;
     let userCurrentBalance = 0.00;
-
-    // Shipping address state
+    let userHasPin = false; // Tracks if user has set a PIN
     let selectedShippingAddress = null;
 
     const urlParams = new URLSearchParams(window.location.search);
     const productId = urlParams.get('id');
 
+    // ==============================================
+    // 2. Initialization
+    // ==============================================
     document.addEventListener('DOMContentLoaded', () => {
         if (!productId) {
             StatusDialog.fail('Error', 'No product specified!', 'Go Home', () => {
@@ -390,6 +446,9 @@
         fetchShippingAddress();
     });
 
+    // ==============================================
+    // 3. API Calls
+    // ==============================================
     async function fetchProductData(id) {
         try {
             const response = await fetch(`../api/Get_Products.php?product_id=${id}`);
@@ -411,6 +470,18 @@
             if (result.success) {
                 userCurrentBalance = parseFloat(result.balance);
                 document.getElementById('user-balance-display').innerText = `RM${userCurrentBalance.toFixed(2)}`;
+
+                // IMPORTANT: Ensure your backend Get_Wallet_Balance.php returns 'has_pin' boolean
+                // If backend doesn't support it yet, maybe defaulting to true for testing is safer,
+                // but for security it should default to false.
+                if (typeof result.has_pin !== 'undefined') {
+                    userHasPin = Boolean(result.has_pin);
+                } else {
+                    // Fallback if backend not updated yet (Assume no PIN to force setup, or true to bypass)
+                    // userHasPin = false;
+                    console.warn("Backend missing has_pin");
+                }
+
             } else {
                 document.getElementById('user-balance-display').innerText = "RM0.00";
             }
@@ -419,8 +490,31 @@
         }
     }
 
+    async function fetchShippingAddress() {
+        try {
+            const res = await fetch('../../Module_User_Account_Management/api/get_addresses.php');
+            const json = await res.json();
+
+            if (json.status !== 'success' || !Array.isArray(json.data) || json.data.length === 0) {
+                selectedShippingAddress = null;
+                renderNoShippingAddress();
+                return;
+            }
+
+            const list = json.data;
+            const def = list.find(a => String(a.Address_Is_Default) === '1');
+            selectedShippingAddress = def || list[0];
+            renderShippingAddress(selectedShippingAddress);
+
+        } catch (err) {
+            console.error('Fetch shipping address error:', err);
+            selectedShippingAddress = null;
+            renderNoShippingAddress();
+        }
+    }
+
     // ==============================================
-    // 2. 渲染页面逻辑 (判断 Shipping 或 Meetup 限制)
+    // 4. Rendering & Logic
     // ==============================================
     function renderOrderPage(item) {
         document.getElementById('order-title').innerText = item.Product_Title;
@@ -432,20 +526,11 @@
         const imgBox = document.getElementById('order-img');
 
         if (item.Main_Image) {
-            // 1. 统一将所有反斜杠 (\) 替换为正斜杠 (/)
             let cleanPath = String(item.Main_Image).replace(/\\/g, '/');
-
-            // 2. 截取文件名 (找到 Public_Product_Images 之后的部分)
-            // 只要路径里包含 'Public_Product_Images'，我们就提取它后面的内容
             if (cleanPath.includes('Public_Product_Images')) {
-                // 提取出 "Public_Product_Images/xxx.jpg" 这一段
                 cleanPath = cleanPath.substring(cleanPath.indexOf('Public_Product_Images'));
-
-                // 3. 拼接完整的相对路径
-                // ../../ 返回根目录 -> Module_Product_Ecosystem 文件夹 -> 图片路径
                 imgBox.innerHTML = `<img src="../../Module_Product_Ecosystem/${cleanPath}" alt="Product Image">`;
             } else {
-                // 如果数据库存的路径很奇怪，尝试直接显示，或显示占位符
                 imgBox.innerHTML = `<img src="../../${cleanPath}" alt="Product Image" onerror="this.style.display='none'">`;
             }
         } else {
@@ -501,97 +586,6 @@
         document.getElementById('total-price-display').innerText = `RM${total.toFixed(2)}`;
     }
 
-    function handlePayClick() {
-        const isShipping = currentShippingCost > 0;
-        if (isShipping && !selectedShippingAddress) {
-            StatusDialog.fail('No Address', 'Please add/select a shipping address first.', 'Go to Address', goManageAddress);
-            return;
-        }
-
-        const totalAmount = parseFloat(document.getElementById('total-price-display').innerText.replace('RM', ''));
-
-        StatusDialog.confirm(
-            'Confirm Payment?',
-            `You are about to pay RM${totalAmount.toFixed(2)} from your wallet.`,
-            'Yes, Pay Now',
-            function() {
-                processPayment(totalAmount);
-            }
-        );
-    }
-
-    async function processPayment(totalAmount) {
-        const payBtn = document.querySelector('.btn-pay');
-
-        if (totalAmount > userCurrentBalance) {
-            window.location.href = "Payment_Failure.html";
-            return;
-        }
-
-        const shippingType = currentShippingCost > 0 ? 'shipping' : 'meetup';
-
-        const payload = {
-            product_id: productId,
-            total_amount: totalAmount,
-            shipping_type: shippingType,
-            address_id: (shippingType === 'shipping' && selectedShippingAddress) ? selectedShippingAddress.Address_ID : null
-        };
-
-        payBtn.disabled = true;
-        payBtn.innerText = "Processing...";
-
-        try {
-            const response = await fetch('../api/Process_Order_Payment.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-
-            const result = await response.json();
-
-            if (result.success) {
-                window.location.href = "Payment_Success.html?type=order";
-            } else {
-                console.warn("Payment failed:", result.msg);
-                if (result.msg && result.msg.includes('Insufficient balance')) {
-                    window.location.href = "Payment_Failure.html";
-                } else {
-                    StatusDialog.fail('Payment Error', result.msg || 'Payment failed');
-                    payBtn.disabled = false;
-                    payBtn.innerText = "Pay Now";
-                }
-            }
-        } catch (error) {
-            console.error("Network Error:", error);
-            StatusDialog.fail('Connection Error', 'Please check your internet connection.');
-            payBtn.disabled = false;
-            payBtn.innerText = "Pay Now";
-        }
-    }
-
-    async function fetchShippingAddress() {
-        try {
-            const res = await fetch('../../Module_User_Account_Management/api/get_addresses.php');
-            const json = await res.json();
-
-            if (json.status !== 'success' || !Array.isArray(json.data) || json.data.length === 0) {
-                selectedShippingAddress = null;
-                renderNoShippingAddress();
-                return;
-            }
-
-            const list = json.data;
-            const def = list.find(a => String(a.Address_Is_Default) === '1');
-            selectedShippingAddress = def || list[0];
-            renderShippingAddress(selectedShippingAddress);
-
-        } catch (err) {
-            console.error('Fetch shipping address error:', err);
-            selectedShippingAddress = null;
-            renderNoShippingAddress();
-        }
-    }
-
     function renderShippingAddress(addr) {
         const detailEl = document.getElementById('ship-addr-detail');
         const nameEl = document.getElementById('ship-addr-name');
@@ -599,10 +593,7 @@
         const tagEl = document.getElementById('ship-addr-default-tag');
         const hintEl = document.getElementById('ship-addr-hint');
 
-        if (detailEl) {
-            const text = addr.Address_Detail || '-';
-            detailEl.innerHTML = `<i class="ri-map-pin-2-line"></i>${escapeHtml(text)}`;
-        }
+        if (detailEl) detailEl.innerHTML = `<i class="ri-map-pin-2-line"></i>${escapeHtml(addr.Address_Detail || '')}`;
         if (nameEl) nameEl.innerText = addr.Address_Receiver_Name || '-';
         if (phoneEl) phoneEl.innerText = addr.Address_Phone_Number || '-';
 
@@ -625,9 +616,166 @@
         if (hintEl) hintEl.innerText = 'Please add an address to use Shipping.';
     }
 
+    // ==============================================
+    // 5. Payment & PIN Logic
+    // ==============================================
+
+    function handlePayClick() {
+        const isShipping = currentShippingCost > 0;
+
+        // 1. Check Address
+        if (isShipping && !selectedShippingAddress) {
+            StatusDialog.fail('No Address', 'Please add/select a shipping address first.', 'Go to Address', goManageAddress);
+            return;
+        }
+
+        const totalAmount = parseFloat(document.getElementById('total-price-display').innerText.replace('RM', ''));
+
+        // 2. Check Balance
+        if (totalAmount > userCurrentBalance) {
+            StatusDialog.fail('Insufficient Balance', 'Please top up your wallet.', 'Top Up', () => {
+                window.location.href = '../../Module_User_Account_Management/pages/profile.php#wallet';
+            });
+            return;
+        }
+
+        // 3. Check PIN Status
+        // If userHasPin is undefined/false, prompt them to set it up
+        if (!userHasPin) {
+            StatusDialog.confirm(
+                'Set Payment PIN',
+                'For security, you must set a 6-digit Payment PIN before purchasing.',
+                'Set PIN Now',
+                function() {
+                    window.location.href = '../../Module_User_Account_Management/pages/profile.php#security';
+                }
+            );
+            return;
+        }
+
+        // 4. Open PIN Modal
+        openPinModal();
+    }
+
+    // --- PIN Modal Controls ---
+    const pinModal = document.getElementById('pin-modal');
+    const realInput = document.getElementById('real-pin-input');
+    const boxes = document.querySelectorAll('.pin-box');
+    const confirmBtn = document.getElementById('btn-confirm-pin');
+
+    function openPinModal() {
+        pinModal.style.display = 'flex';
+        setTimeout(() => pinModal.classList.add('active'), 10);
+        realInput.value = '';
+        updatePinVisuals();
+        realInput.focus();
+    }
+
+    function closePinModal() {
+        pinModal.classList.remove('active');
+        setTimeout(() => pinModal.style.display = 'none', 300);
+        realInput.blur();
+    }
+
+    realInput.addEventListener('input', (e) => {
+        // Only allow numbers
+        realInput.value = realInput.value.replace(/[^0-9]/g, '');
+        updatePinVisuals();
+
+        // Enable confirm if 6 digits
+        if (realInput.value.length === 6) {
+            confirmBtn.style.opacity = '1';
+            confirmBtn.style.pointerEvents = 'auto';
+            // Optional: Auto submit
+            // confirmPinPayment();
+        } else {
+            confirmBtn.style.opacity = '0.5';
+            confirmBtn.style.pointerEvents = 'none';
+        }
+    });
+
+    function updatePinVisuals() {
+        const val = realInput.value;
+        boxes.forEach((box, index) => {
+            if (index < val.length) {
+                box.innerText = '•';
+                box.classList.add('filled');
+                box.classList.remove('active');
+            } else if (index === val.length) {
+                box.innerText = '';
+                box.classList.add('active'); // Current focus
+                box.classList.remove('filled');
+            } else {
+                box.innerText = '';
+                box.classList.remove('filled', 'active');
+            }
+        });
+    }
+
+    function confirmPinPayment() {
+        const pinCode = realInput.value;
+        if (pinCode.length !== 6) return;
+
+        const totalAmount = parseFloat(document.getElementById('total-price-display').innerText.replace('RM', ''));
+
+        closePinModal();
+        processPayment(totalAmount, pinCode);
+    }
+
+    // --- Backend Processing ---
+    async function processPayment(totalAmount, pinCode) {
+        // We temporarily disable the pay button on the main UI just in case
+        const payBtn = document.querySelector('.btn-pay');
+        payBtn.disabled = true;
+        payBtn.innerText = "Processing...";
+
+        const shippingType = currentShippingCost > 0 ? 'shipping' : 'meetup';
+
+        const payload = {
+            product_id: productId,
+            total_amount: totalAmount,
+            shipping_type: shippingType,
+            address_id: (shippingType === 'shipping' && selectedShippingAddress) ? selectedShippingAddress.Address_ID : null,
+            payment_pin: pinCode // Send PIN
+        };
+
+        try {
+            const response = await fetch('../api/Process_Order_Payment.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                window.location.href = "Payment_Success.html?type=order";
+            } else {
+                payBtn.disabled = false;
+                payBtn.innerText = "Pay Now";
+
+                if (result.msg && (result.msg.includes('PIN') || result.msg.includes('Password'))) {
+                    StatusDialog.fail('Incorrect PIN', result.msg, 'Try Again', () => {
+                        openPinModal();
+                    });
+                } else if (result.msg && result.msg.includes('balance')) {
+                    window.location.href = "Payment_Failure.html";
+                } else {
+                    StatusDialog.fail('Payment Error', result.msg || 'Payment failed');
+                }
+            }
+        } catch (error) {
+            console.error("Network Error:", error);
+            StatusDialog.fail('Connection Error', 'Please check your internet connection.');
+            payBtn.disabled = false;
+            payBtn.innerText = "Pay Now";
+        }
+    }
+
+    // ==============================================
+    // 6. Helpers
+    // ==============================================
     function goManageAddress() {
-        // Go to the authenticated profile shell and open Address tab directly
-        // Include a return URL so the Address page can show a "Back to Order" button.
         const ret = encodeURIComponent(window.location.pathname + window.location.search + window.location.hash);
         window.location.href = `../../Module_User_Account_Management/pages/profile.php?return=${ret}#address`;
     }
@@ -640,9 +788,7 @@
             .replaceAll('"', '&quot;')
             .replaceAll("'", '&#039;');
     }
-
     window.goManageAddress = goManageAddress;
 </script>
 </body>
 </html>
-

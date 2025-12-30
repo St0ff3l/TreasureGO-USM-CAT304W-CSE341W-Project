@@ -155,13 +155,12 @@
     .btn-primary-action:hover { background: black; color: white; transform: translateY(-2px); }
 
     /* =========================================
-       🔥 NEW: ADDRESS MODULE STYLES (JD/Taobao Style)
+       🔥 NEW: ADDRESS MODULE STYLES
        ========================================= */
     .address-list {
       display: flex; flex-direction: column; gap: 15px; margin-bottom: 20px;
     }
 
-    /* 地址卡片条目 */
     .address-item {
       display: flex; justify-content: space-between; align-items: center;
       background: #fff; border: 1px solid #E5E7EB; border-radius: 16px;
@@ -169,27 +168,22 @@
     }
     .address-item:hover { border-color: var(--primary); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
 
-    /* 内容区 */
     .addr-content { flex: 1; padding-right: 20px; }
 
-    /* 1. 地址详情 (主视觉，大黑字) */
     .addr-main-text {
       font-size: 1.1rem; font-weight: 700; color: #111827;
       line-height: 1.4; margin-bottom: 8px;
     }
 
-    /* 2. 底部元数据 (名字 + 电话) */
     .addr-meta-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
     .addr-name-bold { font-weight: 700; font-size: 0.95rem; color: #374151; }
     .addr-phone-text { color: #6B7280; font-size: 0.9rem; font-family: monospace; letter-spacing: 0.5px; }
 
-    /* 标签样式 (Home/Default) */
     .addr-tag {
       font-size: 0.7rem; background: #FEF2F2; color: #EF4444;
       padding: 2px 8px; border-radius: 6px; font-weight: 600; border: 1px solid #FEE2E2;
     }
 
-    /* 右侧操作按钮 */
     .addr-actions-right {
       display: flex; align-items: center; gap: 10px; padding-left: 15px; border-left: 1px dashed #E5E7EB;
     }
@@ -201,7 +195,6 @@
     .icon-btn:hover { background: #F3F4F6; color: var(--primary); }
     .icon-btn.delete:hover { background: #FEF2F2; color: #EF4444; }
 
-    /* 添加新地址按钮 (虚线框) */
     .add-addr-row {
       border: 2px dashed #E5E7EB; border-radius: 16px; padding: 15px;
       display: flex; align-items: center; justify-content: center; gap: 10px;
@@ -242,7 +235,6 @@
 
     .review-criteria { margin-bottom: 15px; }
     .review-criteria label { display: block; font-weight: 600; margin-bottom: 5px; }
-    .star-rating { display: flex; gap: 5px; font-size: 1.5rem; color: #D1D5DB; cursor: pointer; }
     .star-rating .ri-star-fill.active { color: #F59E0B; }
     .star-rating .ri-star-fill:hover { color: #FCD34D; }
 
@@ -391,38 +383,17 @@
       .product-img { height: 120px; }
     }
 
-
-
     /* 确保列表项中的文字和图标对齐 */
     .addr-main-text, .addr-name-bold, .addr-phone-text {
       display: inline-flex;
       align-items: center;
     }
 
-    /* 地址主文字图标稍微加亮 */
-    .addr-main-text i {
-      font-size: 1.2rem;
-      color: var(--primary);
-      margin-right: 8px;
-    }
-
-    /* 底部名字和电话的小图标 */
-    .addr-meta-row i {
-      font-size: 0.9rem;
-      color: var(--text-gray);
-      margin-right: 4px;
-    }
-
-    /* 默认标签样式 */
+    .addr-main-text i { font-size: 1.2rem; color: var(--primary); margin-right: 8px; }
+    .addr-meta-row i { font-size: 0.9rem; color: var(--text-gray); margin-right: 4px; }
     .addr-tag {
-      font-size: 0.7rem;
-      background: #FEF2F2;
-      color: #EF4444;
-      padding: 2px 8px;
-      border-radius: 6px;
-      font-weight: 600;
-      border: 1px solid #FEE2E2;
-      margin-left: 8px;
+      font-size: 0.7rem; background: #FEF2F2; color: #EF4444; padding: 2px 8px;
+      border-radius: 6px; font-weight: 600; border: 1px solid #FEE2E2; margin-left: 8px;
     }
 
     /* --- Product Card Styles --- */
@@ -439,20 +410,10 @@
     .product-status { font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; background: #EEF2FF; color: var(--primary); display: inline-block; margin-bottom: 5px; width: fit-content; }
 
     .btn-review {
-      margin-top: 10px;
-      width: 100%;
-      padding: 8px;
-      background-color: #F59E0B;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background-color 0.2s;
+      margin-top: 10px; width: 100%; padding: 8px; background-color: #F59E0B;
+      color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: background-color 0.2s;
     }
-    .btn-review:hover {
-      background-color: #D97706;
-    }
+    .btn-review:hover { background-color: #D97706; }
 
   </style>
 </head>
@@ -614,6 +575,14 @@
           <a href="forgot_password.php" class="btn-outline" style="text-decoration: none; color: inherit;">Change Password</a>
         </div>
 
+        <div class="security-item">
+          <div class="security-info">
+            <h4>Payment PIN</h4>
+            <p id="pin_status_text" style="color: #6B7280;">Secure your wallet transactions</p>
+          </div>
+          <button type="button" class="btn-outline" onclick="openPinModal()" id="btn_pin_action">Set PIN</button>
+        </div>
+
         <div class="security-item" style="border-bottom: none;">
           <div class="security-info">
             <h4 style="color: #EF4444;">Delete Account</h4>
@@ -675,30 +644,6 @@
 </div>
 
 <div class="modal-overlay" id="review-modal">
-  <div class="modal-content">
-    <div class="settings-header" style="margin-bottom: 20px; display:flex; justify-content:space-between;">
-      <h2>Write a Review</h2>
-      <i class="ri-close-line" style="font-size:1.5rem; cursor:pointer;" onclick="closeReviewModal()"></i>
-    </div>
-
-    <form onsubmit="handleReviewSubmit(event)">
-      <input type="hidden" id="review_order_id">
-      <input type="hidden" id="review_target_id">
-
-      <div id="criteria-container">
-      </div>
-
-      <div class="form-group full-width">
-        <label class="form-label">Comment</label>
-        <textarea class="form-input" id="review_comment" rows="3" placeholder="Share your experience..."></textarea>
-      </div>
-
-      <button type="submit" class="btn-save" style="width:100%;">Submit Review</button>
-    </form>
-  </div>
-</div>
-
-<div class="modal-overlay" id="review-modal">
   <div class="review-modal-content">
     <div class="settings-header" style="margin-bottom: 20px; display:flex; justify-content:space-between;">
       <h2>Write a Review</h2>
@@ -743,6 +688,35 @@
         <p style="font-size: 0.8rem; color: #666; margin-top: 5px;">Max size: 5MB. Formats: JPG, PNG, GIF, WebP</p>
       </div>
       <button type="submit" class="btn-save" style="width:100%;">Upload & Save</button>
+    </form>
+  </div>
+</div>
+
+<div class="modal-overlay" id="pin-manager-modal">
+  <div class="modal-content" style="max-width: 400px;">
+    <div class="settings-header" style="margin-bottom: 20px; display:flex; justify-content:space-between;">
+      <h2 id="pin_modal_title">Set Payment PIN</h2>
+      <i class="ri-close-line" style="font-size:1.5rem; cursor:pointer;" onclick="closePinModal()"></i>
+    </div>
+
+    <form onsubmit="handlePinSubmit(event)">
+
+      <div class="form-group" id="group_old_pin" style="display:none;">
+        <label class="form-label">Current PIN</label>
+        <input type="password" id="input_old_pin" class="form-input" maxlength="6" pattern="\d{6}" placeholder="Enter current 6-digit PIN" inputmode="numeric">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">New PIN</label>
+        <input type="password" id="input_new_pin" class="form-input" maxlength="6" pattern="\d{6}" placeholder="Enter new 6-digit PIN" required inputmode="numeric">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Confirm New PIN</label>
+        <input type="password" id="input_confirm_pin" class="form-input" maxlength="6" pattern="\d{6}" placeholder="Re-enter new PIN" required inputmode="numeric">
+      </div>
+
+      <button type="submit" class="btn-save" style="width:100%;">Save PIN</button>
     </form>
   </div>
 </div>
@@ -1238,6 +1212,25 @@
     } else if (user.User_Username) {
       avatarEl.innerText = user.User_Username.charAt(0).toUpperCase();
     }
+
+    // 🔥 NEW: Check for Payment PIN Status
+    // IMPORTANT: Ensure your backend (get_profile.php) returns user.has_pin (true/false)
+    window.currentUserHasPin = Boolean(user.has_pin);
+
+    const pinStatusText = document.getElementById('pin_status_text');
+    const pinBtn = document.getElementById('btn_pin_action');
+
+    if (pinStatusText && pinBtn) {
+      if (window.currentUserHasPin) {
+        pinStatusText.innerText = "PIN is set. Used for transactions.";
+        pinStatusText.style.color = "#059669"; // Green
+        pinBtn.innerText = "Change PIN";
+      } else {
+        pinStatusText.innerText = "Not set yet. Required for transactions.";
+        pinStatusText.style.color = "#D97706"; // Orange
+        pinBtn.innerText = "Set PIN";
+      }
+    }
   }
 
   function handleEmailChange() {
@@ -1391,91 +1384,6 @@
     }, true);
   }
 
-  // --- Review Modal Logic ---
-  const reviewModal = document.getElementById('review-modal');
-  const criteriaNames = ['Communication', 'Payment Speed', 'Politeness', 'Responsiveness', 'Overall Experience'];
-  let currentScores = [0, 0, 0, 0, 0];
-
-  function openReviewModal(orderId, targetId) {
-    document.getElementById('review_order_id').value = orderId;
-    document.getElementById('review_target_id').value = targetId;
-    document.getElementById('review_comment').value = '';
-    currentScores = [0, 0, 0, 0, 0];
-
-    const container = document.getElementById('criteria-container');
-    container.innerHTML = '';
-
-    criteriaNames.forEach((name, index) => {
-      const div = document.createElement('div');
-      div.className = 'review-criteria';
-      div.innerHTML = `
-              <label>${name}</label>
-              <div class="star-rating" id="criteria-${index}">
-                  ${[1, 2, 3, 4, 5].map(star => `
-                      <i class="ri-star-fill" onclick="setRating(${index}, ${star})"></i>
-                  `).join('')}
-              </div>
-          `;
-      container.appendChild(div);
-    });
-
-    reviewModal.classList.add('open');
-  }
-
-  function closeReviewModal() {
-    reviewModal.classList.remove('open');
-  }
-
-  function setRating(criteriaIndex, score) {
-    currentScores[criteriaIndex] = score;
-    const stars = document.querySelectorAll(`#criteria-${criteriaIndex} .ri-star-fill`);
-    stars.forEach((star, i) => {
-      if (i < score) {
-        star.classList.add('active');
-      } else {
-        star.classList.remove('active');
-      }
-    });
-  }
-
-  async function handleReviewSubmit(e) {
-    e.preventDefault();
-    const orderId = document.getElementById('review_order_id').value;
-    const targetId = document.getElementById('review_target_id').value;
-    const comment = document.getElementById('review_comment').value;
-
-    if (currentScores.some(s => s === 0)) {
-      StatusDialog.warning('Incomplete', 'Please rate all criteria.', 'OK');
-      return;
-    }
-
-    try {
-      const res = await fetch('../api/submit_review.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          order_id: orderId,
-          target_user_id: targetId,
-          scores: currentScores,
-          comment: comment
-        })
-      });
-      const json = await res.json();
-
-      if (json.success) {
-        StatusDialog.success('Success', 'Review submitted!', 'OK', () => {
-          closeReviewModal();
-          fetchSoldListings(); // Refresh list
-        });
-      } else {
-        StatusDialog.fail('Error', json.message);
-      }
-    } catch (err) {
-      console.error(err);
-      StatusDialog.fail('Error', 'Network error occurred.');
-    }
-  }
-
   // --- Avatar Upload Logic ---
   const avatarModal = document.getElementById('avatar-modal');
 
@@ -1523,8 +1431,6 @@
           const fallbackInitial = document.getElementById('u_name').innerText.charAt(0).toUpperCase();
           avatarEl.innerHTML = `<img src="${json.url}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" onerror="this.style.display='none'; this.parentNode.innerText='${fallbackInitial}';">`;
 
-          // Update Headerbar avatar (if possible)
-          // Try to update headerbar DOM directly if it exists
           const headerAvatar = document.querySelector('#nav-avatar img');
           if (headerAvatar) {
             headerAvatar.src = json.url;
@@ -1534,7 +1440,6 @@
               this.parentNode.style.background='#EEF2FF';
             };
           } else {
-            // If it was text before, we might need to replace the content
             const headerAvatarBtn = document.getElementById('nav-avatar');
             if (headerAvatarBtn) {
               headerAvatarBtn.innerHTML = `<img src="${json.url}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;" onerror="this.style.display='none'; this.parentNode.innerText='${fallbackInitial}'; this.parentNode.style.background='#EEF2FF';">`;
@@ -1548,6 +1453,97 @@
     } catch (err) {
       console.error(err);
       StatusDialog.fail('Error', 'Network error occurred.');
+    }
+  }
+
+  // 🔥 Modified: Payment PIN Logic (Old PIN Verification Only)
+  const pinModal = document.getElementById('pin-manager-modal');
+
+  function openPinModal() {
+    // 1. 重置表单
+    document.getElementById('input_new_pin').value = '';
+    document.getElementById('input_confirm_pin').value = '';
+    document.getElementById('input_old_pin').value = '';
+
+    const title = document.getElementById('pin_modal_title');
+    const oldGroup = document.getElementById('group_old_pin');
+    const oldInput = document.getElementById('input_old_pin');
+
+    // 2. 根据是否已设置 PIN 来切换 UI
+    if (window.currentUserHasPin) {
+      // 修改模式：必须验证旧密码
+      title.innerText = "Change Payment PIN";
+      oldGroup.style.display = 'block';
+      oldInput.required = true;
+    } else {
+      // 设置模式：无需旧密码
+      title.innerText = "Set Payment PIN";
+      oldGroup.style.display = 'none';
+      oldInput.required = false;
+    }
+
+    pinModal.classList.add('open');
+  }
+
+  function closePinModal() {
+    pinModal.classList.remove('open');
+  }
+
+  async function handlePinSubmit(e) {
+    e.preventDefault();
+
+    const newPin = document.getElementById('input_new_pin').value;
+    const confirmPin = document.getElementById('input_confirm_pin').value;
+    const oldPin = document.getElementById('input_old_pin').value;
+
+    // 1. PIN 格式校验
+    if (!/^\d{6}$/.test(newPin)) {
+      StatusDialog.warning("Invalid Format", "New PIN must be exactly 6 digits.", "OK");
+      return;
+    }
+    if (newPin !== confirmPin) {
+      StatusDialog.warning("Mismatch", "New PINs do not match.", "OK");
+      return;
+    }
+
+    // 如果是修改模式，检查旧 PIN 格式
+    if (window.currentUserHasPin && !/^\d{6}$/.test(oldPin)) {
+      StatusDialog.warning("Invalid Format", "Old PIN must be 6 digits.", "OK");
+      return;
+    }
+
+    // 2. 准备数据
+    const payload = {
+      new_pin: newPin,
+      // 如果已设置过 PIN，必须传旧 PIN 给后端验证
+      old_pin: window.currentUserHasPin ? oldPin : null
+    };
+
+    try {
+      // 3. 发送请求
+      const res = await fetch('../api/update_pin.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      const json = await res.json();
+
+      if (json.success) {
+        closePinModal();
+        StatusDialog.success("Success", "Payment PIN updated successfully!", "OK", () => {
+          // 更新 UI 状态
+          window.currentUserHasPin = true;
+          document.getElementById('pin_status_text').innerText = "PIN is set. Used for transactions.";
+          document.getElementById('pin_status_text').style.color = "#059669";
+          document.getElementById('btn_pin_action').innerText = "Change PIN";
+        });
+      } else {
+        StatusDialog.fail("Update Failed", json.message || "Incorrect Old PIN");
+      }
+    } catch (err) {
+      console.error(err);
+      StatusDialog.fail("Error", "Network error occurred.");
     }
   }
 </script>

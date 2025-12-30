@@ -22,22 +22,69 @@ $input = json_decode(file_get_contents('php://input'), true);
 $totalAmount = isset($input['total_amount']) ? floatval($input['total_amount']) : 0.00;
 $productId   = isset($input['product_id']) ? intval($input['product_id']) : 0;
 $shippingType = isset($input['shipping_type']) ? $input['shipping_type'] : 'meetup';
-
-// ✅ NEW: Address ID (for shipping only)
 $addressId = isset($input['address_id']) && $input['address_id'] !== '' ? intval($input['address_id']) : null;
+
+// ✅ NEW: 获取支付密码
+$pinCode = isset($input['payment_pin']) ? $input['payment_pin'] : '';
 
 if ($totalAmount <= 0 || $productId === 0) {
     echo json_encode(['success' => false, 'msg' => 'Invalid payment data']);
+    exit;
+}
+if (empty($pinCode)) {
+    echo json_encode(['success' => false, 'msg' => 'Payment PIN is required']);
     exit;
 }
 
 try {
     $conn = getDatabaseConnection();
 
-    // === 开启事务 (Transaction) ===
+    // =================================================================
+    // 🔥 STEP A: 支付密码验证 (必须在开启事务之前执行)
+    // =================================================================
+    $stmtUser = $conn->prepare("SELECT User_Payment_PIN_Hash, User_PIN_Retry_Count, User_PIN_Locked_Until FROM User WHERE User_ID = :uid");
+    $stmtUser->execute([':uid' => $buyerId]);
+    $userInfo = $stmtUser->fetch(PDO::FETCH_ASSOC);
+
+    if (!$userInfo) {
+        throw new Exception("User not found");
+    }
+
+    // 检查锁定
+    if ($userInfo['User_PIN_Locked_Until'] && strtotime($userInfo['User_PIN_Locked_Until']) > time()) {
+        $waitMinutes = ceil((strtotime($userInfo['User_PIN_Locked_Until']) - time()) / 60);
+        throw new Exception("Wallet locked. Try again in $waitMinutes minutes.");
+    }
+
+    // 验证密码
+    if (!password_verify($pinCode, $userInfo['User_Payment_PIN_Hash'])) {
+        $newRetry = $userInfo['User_PIN_Retry_Count'] + 1;
+        $lockUntil = null;
+        $errorMsg = "Incorrect PIN. Attempts remaining: " . (5 - $newRetry);
+
+        if ($newRetry >= 5) {
+            $lockUntil = date('Y-m-d H:i:s', strtotime('+15 minutes'));
+            $newRetry = 0;
+            $errorMsg = "Too many failed attempts. Wallet locked for 15 minutes.";
+        }
+
+        $updateStmt = $conn->prepare("UPDATE User SET User_PIN_Retry_Count = :retry, User_PIN_Locked_Until = :lock WHERE User_ID = :uid");
+        $updateStmt->execute([':retry' => $newRetry, ':lock' => $lockUntil, ':uid' => $buyerId]);
+
+        throw new Exception($errorMsg);
+    }
+
+    // 重置错误计数
+    if ($userInfo['User_PIN_Retry_Count'] > 0) {
+        $conn->prepare("UPDATE User SET User_PIN_Retry_Count = 0 WHERE User_ID = :uid")->execute([':uid' => $buyerId]);
+    }
+
+    // =================================================================
+    // 🔥 STEP B: 核心交易事务
+    // =================================================================
     $conn->beginTransaction();
 
-    // ✅ Validate address_id (only when shipping)
+    // 验证地址
     if ($shippingType === 'shipping') {
         if (!$addressId) {
             throw new Exception('Shipping address is required');
@@ -48,13 +95,10 @@ try {
             throw new Exception('Invalid shipping address');
         }
     } else {
-        // meetup -> force NULL
         $addressId = null;
     }
 
-    // ----------------------------------------------------------------
-    // 3. 获取商品信息 & 卖家ID (关键步骤：使用 FOR UPDATE 锁住商品防止并发购买)
-    // ----------------------------------------------------------------
+    // 3. 获取商品信息 (锁定)
     $sqlProduct = "SELECT User_ID AS Seller_ID, Product_Price, Product_Status, Product_Title 
                    FROM Product 
                    WHERE Product_ID = :pid 
@@ -63,23 +107,14 @@ try {
     $stmtProd->execute([':pid' => $productId]);
     $productInfo = $stmtProd->fetch(PDO::FETCH_ASSOC);
 
-    // 校验商品有效性
-    if (!$productInfo) {
-        throw new Exception("Product not found");
-    }
-    if ($productInfo['Product_Status'] !== 'Active') {
-        throw new Exception("Product is already sold or unavailable");
-    }
-    if ($productInfo['Seller_ID'] == $buyerId) {
-        throw new Exception("You cannot buy your own product");
-    }
+    if (!$productInfo) throw new Exception("Product not found");
+    if ($productInfo['Product_Status'] !== 'Active') throw new Exception("Product is unavailable");
+    if ($productInfo['Seller_ID'] == $buyerId) throw new Exception("You cannot buy your own product");
 
     $sellerId = $productInfo['Seller_ID'];
     $productPrice = floatval($productInfo['Product_Price']);
 
-    // ----------------------------------------------------------------
-    // 4. 检查买家余额 (并锁定钱包行)
-    // ----------------------------------------------------------------
+    // 4. 检查余额
     $sqlCheck = "SELECT Balance_After FROM Wallet_Logs WHERE User_ID = :uid ORDER BY Log_ID DESC LIMIT 1 FOR UPDATE";
     $stmtCheck = $conn->prepare($sqlCheck);
     $stmtCheck->execute([':uid' => $buyerId]);
@@ -92,68 +127,26 @@ try {
     }
 
     // ----------------------------------------------------------------
-    // 5. 执行扣款 (插入 Wallet_Logs)
+    // 5. 先生成订单 (Orders) - 这样才有 Order_ID 给钱包日志用
     // ----------------------------------------------------------------
-    $newBalance = $currentBalance - $totalAmount;
-    $negativeAmount = -1 * $totalAmount;
-    $walletDesc = "Payment for Order: " . $productInfo['Product_Title'];
-
-    $sqlInsertWallet = "INSERT INTO Wallet_Logs 
-                  (User_ID, Amount, Balance_After, Description, Reference_Type, Created_AT) 
-                  VALUES 
-                  (:uid, :amount, :balance_after, :desc, 'order_payment', NOW())";
-
-    $stmtWallet = $conn->prepare($sqlInsertWallet);
-    $stmtWallet->execute([
-        ':uid' => $buyerId,
-        ':amount' => $negativeAmount,
-        ':balance_after' => $newBalance,
-        ':desc' => $walletDesc
-    ]);
-
-    // ----------------------------------------------------------------
-    // 6. 生成订单 (插入 Orders 表)
-    // ----------------------------------------------------------------
-    // Check Seller Membership for Platform Fee
-    $sqlMembership = "SELECT mp.Membership_Tier
-                      FROM Memberships m
-                      JOIN Membership_Plans mp ON m.Plan_ID = mp.Plan_ID
-                      WHERE m.User_ID = :seller_id
-                        AND m.Memberships_Start_Date <= NOW()
-                        AND m.Memberships_End_Date > NOW()
-                      ORDER BY mp.Membership_Price DESC
-                      LIMIT 1";
+    // 计算平台费
+    $sqlMembership = "SELECT mp.Membership_Tier FROM Memberships m JOIN Membership_Plans mp ON m.Plan_ID = mp.Plan_ID WHERE m.User_ID = :seller_id AND m.Memberships_Start_Date <= NOW() AND m.Memberships_End_Date > NOW() ORDER BY mp.Membership_Price DESC LIMIT 1";
     $stmtMembership = $conn->prepare($sqlMembership);
     $stmtMembership->execute([':seller_id' => $sellerId]);
     $membership = $stmtMembership->fetch(PDO::FETCH_ASSOC);
 
     $sellerTier = $membership ? $membership['Membership_Tier'] : 'Free';
     $waiveFeeTiers = ['VIP', 'SVIP'];
-
-    if (in_array($sellerTier, $waiveFeeTiers)) {
-        $platformFee = 0.00;
-    } else {
-        $platformFee = $productPrice * 0.02;
-    }
+    $platformFee = in_array($sellerTier, $waiveFeeTiers) ? 0.00 : $productPrice * 0.02;
 
     $sqlOrder = "INSERT INTO Orders (
-                    Orders_Buyer_ID, 
-                    Orders_Seller_ID, 
-                    Product_ID,
-                    Orders_Total_Amount, 
-                    Orders_Platform_Fee, 
-                    Orders_Status, 
-                    Orders_Created_AT,
-                    Address_ID
+                    Orders_Buyer_ID, Orders_Seller_ID, Product_ID,
+                    Orders_Total_Amount, Orders_Platform_Fee, 
+                    Orders_Status, Orders_Created_AT, Address_ID
                 ) VALUES (
-                    :buyer_id,
-                    :seller_id,
-                    :product_id,
-                    :total_amount,
-                    :platform_fee,
-                    'Paid',
-                    NOW(),
-                    :address_id
+                    :buyer_id, :seller_id, :product_id,
+                    :total_amount, :platform_fee, 
+                    'Paid', NOW(), :address_id
                 )";
 
     $stmtOrder = $conn->prepare($sqlOrder);
@@ -166,8 +159,33 @@ try {
         ':address_id' => $addressId
     ]);
 
+    // 🔥 获取刚生成的订单 ID
+    $newOrderId = $conn->lastInsertId();
+
     // ----------------------------------------------------------------
-    // 7. 更新商品状态为已售出 (Sold)
+    // 6. 再执行扣款 (Wallet_Logs) - 关联 Order ID
+    // ----------------------------------------------------------------
+    $newBalance = $currentBalance - $totalAmount;
+    $negativeAmount = -1 * $totalAmount;
+    $walletDesc = "Payment for Order: " . $productInfo['Product_Title'];
+
+    // 🔥 修改：加入了 Reference_ID 和 Reference_Type
+    $sqlInsertWallet = "INSERT INTO Wallet_Logs 
+                  (User_ID, Amount, Balance_After, Description, Reference_Type, Reference_ID, Created_AT) 
+                  VALUES 
+                  (:uid, :amount, :balance_after, :desc, 'order_payment', :ref_id, NOW())";
+
+    $stmtWallet = $conn->prepare($sqlInsertWallet);
+    $stmtWallet->execute([
+        ':uid' => $buyerId,
+        ':amount' => $negativeAmount,
+        ':balance_after' => $newBalance,
+        ':desc' => $walletDesc,
+        ':ref_id' => $newOrderId // 关联刚才生成的订单ID
+    ]);
+
+    // ----------------------------------------------------------------
+    // 7. 更新商品状态
     // ----------------------------------------------------------------
     $sqlUpdateProd = "UPDATE Product SET Product_Status = 'Sold' WHERE Product_ID = :pid";
     $stmtUpdateProd = $conn->prepare($sqlUpdateProd);
@@ -181,7 +199,7 @@ try {
 
 } catch (Exception $e) {
     if (isset($conn)) { $conn->rollBack(); } // 出错回滚
-    $response['msg'] = $e->getMessage(); // 返回具体错误信息给前端
+    $response['msg'] = $e->getMessage();
 }
 
 echo json_encode($response);

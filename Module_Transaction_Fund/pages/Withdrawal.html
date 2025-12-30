@@ -105,80 +105,7 @@
             }
         }
 
-        .nav-actions {
-            display: flex;
-            gap: 10px;
-        }
-
-        .nav-actions button {
-            border: none;
-            background: transparent;
-            font-weight: 600;
-            color: var(--text-gray);
-            padding: 0.6rem 1.2rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            border-radius: 8px;
-        }
-
-        .nav-actions .btn-primary {
-            background-color: var(--text-dark);
-            color: white;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-        }
-
-        .nav-actions .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 15px rgba(0,0,0,0.15);
-        }
-
-        .nav-actions button:not(.btn-primary):hover {
-            color: var(--primary);
-            background: rgba(79, 70, 229, 0.05);
-        }
-
-        /* User Avatar and Menu Styles */
-        .menu-container { position: relative; display: inline-block; }
-
-        .avatar-btn {
-            width: 40px; height: 40px; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 16px; cursor: pointer; color: white;
-            font-weight: bold; transition: all 0.3s;
-            background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
-            border: 2px solid #fff;
-            box-shadow: 0 4px 10px rgba(79, 70, 229, 0.2);
-        }
-        .avatar-btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 6px 15px rgba(79, 70, 229, 0.3);
-        }
-
-        .dropdown-content {
-            display: none; position: absolute; right: 0;
-            top: 100%; margin-top: 10px;
-            background-color: white; min-width: 160px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.12);
-            border-radius: 16px; z-index: 1001; padding: 8px;
-            animation: fadeInMenu 0.2s ease;
-        }
-        .dropdown-content::before {
-            content: ""; position: absolute; top: -20px; left: 0;
-            width: 100%; height: 20px; background: transparent;
-        }
-
-        .menu-container:hover .dropdown-content { display: block; }
-        .dropdown-item {
-            color: var(--text-dark); padding: 12px 16px; text-decoration: none;
-            display: block; font-size: 14px; font-weight: 500; border-radius: 10px;
-        }
-        .dropdown-item:hover { background-color: #f3f4f6; color: var(--primary); }
-
-        @keyframes fadeInMenu {
-            from { opacity: 0; transform: translateY(-8px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
+        /* --- Updated UI Styles --- */
         .main-container {
             max-width: 800px;
             margin: 40px auto;
@@ -206,7 +133,6 @@
             color: var(--text-gray);
         }
 
-        /* Action Section */
         .action-section {
             background: white;
             border-radius: 20px;
@@ -269,12 +195,12 @@
             min-height: 100px;
         }
 
-        /* Upload Styles (Merged from Publish Item) */
+        /* Upload Styles */
         .upload-area {
             border: 2px dashed #CBD5E1;
             border-radius: 20px;
             padding: 30px;
-            padding-bottom: 80px; /* Space for add btn */
+            padding-bottom: 80px;
             min-height: 250px;
             background: #F8FAFC;
             transition: all 0.3s ease;
@@ -372,7 +298,6 @@
             z-index: 10; display: none; transition: 0.2s;
         }
         .clear-btn:hover { background: #EF4444; color: white; }
-        /* End Upload Styles */
 
         .btn {
             padding: 12px 30px;
@@ -427,6 +352,40 @@
             border-color: rgba(79, 70, 229, 0.1);
         }
 
+        /* --- 🔥 Payment PIN Modal Styles --- */
+        .pin-modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(8px);
+            z-index: 2000; display: none; align-items: center; justify-content: center;
+            opacity: 0; transition: opacity 0.3s ease;
+        }
+        .pin-modal-overlay.active { opacity: 1; }
+
+        .pin-card {
+            background: #fff; width: 90%; max-width: 360px;
+            border-radius: 24px; padding: 30px; text-align: center;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            transform: scale(0.9); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .pin-modal-overlay.active .pin-card { transform: scale(1); }
+
+        .pin-input-container { margin: 24px 0; position: relative; }
+        .pin-real-input {
+            width: 100%; height: 50px; opacity: 0; position: absolute; top: 0; left: 0; z-index: 2;
+            cursor: text;
+        }
+
+        /* 6-box Styles */
+        .pin-boxes { display: flex; gap: 8px; justify-content: center; }
+        .pin-box {
+            width: 45px; height: 50px; border: 2px solid #E2E8F0; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.5rem; font-weight: 700; color: var(--text-dark);
+            background: #F8FAFC; transition: all 0.2s;
+        }
+        .pin-box.active { border-color: var(--primary); background: #fff; box-shadow: 0 0 0 4px var(--primary-light); }
+        .pin-box.filled { background: #fff; border-color: #CBD5E1; }
+
         @media (max-width: 768px) {
             .page-title { font-size: 2rem; }
         }
@@ -458,7 +417,7 @@
             <span>💸</span>
             Withdrawal Details
         </h2>
-        <form id="fundRequestForm">
+        <form id="fundRequestForm" onsubmit="event.preventDefault(); handleWithdrawClick();">
             <input type="hidden" id="requestType" value="withdrawal">
             <div class="form-grid">
                 <div class="form-group">
@@ -498,81 +457,230 @@
     </div>
 </div>
 
-<script>
-    // ==================== LOGIN MODAL SETUP ====================
-    const AuthModal = {
-        htmlContent: `
-            <dialog id="globalLoginDialog" class="tg-auth-modal">
-                <div style="font-size: 40px; margin-bottom: 10px;">🔒</div>
-                <h3 style="margin-bottom:10px; color: #1F2937; font-size: 1.2rem; font-family: 'Poppins', sans-serif;">Login Required</h3>
-                <p style="margin-bottom:25px; color:#6B7280; font-size: 0.95rem; line-height: 1.5; font-family: 'Poppins', sans-serif;">
-                    You need to log in to access this feature.
-                </p>
-                <div style="display:flex; gap:10px; justify-content:center;">
-                    <button onclick="AuthModal.close()"
-                            style="padding:10px 20px; border:1px solid #E5E7EB; background:white; color: #374151; border-radius:12px; cursor:pointer; font-weight: 600;">
-                        Cancel
-                    </button>
-                    <button onclick="window.location.href='../../Module_User_Account_Management/pages/login.php'"
-                            style="padding:10px 20px; border:none; background:#4F46E5; color:white; border-radius:12px; cursor:pointer; font-weight: 600;">
-                        Go to Login
-                    </button>
-                </div>
-            </dialog>
-        `,
-        init: function() {
-            if (document.getElementById('globalLoginDialog')) return;
-            const style = document.createElement('style');
-            style.innerHTML = `
-                .tg-auth-modal::backdrop { background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(4px); }
-                .tg-auth-modal {
-                    position: fixed; top: 30%; bottom: auto; left: 0; right: 0; margin: 0 auto;
-                    border-radius: 24px; padding: 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.15);
-                    text-align: center; width: 320px; border: none; outline: none;
-                    animation: tgSlideDown 0.4s cubic-bezier(0.25, 1, 0.5, 1);
-                }
-                @keyframes tgSlideDown { from { transform: translateY(-30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-            `;
-            document.head.appendChild(style);
-            document.body.insertAdjacentHTML('beforeend', this.htmlContent);
-        },
-        show: function() {
-            this.init();
-            const dialog = document.getElementById('globalLoginDialog');
-            if (dialog) dialog.showModal();
-        },
-        close: function() {
-            const dialog = document.getElementById('globalLoginDialog');
-            if (dialog) dialog.close();
-            window.location.href = '../../index.html';
-        }
-    };
+<div id="pin-modal" class="pin-modal-overlay">
+    <div class="pin-card">
+        <div style="font-size: 3rem; margin-bottom: 10px;">🔒</div>
+        <h3 style="margin: 0 0 8px 0; font-size: 1.25rem;">Enter Payment PIN</h3>
+        <p style="margin: 0 0 20px 0; color: #64748B; font-size: 0.9rem;">Security check required for withdrawal.</p>
 
-    // Check login status on page load
-    let isUserLoggedIn = false;
+        <div class="pin-input-container">
+            <input type="tel" maxlength="6" id="real-pin-input" class="pin-real-input" autocomplete="off" inputmode="numeric">
+
+            <div class="pin-boxes">
+                <div class="pin-box"></div><div class="pin-box"></div><div class="pin-box"></div>
+                <div class="pin-box"></div><div class="pin-box"></div><div class="pin-box"></div>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+            <button onclick="closePinModal()" class="btn" style="background: #F1F5F9; color: #64748B; flex: 1;">Cancel</button>
+            <button onclick="submitWithPin()" id="btn-confirm-pin" class="btn btn-submit" style="flex: 1; opacity: 0.5; pointer-events: none;">Confirm</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ==================== LOGIN & SETUP ====================
+    let CURRENT_USER_ID = null;
+    let USER_HAS_PIN = false;
 
     document.addEventListener('DOMContentLoaded', async () => {
+        await checkLoginStatus();
+        await checkUserPinStatus();
+    });
+
+    async function checkLoginStatus() {
         try {
             const res = await fetch('../../Module_User_Account_Management/api/session_status.php');
             const data = await res.json();
-
-            if (data.is_logged_in) {
-
-                isUserLoggedIn = true;
-                if (data.user && data.user.user_id) {
-                    CURRENT_USER_ID = data.user.user_id;
-                }
+            if (data.is_logged_in && data.user) {
+                CURRENT_USER_ID = data.user.user_id;
             } else {
-                isUserLoggedIn = false;
-                AuthModal.show();
+                window.location.href = '../../Module_User_Account_Management/pages/login.php';
             }
-        } catch (error) {
-            console.error('Error checking login status:', error);
-            AuthModal.show();
+        } catch (error) { console.error(error); }
+    }
+
+    // 🔥 Check PIN status from the Fund_Request API
+    async function checkUserPinStatus() {
+        try {
+            // Updated path to use local module API
+            const response = await fetch('../api/Fund_Request.php?action=check_pin_status');
+            const result = await response.json();
+
+            if (result.success && result.data) {
+                USER_HAS_PIN = Boolean(result.data.has_pin);
+                console.log("PIN Status Check:", USER_HAS_PIN);
+            }
+        } catch (e) {
+            console.error("Failed to check PIN status", e);
+        }
+    }
+
+    // ==================== PIN MODAL LOGIC ====================
+    const pinModal = document.getElementById('pin-modal');
+    const realInput = document.getElementById('real-pin-input');
+    const boxes = document.querySelectorAll('.pin-box');
+    const confirmBtn = document.getElementById('btn-confirm-pin');
+
+    async function handleWithdrawClick() {
+        // 1. Basic Form Validation
+        const amount = document.getElementById('requestAmount').value;
+        const duitNowId = document.getElementById('duitNowId').value;
+
+        if (!amount || amount <= 0) {
+            StatusDialog.fail("Invalid Amount", "Please enter a valid withdrawal amount.");
+            return;
+        }
+        if (!duitNowId) {
+            StatusDialog.fail("Missing Info", "Please enter your DuitNow/Account number.");
+            return;
+        }
+
+        // 🔥 Force re-check status before showing modal
+        await checkUserPinStatus();
+
+        // 2. Check if user has PIN
+        if (!USER_HAS_PIN) {
+            StatusDialog.confirm(
+                'Set Payment PIN',
+                'For security, you must set a 6-digit Payment PIN before withdrawing.',
+                'Set PIN Now',
+                () => { window.location.href = '../../Module_User_Account_Management/pages/profile.php#security'; }
+            );
+            return;
+        }
+
+        // 3. Open PIN Modal
+        openPinModal();
+    }
+
+    function openPinModal() {
+        pinModal.style.display = 'flex';
+        setTimeout(() => pinModal.classList.add('active'), 10);
+        realInput.value = '';
+        updatePinVisuals();
+        realInput.focus();
+    }
+
+    function closePinModal() {
+        pinModal.classList.remove('active');
+        setTimeout(() => pinModal.style.display = 'none', 300);
+        realInput.blur();
+    }
+
+    realInput.addEventListener('input', () => {
+        realInput.value = realInput.value.replace(/[^0-9]/g, '');
+        updatePinVisuals();
+        if (realInput.value.length === 6) {
+            confirmBtn.style.opacity = '1';
+            confirmBtn.style.pointerEvents = 'auto';
+        } else {
+            confirmBtn.style.opacity = '0.5';
+            confirmBtn.style.pointerEvents = 'none';
         }
     });
 
-    // ==================== IMAGE UPLOAD LOGIC ====================
+    function updatePinVisuals() {
+        const val = realInput.value;
+        boxes.forEach((box, index) => {
+            if (index < val.length) {
+                box.innerText = '•';
+                box.classList.add('filled');
+                box.classList.remove('active');
+            } else if (index === val.length) {
+                box.innerText = '';
+                box.classList.add('active');
+                box.classList.remove('filled');
+            } else {
+                box.innerText = '';
+                box.classList.remove('filled', 'active');
+            }
+        });
+    }
+
+    // ==================== SUBMISSION LOGIC ====================
+
+    function convertFileToBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = error => reject(error);
+        });
+    }
+
+    async function submitWithPin() {
+        const pinCode = realInput.value;
+        if (pinCode.length !== 6) return;
+
+        closePinModal();
+
+        // Prepare Data
+        const type = document.getElementById('requestType').value;
+        const amount = document.getElementById('requestAmount').value;
+        const duitNowId = document.getElementById('duitNowId').value;
+        const adminRemarkInput = document.getElementById('adminRemark').value;
+
+        let proofImage = "";
+        if (dt.files.length > 0) {
+            try {
+                proofImage = await convertFileToBase64(dt.files[0]);
+            } catch (err) {
+                StatusDialog.fail('Error', 'Error processing image');
+                return;
+            }
+        }
+
+        const finalRemark = `DuitNow: ${duitNowId}\n\nUser Notes: ${adminRemarkInput}`;
+
+        // Show Loading
+        const submitBtn = document.querySelector('.btn-submit');
+        const originalBtnText = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = 'Processing...';
+
+        try {
+            // 🔥 Updated API Path
+            const response = await fetch('../api/Fund_Request.php?action=create_fund_request', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    user_id: CURRENT_USER_ID,
+                    type: type,
+                    amount: parseFloat(amount),
+                    proof_image: proofImage,
+                    admin_remark: finalRemark,
+                    payment_pin: pinCode // 🔥 Sending PIN to Backend
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                StatusDialog.success(
+                    'Success',
+                    `Withdrawal Request Submitted!<br>Status: Pending`,
+                    'OK',
+                    () => { window.location.href = 'Fund_Request.html'; }
+                );
+            } else {
+                if (result.message && (result.message.includes('PIN') || result.message.includes('Password'))) {
+                    StatusDialog.fail('Incorrect PIN', result.message, 'Try Again', openPinModal);
+                } else {
+                    StatusDialog.fail('Submission Failed', result.message || 'Unknown error');
+                }
+            }
+        } catch (error) {
+            console.error(error);
+            StatusDialog.fail('Error', 'Network error occurred.');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnText;
+        }
+    }
+
+    // ==================== IMAGE UPLOAD UTILS ====================
     const uploadArea = document.getElementById('uploadArea');
     const fileInput = document.getElementById('fileInput');
     const preview = document.getElementById('imagePreview');
@@ -581,64 +689,30 @@
     const addMoreBtn = document.getElementById('addMoreBtn');
     let dt = new DataTransfer();
 
-    // 1. Click to Upload
     window.triggerUpload = function() { fileInput.click(); }
+    placeholder.addEventListener('click', function() { triggerUpload(); });
 
-    // Click on placeholder triggers upload
-    placeholder.addEventListener('click', function() {
-        triggerUpload();
-    });
-
-    // 2. Drag and Drop Support
     ;['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-        uploadArea.addEventListener(eventName, preventDefaults, false);
+        uploadArea.addEventListener(eventName, (e) => { e.preventDefault(); e.stopPropagation(); }, false);
+    });
+    ['dragenter', 'dragover'].forEach(eventName => {
+        uploadArea.addEventListener(eventName, () => uploadArea.classList.add('drag-over'), false);
+    });
+    ['dragleave', 'drop'].forEach(eventName => {
+        uploadArea.addEventListener(eventName, () => uploadArea.classList.remove('drag-over'), false);
     });
 
-    function preventDefaults(e) {
-        e.preventDefault();
-        e.stopPropagation();
-    }
+    uploadArea.addEventListener('drop', (e) => handleFiles(e.dataTransfer.files), false);
+    fileInput.addEventListener('change', function(e) { handleFiles(this.files); });
 
-    // Highlight effect
-    ;['dragenter', 'dragover'].forEach(eventName => {
-        uploadArea.addEventListener(eventName, highlight, false);
-    });
-    ;['dragleave', 'drop'].forEach(eventName => {
-        uploadArea.addEventListener(eventName, unhighlight, false);
-    });
-
-    function highlight(e) { uploadArea.classList.add('drag-over'); }
-    function unhighlight(e) { uploadArea.classList.remove('drag-over'); }
-
-    // Handle Dropped Files
-    uploadArea.addEventListener('drop', handleDrop, false);
-
-    function handleDrop(e) {
-        const droppedFiles = e.dataTransfer.files;
-        handleFiles(droppedFiles);
-    }
-
-    // 3. Common File Handling
     function handleFiles(files) {
-        // Clear previous files for single upload context, remove if multiple allowed
-        // dt.items.clear();
-
         for (let file of files) {
-            // Only accept images
-            if (file.type.startsWith('image/')) {
-                dt.items.add(file);
-            }
+            if (file.type.startsWith('image/')) dt.items.add(file);
         }
         fileInput.files = dt.files;
         renderPreview();
     }
 
-    // Handle Input Change (from clicking)
-    fileInput.addEventListener('change', function(e) {
-        handleFiles(this.files);
-    });
-
-    // Clear All
     window.clearImages = function(e) {
         if(e) e.stopPropagation();
         dt.items.clear();
@@ -646,7 +720,6 @@
         renderPreview();
     }
 
-    // Remove Single Image
     window.removeImage = function(index) {
         const newDt = new DataTransfer();
         const files = dt.files;
@@ -671,20 +744,10 @@
                 reader.onload = function(event) {
                     const wrapper = document.createElement('div');
                     wrapper.className = 'preview-wrapper';
-                    const img = document.createElement('img');
-                    img.src = event.target.result;
-                    img.className = 'preview-item';
-
-                    const delBtn = document.createElement('div');
-                    delBtn.className = 'delete-single-btn';
-                    delBtn.innerHTML = '✕';
-                    delBtn.onclick = function(e) {
-                        e.stopPropagation();
-                        removeImage(index);
-                    };
-
-                    wrapper.appendChild(img);
-                    wrapper.appendChild(delBtn);
+                    wrapper.innerHTML = `
+                        <img src="${event.target.result}" class="preview-item">
+                        <div class="delete-single-btn" onclick="removeImage(${index}); event.stopPropagation();">✕</div>
+                    `;
                     preview.appendChild(wrapper);
                 };
                 reader.readAsDataURL(file);
@@ -697,63 +760,10 @@
         }
     }
 
-    // Helper function to convert file to Base64
-    function convertFileToBase64(file) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = () => resolve(reader.result);
-            reader.onerror = error => reject(error);
-        });
-    }
-
-    // ==================== API CONFIGURATION ====================
-    const API_BASE_URL = '../api/Fund_Request.php';
-    let CURRENT_USER_ID = null;
-
-    // API Helper Functions
-    async function apiCall(action, data = {}, method = 'POST') {
-        try {
-            let url = `${API_BASE_URL}?action=${action}`;
-            const options = {
-                method: method,
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            };
-
-            if (method === 'GET') {
-                Object.keys(data).forEach(key => {
-                    url += `&${key}=${encodeURIComponent(data[key])}`;
-                });
-            } else {
-                options.body = JSON.stringify(data);
-            }
-
-            const response = await fetch(url, options);
-            const result = await response.json();
-
-            if (!result.success) {
-                throw new Error(result.message || 'API request failed');
-            }
-
-            return result;
-        } catch (error) {
-            console.error('API Error:', error);
-            throw error; // Re-throw to be caught by form submit handler
-        }
-    }
-
     // ==================== BACKGROUND ANIMATION ====================
     const container = document.getElementById('floating-container');
     const items = ['💳', '💰', '💸', '🏦', '💵', '💴', '💶', '💷', '📊', '📈', '💹', '🔒', '🛡️'];
-    const count = 12;
-
-    for (let i = 0; i < count; i++) {
-        createFloater();
-    }
-
-    function createFloater() {
+    for (let i = 0; i < 12; i++) {
         const el = document.createElement('div');
         el.classList.add('floating-item');
         el.innerText = items[Math.floor(Math.random() * items.length)];
@@ -763,51 +773,6 @@
         el.style.animationDelay = '-' + (Math.random() * 15) + 's';
         container.appendChild(el);
     }
-
-    // Fund Request Form Submission
-    document.getElementById('fundRequestForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-
-        const type = document.getElementById('requestType').value;
-        const amount = document.getElementById('requestAmount').value;
-        const duitNowId = document.getElementById('duitNowId').value;
-        const adminRemarkInput = document.getElementById('adminRemark').value;
-
-        // Convert image to Base64 if exists
-        let proofImage = "";
-        if (dt.files.length > 0) {
-            try {
-                // We take the first file for the proof image
-                proofImage = await convertFileToBase64(dt.files[0]);
-            } catch (err) {
-                StatusDialog.fail('Error', 'Error processing image');
-                return;
-            }
-        }
-
-        const finalRemark = `DuitNow: ${duitNowId}\n\nUser Notes: ${adminRemarkInput}`;
-
-        try {
-            // Submit to API
-            const result = await apiCall('create_fund_request', {
-                user_id: CURRENT_USER_ID,
-                type: type,
-                amount: parseFloat(amount),
-                proof_image: proofImage, // Now sending Base64 string
-                admin_remark: finalRemark
-            });
-
-            StatusDialog.success(
-                'Success',
-                `Withdrawal Submitted Successfully!<br><br>Request ID: #FR${result.data.request_id}<br>Amount: $${amount}<br>Status: ${result.data.status}`,
-                'OK',
-                () => { window.location.href = 'Fund_Request.html'; }
-            );
-
-        } catch (error) {
-            StatusDialog.fail('Submission Failed', error.message);
-        }
-    });
 </script>
 
 </body>

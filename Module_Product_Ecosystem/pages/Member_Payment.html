@@ -5,89 +5,115 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Checkout Membership - TreasureGO</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
-  <style>
-    /* --- Core Variables --- */
-    :root {
-      --bg-color: #F3F6F9;
-      --primary: #4F46E5;
-      --primary-hover: #4338CA;
-      --text-dark: #1F2937;
-      --text-gray: #6B7280;
-      --glass-bg: rgba(255, 255, 255, 0.95);
-      --gold: #F59E0B;
-      --gold-light: #FFFBEB;
-    }
-    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-    body { font-family: 'Poppins', 'Noto Sans SC', sans-serif; background: var(--bg-color); color: var(--text-dark); min-height: 100vh; margin: 0; padding-bottom: 40px; }
+  <script src="../../Public_Assets/js/status_dialog.js"></script> <style>
+  /* --- Core Variables --- */
+  :root {
+    --bg-color: #F3F6F9;
+    --primary: #4F46E5;
+    --primary-hover: #4338CA;
+    --text-dark: #1F2937;
+    --text-gray: #6B7280;
+    --glass-bg: rgba(255, 255, 255, 0.95);
+    --gold: #F59E0B;
+    --gold-light: #FFFBEB;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body { font-family: 'Poppins', 'Noto Sans SC', sans-serif; background: var(--bg-color); color: var(--text-dark); min-height: 100vh; margin: 0; padding-bottom: 40px; }
 
-    /* --- Navbar --- */
-    .navbar { background: var(--glass-bg); backdrop-filter: blur(12px); padding: 1rem 5%; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; border-bottom: 1px solid rgba(255,255,255,0.5); }
-    .logo { font-weight: 800; font-size: 1.5rem; color: var(--primary); display: flex; align-items: center; gap: 10px; text-decoration: none; }
-    .logo span { color: var(--text-dark); }
-    .logo-img { width: 42px; height: 42px; border-radius: 10px; object-fit: cover; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-    .nav-actions { display: flex; align-items: center; gap: 20px; }
-    .menu-container { position: relative; display: inline-block; }
-    .dots-btn { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; cursor: pointer; font-weight: bold; }
+  /* --- Navbar --- */
+  .navbar { background: var(--glass-bg); backdrop-filter: blur(12px); padding: 1rem 5%; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; border-bottom: 1px solid rgba(255,255,255,0.5); }
 
-    /* --- Layout --- */
-    .container { max-width: 1000px; margin: 40px auto; padding: 0 20px; display: grid; grid-template-columns: 1.5fr 1fr; gap: 30px; align-items: start; }
-    .card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-bottom: 20px; transition: 0.3s; }
-    h2 { margin-top: 0; margin-bottom: 20px; font-size: 1.2rem; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+  /* --- Layout --- */
+  .container { max-width: 1000px; margin: 40px auto; padding: 0 20px; display: grid; grid-template-columns: 1.5fr 1fr; gap: 30px; align-items: start; }
+  .card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-bottom: 20px; transition: 0.3s; }
+  h2 { margin-top: 0; margin-bottom: 20px; font-size: 1.2rem; font-weight: 700; display: flex; align-items: center; gap: 10px; }
 
-    /* --- Single Payment Method Style --- */
-    .wallet-card {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #EEF2FF;
-      border: 2px solid var(--primary);
-      padding: 25px;
-      border-radius: 16px;
-      color: var(--primary);
-      margin-bottom: 20px;
-      text-align: center;
-    }
-    .wallet-info { display: flex; align-items: center; gap: 15px; }
-    .wallet-icon { font-size: 2.2rem; }
-    .wallet-text { text-align: left; }
-    .wallet-text h4 { margin: 0; font-size: 1.1rem; }
-    .wallet-text p { margin: 2px 0 0 0; font-size: 0.9rem; opacity: 0.8; }
+  /* --- Single Payment Method Style --- */
+  .wallet-card {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #EEF2FF;
+    border: 2px solid var(--primary);
+    padding: 25px;
+    border-radius: 16px;
+    color: var(--primary);
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  .wallet-info { display: flex; align-items: center; gap: 15px; }
+  .wallet-icon { font-size: 2.2rem; }
+  .wallet-text { text-align: left; }
+  .wallet-text h4 { margin: 0; font-size: 1.1rem; }
+  .wallet-text p { margin: 2px 0 0 0; font-size: 0.9rem; opacity: 0.8; }
 
-    /* --- Membership Summary Style --- */
-    .plan-header { display: flex; align-items: center; gap: 15px; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #eee; }
-    .plan-icon { width: 60px; height: 60px; border-radius: 12px; background: #f0f0f0; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; }
-    .plan-details h3 { margin: 0 0 4px 0; font-size: 1.1rem; }
-    .plan-cycle { color: var(--text-gray); font-size: 0.9rem; margin: 0; }
+  /* --- Membership Summary Style --- */
+  .plan-header { display: flex; align-items: center; gap: 15px; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #eee; }
+  .plan-icon { width: 60px; height: 60px; border-radius: 12px; background: #f0f0f0; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; }
+  .plan-details h3 { margin: 0 0 4px 0; font-size: 1.1rem; }
+  .plan-cycle { color: var(--text-gray); font-size: 0.9rem; margin: 0; }
 
-    /* Style variations for SVIP */
-    .card.svip-theme { border: 2px solid var(--gold); background: linear-gradient(to bottom, #FFFCF5, #FFFFFF); }
-    .svip-text { color: var(--gold); }
-    .card.vip-theme { border: 2px solid #eee; }
+  /* Style variations for SVIP */
+  .card.svip-theme { border: 2px solid var(--gold); background: linear-gradient(to bottom, #FFFCF5, #FFFFFF); }
+  .svip-text { color: var(--gold); }
+  .card.vip-theme { border: 2px solid #eee; }
 
-    .summary-row { display: flex; justify-content: space-between; margin-bottom: 12px; color: #555; font-size: 0.95rem; }
-    .total-row { display: flex; justify-content: space-between; margin-top: 20px; padding-top: 20px; border-top: 2px dashed #eee; font-weight: 800; font-size: 1.4rem; color: var(--text-dark); }
+  .summary-row { display: flex; justify-content: space-between; margin-bottom: 12px; color: #555; font-size: 0.95rem; }
+  .total-row { display: flex; justify-content: space-between; margin-top: 20px; padding-top: 20px; border-top: 2px dashed #eee; font-weight: 800; font-size: 1.4rem; color: var(--text-dark); }
 
-    /* Buttons */
-    .btn-pay { width: 100%; background: var(--primary); color: white; border: none; padding: 16px; border-radius: 14px; font-size: 1.1rem; font-weight: 700; cursor: pointer; margin-top: 25px; box-shadow: 0 10px 25px rgba(79, 70, 229, 0.25); transition: 0.2s; }
-    .btn-pay:hover { background: var(--primary-hover); transform: translateY(-2px); }
-    /* SVIP specific button color */
-    .btn-pay.gold-btn { background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); box-shadow: 0 10px 25px rgba(245, 158, 11, 0.3); }
+  /* Buttons */
+  .btn-pay { width: 100%; background: var(--primary); color: white; border: none; padding: 16px; border-radius: 14px; font-size: 1.1rem; font-weight: 700; cursor: pointer; margin-top: 25px; box-shadow: 0 10px 25px rgba(79, 70, 229, 0.25); transition: 0.2s; }
+  .btn-pay:hover { background: var(--primary-hover); transform: translateY(-2px); }
+  .btn-pay.gold-btn { background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); box-shadow: 0 10px 25px rgba(245, 158, 11, 0.3); }
 
-    .btn-cancel { width: 100%; display: block; text-align: center; margin-top: 15px; color: var(--text-gray); text-decoration: none; font-weight: 600; font-size: 0.95rem; }
-    .btn-cancel:hover { color: var(--text-dark); }
+  .btn-cancel { width: 100%; display: block; text-align: center; margin-top: 15px; color: var(--text-gray); text-decoration: none; font-weight: 600; font-size: 0.95rem; }
+  .btn-cancel:hover { color: var(--text-dark); }
 
-    /* Terms Text */
-    .terms-text { font-size: 0.8rem; color: #888; text-align: center; line-height: 1.5; margin-top: 0px; padding-top: 15px; border-top: 1px solid #f0f0f0; }
+  /* Terms Text */
+  .terms-text { font-size: 0.8rem; color: #888; text-align: center; line-height: 1.5; margin-top: 0px; padding-top: 15px; border-top: 1px solid #f0f0f0; }
 
-    @media (max-width: 768px) {
-      .navbar { padding: 1rem 20px; }
-      .container { margin-top: 20px; grid-template-columns: 1fr; gap: 20px; }
-    }
-  </style>
+  /* --- 🔥 Payment PIN Modal Styles --- */
+  .pin-modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(8px);
+    z-index: 2000; display: none; align-items: center; justify-content: center;
+    opacity: 0; transition: opacity 0.3s ease;
+  }
+  .pin-modal-overlay.active { opacity: 1; }
+
+  .pin-card {
+    background: #fff; width: 90%; max-width: 360px;
+    border-radius: 24px; padding: 30px; text-align: center;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    transform: scale(0.9); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .pin-modal-overlay.active .pin-card { transform: scale(1); }
+
+  .pin-input-container { margin: 24px 0; position: relative; }
+  .pin-real-input {
+    width: 100%; height: 50px; opacity: 0; position: absolute; top: 0; left: 0; z-index: 2;
+    cursor: text;
+  }
+
+  /* 6-box Styles */
+  .pin-boxes { display: flex; gap: 8px; justify-content: center; }
+  .pin-box {
+    width: 45px; height: 50px; border: 2px solid #E2E8F0; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem; font-weight: 700; color: var(--text-dark);
+    background: #F8FAFC; transition: all 0.2s;
+  }
+  .pin-box.active { border-color: var(--primary); background: #fff; box-shadow: 0 0 0 4px var(--primary-light); }
+  .pin-box.filled { background: #fff; border-color: #CBD5E1; }
+
+  @media (max-width: 768px) {
+    .navbar { padding: 1rem 20px; }
+    .container { margin-top: 20px; grid-template-columns: 1fr; gap: 20px; }
+  }
+</style>
 </head>
 <body>
 
-<!-- Navbar replaced by headerbar.js -->
 <script src="../../Public_Assets/js/headerbar.js"></script>
 <script>TreasureGoHeaderbar.mount({ basePath: '../../' });</script>
 
@@ -115,7 +141,7 @@
     <div style="text-align:center; padding: 0 20px;">
       <p style="color:#9CA3AF; font-size:0.85rem;">
         <span style="vertical-align: middle; margin-right:5px;">🔒</span>
-        Secure Payment
+        Secure Payment with PIN Protection
       </p>
     </div>
   </div>
@@ -141,9 +167,31 @@
         <span id="total-price" style="color:var(--primary);">RM0.00</span>
       </div>
 
-      <button class="btn-pay" id="pay-btn" onclick="processPayment()">Pay</button>
+      <button class="btn-pay" id="pay-btn" onclick="handlePayClick()">Pay</button>
 
       <a href="javascript:history.back()" class="btn-cancel">Cancel & Go Back</a>
+    </div>
+  </div>
+</div>
+
+<div id="pin-modal" class="pin-modal-overlay">
+  <div class="pin-card">
+    <div style="font-size: 3rem; margin-bottom: 10px;">🔒</div>
+    <h3 style="margin: 0 0 8px 0; font-size: 1.25rem;">Enter Payment PIN</h3>
+    <p style="margin: 0 0 20px 0; color: #64748B; font-size: 0.9rem;">Please enter your 6-digit PIN to confirm.</p>
+
+    <div class="pin-input-container">
+      <input type="tel" maxlength="6" id="real-pin-input" class="pin-real-input" autocomplete="off" inputmode="numeric">
+
+      <div class="pin-boxes">
+        <div class="pin-box"></div><div class="pin-box"></div><div class="pin-box"></div>
+        <div class="pin-box"></div><div class="pin-box"></div><div class="pin-box"></div>
+      </div>
+    </div>
+
+    <div style="display: flex; gap: 10px;">
+      <button onclick="closePinModal()" style="flex: 1; border: none; padding: 12px; border-radius: 14px; font-size: 1rem; font-weight: 700; cursor: pointer; background: #F1F5F9; color: #64748B; transition: 0.2s;">Cancel</button>
+      <button onclick="confirmPinPayment()" id="btn-confirm-pin" class="btn-pay" style="flex: 1; margin-top: 0; padding: 12px; font-size: 1rem; opacity: 0.5; pointer-events: none;">Confirm</button>
     </div>
   </div>
 </div>
@@ -156,24 +204,31 @@
   const rawPrice = urlParams.get('price') || '9.90';
   const priceValue = parseFloat(rawPrice.replace(/[^0-9.]/g, ''));
 
-  // 全局变量，用于存储加载后的余额 (仅用于显示，不做安全校验)
+  // 全局变量
   let realUserBalance = 0.00;
+  let userHasPin = false; // 🔥 新增：是否有密码
 
   // 2. 页面加载初始化
   document.addEventListener('DOMContentLoaded', () => {
     renderPlanDetails();
-    fetchUserBalance(); // 获取当前钱包余额显示
+    fetchUserBalance();
   });
 
-  // --- 获取余额显示给用户看 ---
+  // --- 获取余额和 PIN 状态 ---
   async function fetchUserBalance() {
     try {
-      // 路径指向 ../api/Get_Wallet_Balance.php
       const response = await fetch('../api/Get_Wallet_Balance.php');
       const data = await response.json();
 
       if (data.success) {
-        realUserBalance = data.balance;
+        realUserBalance = parseFloat(data.balance);
+
+        // 🔥 新增：检查后端返回的 has_pin 字段
+        if (typeof data.has_pin !== 'undefined') {
+          userHasPin = Boolean(data.has_pin);
+        } else {
+          console.warn("Backend missing has_pin");
+        }
 
         // 更新页面显示
         const balanceDisplay = document.querySelector('.wallet-text p');
@@ -188,14 +243,12 @@
     }
   }
 
-  // --- 渲染页面 Plan 信息 ---
   function renderPlanDetails() {
     const cycleText = cycle.charAt(0).toUpperCase() + cycle.slice(1);
     document.getElementById('cycle-display').innerText = `${cycleText} Billing`;
     document.getElementById('subtotal').innerText = `RM${priceValue.toFixed(2)}`;
     document.getElementById('total-price').innerText = `RM${priceValue.toFixed(2)}`;
 
-    // 更新 VIP / SVIP 主题样式
     const summaryCard = document.getElementById('summary-card');
     const planIcon = document.getElementById('plan-icon');
     const planName = document.getElementById('plan-name');
@@ -220,61 +273,138 @@
     }
   }
 
-  // --- 处理支付逻辑 (真实扣款) ---
-  async function processPayment() {
-    const btn = document.getElementById('pay-btn');
-    if(btn.disabled) return;
+  // --- 🔥 新增：点击支付按钮逻辑 ---
+  function handlePayClick() {
+    // 1. 检查余额 (前端简单预判)
+    if (priceValue > realUserBalance) {
+      window.location.href = `Payment_Failure.html?type=membership&reason=Insufficient Balance`;
+      return;
+    }
 
-    // 1. 禁用按钮防止重复提交
+    // 2. 检查是否有 PIN
+    if (!userHasPin) {
+      StatusDialog.confirm(
+              'Set Payment PIN',
+              'For security, you must set a 6-digit Payment PIN before purchasing.',
+              'Set PIN Now',
+              function() {
+                window.location.href = '../../Module_User_Account_Management/pages/profile.php#security';
+              }
+      );
+      return;
+    }
+
+    // 3. 打开 PIN 弹窗
+    openPinModal();
+  }
+
+  // --- 🔥 PIN Modal Controls ---
+  const pinModal = document.getElementById('pin-modal');
+  const realInput = document.getElementById('real-pin-input');
+  const boxes = document.querySelectorAll('.pin-box');
+  const confirmBtn = document.getElementById('btn-confirm-pin');
+
+  function openPinModal() {
+    pinModal.style.display = 'flex';
+    setTimeout(() => pinModal.classList.add('active'), 10);
+    realInput.value = '';
+    updatePinVisuals();
+    realInput.focus();
+  }
+
+  function closePinModal() {
+    pinModal.classList.remove('active');
+    setTimeout(() => pinModal.style.display = 'none', 300);
+    realInput.blur();
+  }
+
+  realInput.addEventListener('input', (e) => {
+    realInput.value = realInput.value.replace(/[^0-9]/g, '');
+    updatePinVisuals();
+
+    if (realInput.value.length === 6) {
+      confirmBtn.style.opacity = '1';
+      confirmBtn.style.pointerEvents = 'auto';
+    } else {
+      confirmBtn.style.opacity = '0.5';
+      confirmBtn.style.pointerEvents = 'none';
+    }
+  });
+
+  function updatePinVisuals() {
+    const val = realInput.value;
+    boxes.forEach((box, index) => {
+      if (index < val.length) {
+        box.innerText = '•';
+        box.classList.add('filled');
+        box.classList.remove('active');
+      } else if (index === val.length) {
+        box.innerText = '';
+        box.classList.add('active');
+        box.classList.remove('filled');
+      } else {
+        box.innerText = '';
+        box.classList.remove('filled', 'active');
+      }
+    });
+  }
+
+  function confirmPinPayment() {
+    const pinCode = realInput.value;
+    if (pinCode.length !== 6) return;
+    closePinModal();
+    processPayment(pinCode); // 调用真实支付，传入 PIN
+  }
+
+  // --- 处理支付逻辑 (真实扣款) ---
+  async function processPayment(pinCode) {
+    const btn = document.getElementById('pay-btn');
     btn.disabled = true;
     btn.innerText = "Processing...";
     btn.style.opacity = "0.7";
 
-    // 准备发送给后端的数据
     const payload = {
       price: priceValue,
       plan: planType,
-      cycle: cycle
+      cycle: cycle,
+      payment_pin: pinCode // 🔥 新增：传入 PIN 码
     };
 
-    // 构建 URL 参数 (用于跳转)
     const urlParamsStr = `type=membership&plan=${encodeURIComponent(planType)}&cycle=${encodeURIComponent(cycle)}&price=${encodeURIComponent(rawPrice)}`;
 
     try {
-      // 2. 发起 POST 请求进行扣款
       const response = await fetch('../api/Process_Payment.php', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
 
       const result = await response.json();
 
-      // 3. 处理后端返回结果
       if (result.success) {
-        // --- 成功 ---
-        // 延迟 500ms 跳转成功页面
-        setTimeout(() => {
-          window.location.href = `Payment_Success.html?${urlParamsStr}`;
-        }, 500);
+        window.location.href = `Payment_Success.html?${urlParamsStr}`;
       } else {
-        // --- 失败 (余额不足 或 出错) ---
         console.error("Payment failed:", result.msg);
-        alert("Payment Failed: " + result.msg);
 
-        // 延迟跳转到失败页
-        setTimeout(() => {
+        // 🔥 处理 PIN 错误
+        if (result.msg && (result.msg.includes('PIN') || result.msg.includes('Password'))) {
+          StatusDialog.fail('Incorrect PIN', result.msg, 'Try Again', () => {
+            openPinModal(); // 重新打开弹窗
+          });
+        } else {
+          // 其他错误跳转失败页
           window.location.href = `Payment_Failure.html?${urlParamsStr}&reason=${encodeURIComponent(result.msg)}`;
-        }, 1000);
+        }
+
+        // 恢复按钮 (如果是 PIN 错误，用户还在当前页)
+        btn.innerText = "Pay";
+        btn.disabled = false;
+        btn.style.opacity = "1";
       }
 
     } catch (error) {
       console.error("Network Error:", error);
-      alert("Network error, please try again.");
-
-      // 恢复按钮状态
+      StatusDialog.fail('Connection Error', 'Please check your internet connection.');
       btn.innerText = "Pay";
       btn.disabled = false;
       btn.style.opacity = "1";
