@@ -22,13 +22,49 @@
 
     body {
       font-family: 'Poppins', 'Noto Sans SC', sans-serif;
-      background: var(--bg-color);
+      background-color: var(--bg-color);
       color: var(--text-dark);
       min-height: 100vh;
       padding-bottom: 80px;
+      position: relative;
+      /* 基础渐变背景 */
+      background-image:
+              radial-gradient(circle at 10% 20%, rgba(79, 70, 229, 0.05) 0%, transparent 40%),
+              radial-gradient(circle at 90% 80%, rgba(245, 158, 11, 0.05) 0%, transparent 40%);
     }
 
-    .page-header { text-align: center; padding: 60px 20px 30px; }
+    /* --- 🔥 背景浮动动画容器 --- */
+    #floating-container {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .floating-item {
+      position: absolute;
+      font-size: 4rem;
+      opacity: 0.6;
+      filter: drop-shadow(0 10px 10px rgba(0,0,0,0.1));
+      animation: floatUp 15s linear infinite;
+    }
+
+    @keyframes floatUp {
+      0% { transform: translateY(110vh) rotate(0deg); opacity: 0; }
+      10% { opacity: 0.8; }
+      90% { opacity: 0.8; }
+      100% { transform: translateY(-10vh) rotate(20deg); opacity: 0; }
+    }
+
+    /* 页面元素需高于背景层 */
+    .page-header, .container {
+      position: relative;
+      z-index: 10;
+    }
+
+    .page-header { text-align: center; padding: 40px 20px 30px; }
+
     .page-title {
       font-size: 2.5rem; line-height: 1.1; margin-bottom: 0.5rem;
       background: linear-gradient(to right, #1F2937 0%, #4F46E5 100%);
@@ -76,6 +112,15 @@
   </style>
 </head>
 <body>
+
+<div id="floating-container"></div>
+
+<script src="../../Public_Assets/js/headerbar.js"></script>
+<script>
+  if (typeof TreasureGoHeaderbar !== 'undefined') {
+    TreasureGoHeaderbar.mount({ basePath: '../../' });
+  }
+</script>
 
 <header class="page-header">
   <h1 class="page-title">⚖️ Dispute Dashboard</h1>
@@ -151,6 +196,26 @@
   const API_LIST = '../api/admin_dispute_list.php';
   let state = { page: 1, pageSize: 20, total: 0, items: [] };
 
+  // 🔥 2. 初始化浮动背景 (Logic from Deposit Page)
+  function initFloatingItems() {
+    const container = document.getElementById('floating-container');
+    // Emoji 替换为更符合 Dispute 场景的图标
+    const items = ['⚖️', '🛡️', '💬', '⚠️', '📝', '🔍', '🤝', '📨'];
+    for (let i = 0; i < 10; i++) {
+      const el = document.createElement('div');
+      el.classList.add('floating-item');
+      el.innerText = items[Math.floor(Math.random() * items.length)];
+      el.style.left = Math.random() * 100 + 'vw';
+      el.style.fontSize = (Math.random() * 3 + 3) + 'rem';
+      el.style.animationDuration = (Math.random() * 10 + 20) + 's';
+      el.style.animationDelay = '-' + (Math.random() * 20) + 's';
+      container.appendChild(el);
+    }
+  }
+
+  // 页面加载时启动背景动画
+  document.addEventListener('DOMContentLoaded', initFloatingItems);
+
   function escapeHtml(s) {
     return String(s ?? '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
   }
@@ -211,7 +276,6 @@
   }
 
   function viewDetail(id) {
-    // 核心改动：跳转到独立的详情页
     window.location.href = `admin_dispute_detail.html?id=${id}`;
   }
 

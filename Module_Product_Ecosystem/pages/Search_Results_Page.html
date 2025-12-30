@@ -67,14 +67,15 @@
        ========================================= */
     .filter-sidebar {
       background: white;
-      padding: 20px;
-      border-radius: 24px;
+      /* ⬇️ 改小：原来是 20px */
+      padding: 15px;
+      border-radius: 20px; /* 圆角也可以稍微小点 */
       box-shadow: var(--card-shadow);
       position: sticky;
-      top: 100px;
+      top: 90px;
       z-index: 900;
       transition: transform 0.3s ease;
-      min-width: 280px;
+      min-width: 260px; /* ⬇️ 改小：原来是 280px */
     }
 
     .mobile-sidebar-close { display: none; text-align: right; font-size: 1.5rem; color: #999; cursor: pointer; margin-bottom: 10px; }
@@ -84,19 +85,27 @@
       list-style: none;
       display: flex;
       flex-direction: column;
-      gap: 2px;
-      margin-bottom: 25px;
+      gap: 0px; /* ⬇️ 改小：去掉间隙 */
+      margin-bottom: 15px; /* ⬇️ 改小：原来是 25px */
       position: relative;
     }
 
     .sidebar-item-wrapper { position: relative; transition: all 0.3s ease; }
 
     .category-trigger {
-      display: flex; align-items: center; gap: 12px;
-      padding: 12px 15px; border-radius: 12px;
-      cursor: pointer; transition: all 0.2s;
-      color: var(--text-dark); font-weight: 600; font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      /* ⬇️ 核心修改：减小内边距，让每一行变矮 */
+      padding: 8px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      color: var(--text-dark);
+      font-weight: 600;
+      font-size: 0.9rem; /* ⬇️ 改小：字体稍微小一点 */
     }
+
     .category-trigger:hover { background-color: #f3f4f6; color: var(--primary); }
     .category-trigger.active { background-color: var(--primary); color: white; }
 
@@ -146,20 +155,20 @@
     .sidebar-divider { height: 1px; background: #eee; margin: 10px 0 20px 0; }
 
     /* Filters (Checkbox & Price) */
-    .filter-group { margin-bottom: 25px; }
-    .filter-title { font-weight: 800; font-size: 1rem; margin-bottom: 12px; display: block; }
-    .filter-option { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; cursor: pointer; color: var(--text-gray); font-size: 0.95rem; }
+    .filter-group { margin-bottom: 15px; }
+    .filter-title { font-weight: 800; font-size: 0.9rem; margin-bottom: 8px; display: block; }
+    .filter-option { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; cursor: pointer; color: var(--text-gray); font-size: 0.85rem; }
     .filter-option:hover { color: var(--primary); }
     .filter-checkbox { accent-color: var(--primary); transform: scale(1.1); }
     .price-inputs { display: flex; gap: 10px; align-items: center; }
-    .price-input { width: 100%; padding: 8px; border: 1px solid #eee; border-radius: 8px; outline: none; background: #f9f9fb; }
+    .price-input { width: 100%; padding: 6px 10px; border: 1px solid #eee; border-radius: 8px; outline: none; background: #f9f9fb; }
 
     /* Buttons */
-    .btn-apply-filter { width: 100%; padding: 12px; background-color: var(--primary); color: white; border: none; border-radius: 12px; font-weight: 600; font-size: 1rem; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 10px rgba(79, 70, 229, 0.2); }
+    .btn-apply-filter { width: 100%; padding: 8px; background-color: var(--primary); color: white; border: none; border-radius: 12px; font-weight: 600; font-size: 1rem; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 10px rgba(79, 70, 229, 0.2); }
     .btn-apply-filter:hover { background-color: var(--primary-hover); transform: translateY(-2px); }
 
     .btn-clear-filter {
-      width: 100%; padding: 10px; margin-bottom: 10px; background: transparent; border: 1px dashed #ccc; border-radius: 12px; color: #888; font-weight: 600; cursor: pointer; font-size: 0.9rem; transition: all 0.2s;
+      width: 100%; padding: 8px; margin-bottom: 10px; background: transparent; border: 1px dashed #ccc; border-radius: 12px; color: #888; font-weight: 600; cursor: pointer; font-size: 0.9rem; transition: all 0.2s;
     }
     .btn-clear-filter:hover { background: #f3f3f3; color: var(--text-dark); border-color: #999; }
 

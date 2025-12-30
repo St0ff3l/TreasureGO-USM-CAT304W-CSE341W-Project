@@ -33,21 +33,29 @@
       background-image: url('data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%234f46e5" fill-opacity="0.03"%3E%3Cpath d="M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E'), linear-gradient(to bottom right, #f3f4f6, #e5e7eb);
       color: var(--text-dark);
       min-height: 100vh;
-      padding: 40px 0;
+      /* 这里为了配合 headerbar 和底部留白，保留 padding-bottom */
+      padding-bottom: 40px;
     }
 
-    .container { max-width: 900px; margin: 0 auto; padding: 0 18px; }
+    /* 🔥 修改点 1：容器上下间距调整为 40px (参照 Reference) */
+    .container {
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 0 18px;
+    }
 
     .card {
       background: var(--card);
       border: 1px solid rgba(255,255,255,0.6);
       border-radius: 24px;
-      padding: 42px;
+      /* 🔥 修改点 2：卡片内边距调整为 50px (参照 Reference) */
+      padding: 50px;
       box-shadow: var(--shadow-lg);
       animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1);
     }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
 
+    /* 以下样式保持原样 */
     .topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
     .back-link { display: inline-flex; align-items: center; gap: 8px; text-decoration: none; color: var(--text-gray); font-weight: 700; transition: 0.2s; }
     .back-link:hover { color: var(--primary); transform: translateX(-3px); }
@@ -81,7 +89,7 @@
     .order-price { font-weight: 900; color: var(--primary); font-size: 1.15rem; }
 
     .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px; }
-    @media (max-width: 720px) { .grid { grid-template-columns: 1fr; } .card { padding: 26px; } }
+    @media (max-width: 720px) { .grid { grid-template-columns: 1fr; } .card { padding: 30px; /* 移动端稍微减小内边距 */ } }
 
     .kv { background: #ffffff; border: 1px solid var(--border); border-radius: 16px; padding: 14px 16px; }
     .kv .k { font-size: 0.78rem; color: #9CA3AF; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
@@ -106,6 +114,14 @@
 </head>
 
 <body>
+
+<script src="../../Public_Assets/js/headerbar.js"></script>
+<script>
+  if (typeof TreasureGoHeaderbar !== 'undefined') {
+    TreasureGoHeaderbar.mount({ basePath: '../../' });
+  }
+</script>
+
 <div class="container">
   <div class="card">
     <div class="topbar">

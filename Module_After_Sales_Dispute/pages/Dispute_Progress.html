@@ -10,7 +10,7 @@
   <link href="../assets/css/upload_images.css" rel="stylesheet">
 
   <style>
-    /* ================= 布局基础 (参考 Support Chat) ================= */
+    /* ================= 布局基础 ================= */
     :root {
       --bg-body: #F3F4F6;
       --card-bg: #FFFFFF;
@@ -28,12 +28,16 @@
 
     body {
       font-family: 'Poppins', sans-serif;
+      /* 🔥 修改 1: 统一背景风格 (和其他页面保持一致) */
       background-color: var(--bg-body);
+      background-image: url('data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%234f46e5" fill-opacity="0.03"%3E%3Cpath d="M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E'), linear-gradient(to bottom right, #f3f4f6, #e5e7eb);
+
       color: var(--text-dark);
-      height: 100dvh; /* 充满屏幕 */
+      /* 取消 100dvh 固定高度，改为 min-height，允许 HeaderBar 正常推流 */
+      min-height: 100vh;
       display: flex;
       flex-direction: column;
-      overflow: hidden;
+      overflow: hidden; /* 防止双重滚动条 */
     }
 
     .main-container {
@@ -42,18 +46,22 @@
       flex-direction: column;
       max-width: 1000px;
       width: 100%;
-      margin: 0 auto;
       background: var(--card-bg);
       position: relative;
-      box-shadow: 0 0 20px rgba(0,0,0,0.05);
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+
+      /* 🔥 修改 2: 容器间距调整为 40px (参照你的要求) */
+      margin: 40px auto;
+
+      /* 重新计算高度：100vh - 顶部间距(40) - 底部间距(40) - HeaderBar预留(约60px) */
+      /* 这样可以保证聊天窗口在卡片内滚动，而不会让整个页面滚动 */
+      height: calc(100vh - 140px);
     }
 
     @media (min-width: 768px) {
       .main-container {
-        margin: 20px auto;
         border-radius: 20px;
-        height: calc(100dvh - 40px);
-        border: 1px solid #E5E7EB;
+        border: 1px solid rgba(255,255,255,0.6);
         overflow: hidden;
       }
     }
@@ -221,6 +229,13 @@
   </style>
 </head>
 <body>
+
+<script src="../../Public_Assets/js/headerbar.js"></script>
+<script>
+  if (typeof TreasureGoHeaderbar !== 'undefined') {
+    TreasureGoHeaderbar.mount({ basePath: '../../' });
+  }
+</script>
 
 <div class="main-container">
 

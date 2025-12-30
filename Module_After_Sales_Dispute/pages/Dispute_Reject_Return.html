@@ -29,12 +29,12 @@
     body {
       font-family: 'Plus Jakarta Sans', sans-serif;
       background: var(--bg);
-      background-image: url('data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%234f46e5" fill-opacity="0.03"%3E%3Cpath d="M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E'), linear-gradient(to bottom right, #f3f4f6, #e5e7eb);
+      background-image: url('data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%234f46e5" fill-opacity="0.03"%3E%3Cpath d="M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E'), linear-gradient(to bottom right, #f3f4f6, #e5e7eb);
       color: var(--text-dark);
       min-height: 100vh;
-      padding: 40px 0;
+      padding-bottom: 40px;
     }
-    .container { max-width: 850px; margin: 0 auto; padding: 0 18px; }
+    .container { max-width: 850px; margin: 0 auto; padding: 0 18px; margin-top: 40px; /* 稍微增加顶部间距以适应 header */ }
     .card {
       background: var(--card);
       border: 1px solid rgba(255,255,255,0.6);
@@ -91,6 +91,13 @@
 </head>
 
 <body>
+
+<script src="../../Public_Assets/js/headerbar.js"></script>
+<script>
+  if (typeof TreasureGoHeaderbar !== 'undefined') {
+    TreasureGoHeaderbar.mount({ basePath: '../../' });
+  }
+</script>
 <div class="container">
   <div class="card">
     <div class="topbar">
