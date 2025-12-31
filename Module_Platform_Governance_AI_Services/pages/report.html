@@ -109,6 +109,31 @@
     .reply-time { font-size: 0.75rem; color: #6B7280; font-weight: 500; }
     .reply-content p { font-size: 0.9rem; color: #4B5563; line-height: 1.4; }
 
+    /* 🔥 新增：证据图片区域样式 🔥 */
+    .evidence-gallery {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+      margin-bottom: 15px;
+      flex-wrap: wrap;
+    }
+
+    .evidence-img {
+      width: 70px;
+      height: 70px;
+      object-fit: cover; /* 保证图片不变形，裁剪中间部分 */
+      border-radius: 8px;
+      border: 1px solid #E5E7EB;
+      cursor: pointer;
+      transition: transform 0.2s;
+      background-color: #f9fafb;
+    }
+
+    .evidence-img:hover {
+      transform: scale(1.05);
+      border-color: var(--primary);
+    }
+
     .empty-state { text-align: center; padding: 60px 0; color: #9CA3AF; }
     .empty-icon { font-size: 4rem; display: block; margin-bottom: 15px; opacity: 0.5; }
   </style>
@@ -189,9 +214,13 @@
     );
   }
 
-  // 3. 渲染列表 (核心修改：添加了时间显示逻辑)
+  // 3. 渲染列表 (🔥 已修改：包含图片显示逻辑)
   function renderList(data) {
     const container = document.getElementById('reportList');
+
+    // 🔴 路径配置：请确保这个路径能指向你存放图片的文件夹
+    // 假设你的 HTML 在 Module/pages/，而图片在根目录，可能需要 ../../
+    const basePath = '../../';
 
     if (!data || data.length === 0) {
       container.innerHTML = `
@@ -215,19 +244,16 @@
       else if(r.status === 'Cancelled') statusLabel = 'Cancelled';
       else statusLabel = 'Pending Review';
 
-      // 取消按钮仅在 Pending 时显示
       const cancelButton = r.status === 'Pending'
               ? `<button onclick="handleCancel(${r.id})" class="btn-pill-cancel">Cancel Report</button>`
               : '';
 
-      // 🔥 核心修改：处理管理员回复部分 🔥
+      // 管理员回复处理
       let adminReplyHtml = '';
       if (r.adminReply) {
         let timeHtml = '';
-        // 如果有处理时间，进行格式化显示
         if (r.updatedAt) {
           const dateObj = new Date(r.updatedAt);
-          // 格式化为: 2025/12/23 14:30
           const dateStr = dateObj.toLocaleDateString() + ' ' + dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
           timeHtml = `<span class="reply-time">${dateStr}</span>`;
         }
@@ -246,6 +272,23 @@
           `;
       }
 
+      // 🔥 新增：处理图片证据 🔥
+      let evidenceHtml = '';
+      if (r.evidence && Array.isArray(r.evidence) && r.evidence.length > 0 && r.evidence[0] !== "") {
+        const images = r.evidence.map(img => {
+          if(!img) return '';
+          // 拼接路径：../../ + 数据库中的路径
+          const fullPath = basePath + img.trim();
+          return `<a href="${fullPath}" target="_blank">
+                        <img src="${fullPath}" class="evidence-img" alt="Proof" onerror="this.style.display='none'">
+                      </a>`;
+        }).join('');
+
+        if(images) {
+          evidenceHtml = `<div class="evidence-gallery">${images}</div>`;
+        }
+      }
+
       return `
         <div class="report-card status-${statusClass}">
           <div class="status-indicator"></div>
@@ -259,6 +302,8 @@
             <h3>${r.targetName || 'Unknown Target'}</h3>
             <span class="reason-tag">${r.reason}</span>
             <p class="details-text">"${r.details}"</p>
+
+            ${evidenceHtml}
           </div>
 
           ${adminReplyHtml}
