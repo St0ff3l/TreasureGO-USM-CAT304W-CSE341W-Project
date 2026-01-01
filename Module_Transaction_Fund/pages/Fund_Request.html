@@ -87,7 +87,7 @@
             height: 40px;
             border-radius: 8px;
             object-fit: cover;
-            /* 呼吸发光动画 */
+            /* Breathing glow animation */
             animation: glowAnimation 3s infinite alternate;
         }
 
@@ -912,7 +912,7 @@
         return str.charAt(0).toUpperCase() + str.slice(1);
     }
 
-    // 直接显示数据库中的时间字符串，不做任何时区转换
+    // Display database time string directly without timezone conversion
     function formatDateTime(dateStr) {
         if (!dateStr) return '-';
         return dateStr;
