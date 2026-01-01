@@ -9,11 +9,10 @@
   <script src="../../Public_Assets/js/headerbar.js"></script>
 
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
   <style>
-    /* =================
-       Styles
-       ================= */
+    /* Base styles for the page layout and report list. */
     :root {
       --bg-color: #F3F6F9;
       --primary: #4F46E5;
@@ -37,12 +36,44 @@
       padding: 40px 20px;
     }
 
+    /*
+      Header container
+      - Uses Flexbox to keep the title on the left and the navigation link on the right
+      - Wraps to a new row when space is limited
+    */
     .header-section {
       margin-bottom: 30px;
-      text-align: left;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      gap: 20px;
     }
-    .header-section h1 { font-size: 1.8rem; color: #111827; margin-bottom: 5px; }
-    .header-section p { color: #6B7280; font-size: 0.9rem; }
+
+    .header-title h1 { font-size: 1.8rem; color: #111827; margin-bottom: 5px; }
+    .header-title p { color: #6B7280; font-size: 0.9rem; }
+
+    /* Link-style button that routes to the violations page. */
+    .btn-switch-violation {
+      padding: 10px 20px;
+      background: #FEF2F2;
+      border: 1px solid #FECACA;
+      border-radius: 99px;
+      color: #991B1B;
+      font-weight: 600;
+      font-size: 0.9rem;
+      text-decoration: none;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+    .btn-switch-violation:hover {
+      background: #FEE2E2;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 10px rgba(239, 68, 68, 0.2);
+    }
 
     .report-list { display: flex; flex-direction: column; gap: 20px; }
 
@@ -58,7 +89,7 @@
     }
     .report-card:hover { transform: translateY(-3px); box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.08); }
 
-    /* Cancel button */
+    /* Cancel button style for reports that are still pending. */
     .btn-pill-cancel {
       padding: 6px 14px;
       border-radius: 99px;
@@ -79,7 +110,7 @@
       box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.3);
     }
 
-    /* Status colors */
+    /* Status theme colors applied via the status-* card class. */
     .status-Cancelled .status-indicator { background: #9CA3AF; }
     .status-Cancelled .status-badge { background: #F3F4F6; color: #6B7280; }
     .status-Pending .status-indicator { background: #F59E0B; }
@@ -102,7 +133,7 @@
     .status-Resolved .status-badge { background: #D1FAE5; color: #065F46; }
     .status-Dismissed .status-badge { background: #F3F4F6; color: #374151; }
 
-    /* Admin reply container */
+    /* Admin reply panel shown when the report has a reply from staff. */
     .admin-reply-box { margin-top: 15px; background: #F8FAFC; border-radius: 12px; padding: 14px; border: 1px dashed #CBD5E1; display: flex; gap: 10px; }
     .admin-avatar { font-size: 1.5rem; }
     .reply-content { flex: 1; }
@@ -111,7 +142,7 @@
     .reply-time { font-size: 0.75rem; color: #6B7280; font-weight: 500; }
     .reply-content p { font-size: 0.9rem; color: #4B5563; line-height: 1.4; }
 
-    /* Evidence image gallery */
+    /* Evidence thumbnail grid (click opens the full image in a new tab). */
     .evidence-gallery {
       display: flex;
       gap: 10px;
@@ -123,7 +154,7 @@
     .evidence-img {
       width: 70px;
       height: 70px;
-      object-fit: cover; /* Keep aspect ratio by cropping center */
+      object-fit: cover;
       border-radius: 8px;
       border: 1px solid #E5E7EB;
       cursor: pointer;
@@ -147,9 +178,17 @@
 </script>
 
 <div class="page-wrapper">
+
   <div class="header-section">
-    <h1>My Reports</h1>
-    <p>Track the status of your submitted reports.</p>
+    <div class="header-title">
+      <h1>My Reports</h1>
+      <p>Track the status of your submitted reports.</p>
+    </div>
+
+    <a href="report_my_violations.html" class="btn-switch-violation">
+      <i class="fa-solid fa-triangle-exclamation"></i>
+      View My Violations
+    </a>
   </div>
 
   <div id="reportList" class="report-list">
@@ -161,11 +200,9 @@
 </div>
 
 <script>
-  /* =================
-     Page logic
-     ================= */
+  /* Page logic for loading, rendering, and cancelling reports. */
 
-  // Fetch the current user's report list.
+  // Fetch reports submitted by the current user.
   async function fetchReports() {
     const listContainer = document.getElementById('reportList');
     try {
@@ -182,7 +219,7 @@
     }
   }
 
-  // Cancel a report (allowed only while status is Pending).
+  // Submit a cancellation request for a report (only allowed while the report is Pending).
   function handleCancel(reportId) {
     if (typeof StatusDialog === 'undefined') {
       console.error('StatusDialog not loaded');
@@ -206,7 +243,7 @@
 
                 if (data.success) {
                   StatusDialog.success('Cancelled', 'Report has been cancelled.', 'Okay', () => {
-                    fetchReports(); // Refresh the list
+                    fetchReports();
                   });
                 } else {
                   StatusDialog.fail('Error', data.message);
@@ -218,7 +255,7 @@
     );
   }
 
-  // Render report cards into the list container.
+  // Render the report list as a set of cards.
   function renderList(data) {
     const container = document.getElementById('reportList');
 
@@ -238,7 +275,7 @@
     }
 
     container.innerHTML = data.map(r => {
-      // Map backend status to UI label and CSS class.
+      // Map backend status to a UI label and a CSS class.
       let statusLabel = 'Processing';
       let statusClass = r.status;
 
@@ -251,7 +288,7 @@
               ? `<button onclick="handleCancel(${r.id})" class="btn-pill-cancel">Cancel Report</button>`
               : '';
 
-      // Admin reply section (if provided).
+      // Admin reply section (rendered only when a reply exists).
       let adminReplyHtml = '';
       if (r.adminReply) {
         let timeHtml = '';
@@ -275,12 +312,12 @@
           `;
       }
 
-      // Evidence images (if provided).
+      // Evidence thumbnails (rendered only when evidence is provided).
       let evidenceHtml = '';
       if (r.evidence && Array.isArray(r.evidence) && r.evidence.length > 0 && r.evidence[0] !== "") {
         const images = r.evidence.map(img => {
           if(!img) return '';
-          // Build the image URL from the base path and the stored relative path.
+          // Build the image URL from the page base path and the stored relative path.
           const fullPath = basePath + img.trim();
           return `<a href="${fullPath}" target="_blank">
                     <img src="${fullPath}" class="evidence-img" alt="Proof" onerror="this.style.display='none'">
@@ -323,9 +360,10 @@
     }).join('');
   }
 
-  // Initial page load.
+  // Run once when the DOM is ready.
   document.addEventListener('DOMContentLoaded', fetchReports);
 </script>
 
 </body>
 </html>
+

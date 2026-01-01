@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TreasureGO - My Violations</title>
+
+  <script src="../../Public_Assets/js/status_dialog.js"></script>
+  <script src="../../Public_Assets/js/headerbar.js"></script>
+
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+  <style>
+    /* Base styles for the violations list page. */
+    :root {
+      --bg-color: #F3F6F9;
+      --text-dark: #1F2937;
+      --glass-bg: rgba(255, 255, 255, 0.95);
+      --danger: #EF4444;
+      --warning: #F59E0B;
+      --info: #3B82F6;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Poppins', 'Noto Sans SC', sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-dark);
+      min-height: 100vh;
+      /* Subtle radial gradients for the page background. */
+      background-image: radial-gradient(circle at 10% 20%, rgba(239, 68, 68, 0.05) 0%, transparent 40%),
+      radial-gradient(circle at 90% 80%, rgba(79, 70, 229, 0.05) 0%, transparent 40%);
+    }
+
+    .page-wrapper {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+
+    /* Header layout. */
+    .header-section {
+      margin-bottom: 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+    .header-title h1 { font-size: 1.8rem; color: #111827; display: flex; align-items: center; gap: 10px; }
+    .header-title p { color: #6B7280; font-size: 0.9rem; margin-top: 5px; }
+
+    /* Navigation button that routes back to the report list. */
+    .btn-switch {
+      padding: 10px 20px;
+      background: white;
+      border: 1px solid #E5E7EB;
+      border-radius: 99px;
+      color: #4B5563;
+      font-weight: 600;
+      font-size: 0.9rem;
+      text-decoration: none;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+    .btn-switch:hover {
+      background: #F9FAFB;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      color: var(--text-dark);
+    }
+
+    /* Container for the violation messages. */
+    .msg-list { display: flex; flex-direction: column; gap: 20px; }
+
+    /* Single message card. */
+    .msg-card {
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      border-radius: 16px;
+      padding: 0;
+      border: 1px solid rgba(255,255,255,0.8);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+      position: relative; overflow: hidden; display: flex;
+      transition: transform 0.2s;
+    }
+    .msg-card:hover { transform: translateY(-2px); box-shadow: 0 10px 20px -5px rgba(0,0,0,0.1); }
+
+    /* Left severity strip. */
+    .severity-strip { width: 6px; flex-shrink: 0; }
+    .type-violation .severity-strip { background-color: var(--danger); }
+    .type-warning .severity-strip { background-color: var(--warning); }
+    .type-info .severity-strip { background-color: var(--info); }
+
+    .msg-content { padding: 20px 24px; flex: 1; }
+
+    /* Card header area. */
+    .msg-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+    .msg-title { font-weight: 700; font-size: 1.1rem; color: #1F2937; display: flex; align-items: center; gap: 8px; }
+    .msg-date { font-size: 0.8rem; color: #9CA3AF; white-space: nowrap; margin-left: 10px; }
+
+    /* Context badge (Violation/Warning/Notice). */
+    .context-badge { font-size: 0.75rem; padding: 4px 10px; border-radius: 6px; font-weight: 600; text-transform: uppercase; }
+    .type-violation .context-badge { background: #FEE2E2; color: #991B1B; }
+    .type-warning .context-badge { background: #FEF3C7; color: #92400E; }
+    .type-info .context-badge { background: #EFF6FF; color: #1E40AF; }
+
+    /* Admin message panel. */
+    .admin-note-box {
+      background: #F9FAFB;
+      border: 1px dashed #D1D5DB;
+      border-radius: 12px;
+      padding: 16px;
+      margin-top: 15px;
+    }
+    .admin-note-label { font-size: 0.75rem; text-transform: uppercase; color: #6B7280; font-weight: 700; margin-bottom: 8px; display: block; }
+    .admin-note-text { color: #374151; font-size: 0.95rem; line-height: 1.6; }
+
+    /* Product snapshot shown when the violation is tied to a specific item. */
+    .affected-item {
+      display: flex; align-items: center; gap: 12px; margin-top: 15px;
+      padding: 10px; background: white; border-radius: 10px; border: 1px solid #E5E7EB;
+    }
+    .item-thumb { width: 40px; height: 40px; border-radius: 6px; object-fit: cover; background: #eee; }
+    .item-name { font-weight: 600; font-size: 0.9rem; color: #374151; }
+    .item-status { font-size: 0.75rem; color: #EF4444; }
+
+    /* Empty state layout. */
+    .empty-state { text-align: center; padding: 60px 0; color: #9CA3AF; }
+    .empty-icon { font-size: 3.5rem; display: block; margin-bottom: 15px; opacity: 0.5; }
+  </style>
+</head>
+<body>
+
+<script>
+  // Mount the global header bar (this page is two levels below the project root).
+  if(typeof TreasureGoHeaderbar !== 'undefined') TreasureGoHeaderbar.mount({ basePath: '../../' });
+</script>
+
+<div class="page-wrapper">
+  <div class="header-section">
+    <div class="header-title">
+      <h1><span style="color: #EF4444;">🛡️</span> My Violations</h1>
+      <p>Notifications regarding your account status and warnings.</p>
+    </div>
+
+    <a href="report.html" class="btn-switch">
+      <i class="fa-solid fa-paper-plane"></i>
+      View Submitted Reports
+    </a>
+  </div>
+
+  <div id="msgList" class="msg-list">
+    <div class="empty-state">Loading messages...</div>
+  </div>
+</div>
+
+<script>
+  // Load messages after the DOM is ready.
+  document.addEventListener('DOMContentLoaded', fetchMessages);
+
+  async function fetchMessages() {
+    const listContainer = document.getElementById('msgList');
+
+    try {
+      // Fetch violation notifications for the current user.
+      // This page is under /pages/ and the PHP API is under /api/.
+      const res = await fetch('../api/report_user_get_violations.php');
+      const json = await res.json();
+
+      // Handle API failures.
+      if (!json.success) {
+        // Redirect to login when the session is missing or expired.
+        if (json.message && json.message.includes('Unauthorized')) {
+          window.location.href = '../../login.html';
+          return;
+        }
+        // Display backend errors to the user.
+        listContainer.innerHTML = `
+            <div class="empty-state">
+                <p style="color:var(--danger)">Error: ${json.message}</p>
+            </div>`;
+        return;
+      }
+
+      const data = json.data;
+
+      // Empty state when there are no violations.
+      if (!data || data.length === 0) {
+        listContainer.innerHTML = `
+          <div class="empty-state">
+            <span class="empty-icon">✅</span>
+            <p>You have no violations.</p>
+            <p style="font-size:0.85rem; color:#D1D5DB; margin-top:5px;">Thank you for following community guidelines.</p>
+          </div>`;
+        return;
+      }
+
+      // Render the list of messages.
+      listContainer.innerHTML = data.map(msg => {
+        // Select an icon and badge label based on severity.
+        let icon = '', badgeText = '';
+        if(msg.type === 'violation') {
+          icon = '<i class="fa-solid fa-ban" style="color:#EF4444;"></i>';
+          badgeText = 'Violation';
+        } else if (msg.type === 'warning') {
+          icon = '<i class="fa-solid fa-triangle-exclamation" style="color:#F59E0B;"></i>';
+          badgeText = 'Warning';
+        } else {
+          icon = '<i class="fa-solid fa-circle-info" style="color:#3B82F6;"></i>';
+          badgeText = 'Notice';
+        }
+
+        // Build the product section only when product information is provided.
+        let productHtml = '';
+        if(msg.affectedProduct) {
+          // Use a generic placeholder if the image fails to load.
+          productHtml = `
+            <div class="affected-item">
+               <img src="${msg.affectedProduct.image}"
+                    class="item-thumb"
+                    alt="Item"
+                    onerror="this.onerror=null; this.src='https://placehold.co/100?text=No+Img'">
+               <div class="item-info">
+                 <span class="item-name">${msg.affectedProduct.name}</span>
+                 <span class="item-status">${msg.affectedProduct.status}</span>
+               </div>
+            </div>`;
+        }
+
+        return `
+          <div class="msg-card type-${msg.type}">
+            <div class="severity-strip"></div>
+            <div class="msg-content">
+              <div class="msg-header">
+                <div class="msg-title">${icon} <span>${msg.title}</span> <span class="context-badge">${badgeText}</span></div>
+                <span class="msg-date">${msg.date}</span>
+              </div>
+              <div class="admin-note-box">
+                 <span class="admin-note-label">Message from Admin</span>
+                 <p class="admin-note-text">"${msg.adminMessage || 'No details provided.'}"</p>
+              </div>
+              ${productHtml}
+            </div>
+          </div>`;
+      }).join('');
+
+    } catch (error) {
+      console.error('Fetch error:', error);
+      listContainer.innerHTML = `
+        <div class="empty-state">
+            <p>Failed to load data. Please try again later.</p>
+        </div>`;
+    }
+  }
+</script>
+
+</body>
+</html>

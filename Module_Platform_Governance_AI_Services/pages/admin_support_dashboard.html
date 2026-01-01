@@ -348,6 +348,7 @@
   // API endpoints used by this page.
   const SUPPORT_QUEUE_API = '../api/admin_get_support_queue.php';
   const ADMIN_CHAT_API = '../api/admin_chat_api.php';
+  // This endpoint goes up two levels because the page is under Module_Platform_Governance_AI_Services/pages/.
   const SESSION_STATUS_API = '../../Module_User_Account_Management/api/session_status.php';
 
   // Page state.
@@ -355,6 +356,20 @@
   let currentProductId = null;
   let pollingInterval = null;
   let myId = null;
+
+  // Helper: normalize asset URLs returned by the backend or stored in the database.
+  // Converts "Public_Assets/..." into "../../Public_Assets/..." for this page's location.
+  function resolveAssetPath(path) {
+    if (!path) return '';
+    if (path.startsWith('http') || path.startsWith('blob:') || path.startsWith('data:')) {
+      return path;
+    }
+    // If it is not already a parent-relative path and not root-relative, prefix it for this page.
+    if (!path.startsWith('../') && !path.startsWith('/')) {
+      return '../../' + path;
+    }
+    return path;
+  }
 
   // Show the permission/authorization guard screen.
   function showGuard(title, sub) {
@@ -419,15 +434,18 @@
       (json.data || []).forEach(contact => {
         const isActive = (currentContactId == contact.User_ID && currentProductId == contact.Product_ID);
 
-        const avatar = contact.User_Avatar_Url;
+        // Fix avatar paths for the current page.
+        const avatar = resolveAssetPath(contact.User_Avatar_Url);
+
         const avatarHtml = avatar
-          ? `<img src="${avatar}" class="contact-avatar" alt="User avatar">`
-          : `<div class="contact-avatar">${String(contact.User_Username || '').charAt(0).toUpperCase()}</div>`;
+                ? `<img src="${avatar}" class="contact-avatar" alt="User avatar">`
+                : `<div class="contact-avatar">${String(contact.User_Username || '').charAt(0).toUpperCase()}</div>`;
 
         const time = contact.Created_At ? new Date(contact.Created_At).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '';
         const msgPreview = contact.Message_Type === 'image' ? '[Image]' : (contact.Message_Content || '');
         const safeUsername = String(contact.User_Username || '').replace(/'/g, "\\'");
 
+        // Use the normalized avatar path in the click handler.
         html += `
           <div class="contact-item ${isActive ? 'active' : ''}"
                onclick="selectContact(this, ${contact.User_ID}, '${safeUsername}', '${avatar || ''}', null)">
@@ -462,6 +480,7 @@
     document.getElementById('emptyState').style.display = 'none';
     document.getElementById('chatContent').style.display = 'flex';
 
+    // Navigate to the public profile using a path relative to this page.
     const profileUrl = `../../Module_User_Account_Management/views/public_profile.html?user_id=${userId}`;
 
     const nameEl = document.getElementById('chatHeaderName');
@@ -473,7 +492,8 @@
     };
 
     const headerAvatar = document.getElementById('chatHeaderAvatar');
-    if (avatar && avatar !== 'undefined') {
+    if (avatar && avatar !== 'undefined' && avatar !== 'null') {
+      // The avatar is already normalized by resolveAssetPath().
       headerAvatar.src = avatar;
       headerAvatar.style.display = 'block';
       headerAvatar.style.cursor = 'pointer';
@@ -532,9 +552,14 @@
         const isMe = msg.Sender_ID == myId;
         const avatar = document.getElementById('chatHeaderAvatar').src;
 
-        const contentHtml = msg.Message_Type === 'image'
-          ? `<img src="${msg.Message_Content}" alt="Image message" style="max-width:200px; border-radius:10px; cursor:pointer;" onclick="window.open(this.src)">`
-          : (msg.Message_Content || '');
+        // When a message is an image, resolve the asset path before rendering.
+        let contentHtml = '';
+        if (msg.Message_Type === 'image') {
+          const imgPath = resolveAssetPath(msg.Message_Content);
+          contentHtml = `<img src="${imgPath}" alt="Image message" style="max-width:200px; border-radius:10px; cursor:pointer;" onclick="window.open(this.src)">`;
+        } else {
+          contentHtml = (msg.Message_Content || '');
+        }
 
         const avatarHtml = (!isMe && avatar) ? `<img src="${avatar}" class="msg-avatar-small" alt="User avatar">` : '';
 
