@@ -25,6 +25,11 @@ set_error_handler(function($errno, $errstr, $errfile, $errline) {
     throw new ErrorException($errstr, 0, $errno, $errfile, $errline);
 });
 
+// Start Session if not started
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 // Get request method and action
 $method = $_SERVER['REQUEST_METHOD'];
 $request_uri = $_SERVER['REQUEST_URI'];
@@ -57,6 +62,10 @@ try {
     switch ($action) {
         case 'create_fund_request':
             createFundRequest($conn, $request);
+            break;
+
+        case 'check_pin_status':
+            checkPinStatus($conn, $request);
             break;
 
         case 'get_fund_requests':
@@ -98,7 +107,37 @@ try {
 // ==================== FUND REQUEST FUNCTIONS ====================
 
 /**
- * Create a new fund request
+ * Check if user has set a PIN (For Frontend Validation)
+ */
+function checkPinStatus($conn, $request) {
+    try {
+        $userId = $request['user_id'] ?? $_GET['user_id'] ?? null;
+        if (!$userId && isset($_SESSION['user_id'])) {
+            $userId = $_SESSION['user_id'];
+        }
+
+        if (!$userId) {
+            sendResponse(false, 'User not logged in', null, 401);
+        }
+
+        $stmt = $conn->prepare("SELECT User_Payment_PIN_Hash FROM User WHERE User_ID = ?");
+        $stmt->execute([$userId]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        $hasPin = false;
+        if ($user && !empty($user['User_Payment_PIN_Hash'])) {
+            $hasPin = true;
+        }
+
+        sendResponse(true, 'PIN status retrieved', ['has_pin' => $hasPin]);
+
+    } catch (Exception $e) {
+        sendResponse(false, 'Database error: ' . $e->getMessage(), null, 500);
+    }
+}
+
+/**
+ * Create a new fund request (Conditional PIN Validation)
  */
 function createFundRequest($conn, $request) {
     try {
@@ -107,6 +146,7 @@ function createFundRequest($conn, $request) {
         $amount = $request['amount'] ?? null;
         $proofImage = $request['proof_image'] ?? '';
         $adminRemark = $request['admin_remark'] ?? '';
+        $pinCode = $request['payment_pin'] ?? '';
 
         // Validation
         if (!$userId || !$type || !$amount) {
@@ -122,53 +162,66 @@ function createFundRequest($conn, $request) {
             sendResponse(false, 'Invalid type. Must be: deposit or withdrawal', null, 400);
         }
 
-        // Convert Base64 image data to file and store only the file path
-        if ($proofImage && strpos($proofImage, 'data:image') === 0) {
-            // Define upload directory in Public_Assets/proofs/
-            $uploadDir = __DIR__ . '/../../Public_Assets/proofs/';
-
-            // Create directory if it doesn't exist
-            if (!is_dir($uploadDir)) {
-                mkdir($uploadDir, 0777, true);
-            }
-
-            // Parse Base64 data
-            $parts = explode(';', $proofImage);
-            $typeInfo = $parts[0];
-
-            if (isset($parts[1])) {
-                $dataPart = explode(',', $parts[1]);
-                if (isset($dataPart[1])) {
-                    $data = base64_decode($dataPart[1]);
-
-                    // Determine file extension based on image type
-                    $extension = 'jpg'; // default
-                    if (strpos($typeInfo, 'png') !== false) $extension = 'png';
-                    if (strpos($typeInfo, 'jpeg') !== false) $extension = 'jpeg';
-                    if (strpos($typeInfo, 'gif') !== false) $extension = 'gif';
-
-                    // Generate unique filename
-                    $filename = 'proof_' . time() . '_' . rand(1000, 9999) . '.' . $extension;
-                    $fileRequestPath = $uploadDir . $filename;
-
-                    // Save file to server and store relative path in database
-                    if (file_put_contents($fileRequestPath, $data)) {
-                        $proofImage = '../../Public_Assets/proofs/' . $filename;
-                    } else {
-                        $proofImage = '';
-                    }
-                }
-            }
-        }
-
-        // Check balance for withdrawal
+        // =============================================================
+        // 🔒 STEP A: 仅在“提现 (Withdrawal)”时验证 PIN 码和余额
+        // =============================================================
         if ($type === 'withdrawal') {
+
+            // 1. 检查 PIN 码是否为空
+            if (empty($pinCode)) {
+                sendResponse(false, 'Payment PIN is required for withdrawal', null, 400);
+            }
+
+            // 2. 查询用户安全信息
+            $stmtUser = $conn->prepare("
+                SELECT User_Payment_PIN_Hash, User_PIN_Retry_Count, User_PIN_Locked_Until 
+                FROM User 
+                WHERE User_ID = :uid
+            ");
+            $stmtUser->execute([':uid' => $userId]);
+            $userInfo = $stmtUser->fetch(PDO::FETCH_ASSOC);
+
+            if (!$userInfo) {
+                sendResponse(false, 'User not found', null, 404);
+            }
+
+            // 3. 检查锁定状态
+            if ($userInfo['User_PIN_Locked_Until'] && strtotime($userInfo['User_PIN_Locked_Until']) > time()) {
+                $waitMinutes = ceil((strtotime($userInfo['User_PIN_Locked_Until']) - time()) / 60);
+                sendResponse(false, "Wallet locked. Try again in $waitMinutes minutes.", null, 403);
+            }
+
+            // 4. 验证 PIN 码
+            if (!password_verify($pinCode, $userInfo['User_Payment_PIN_Hash'])) {
+                $newRetry = $userInfo['User_PIN_Retry_Count'] + 1;
+                $lockUntil = null;
+                $msg = "Incorrect PIN. Attempts remaining: " . (5 - $newRetry);
+
+                if ($newRetry >= 5) {
+                    $lockUntil = date('Y-m-d H:i:s', strtotime('+15 minutes'));
+                    $newRetry = 0;
+                    $msg = "Too many failed attempts. Wallet locked for 15 minutes.";
+                }
+
+                $conn->prepare("UPDATE User SET User_PIN_Retry_Count = :retry, User_PIN_Locked_Until = :lock WHERE User_ID = :uid")
+                    ->execute([':retry' => $newRetry, ':lock' => $lockUntil, ':uid' => $userId]);
+
+                sendResponse(false, $msg, null, 401);
+            }
+
+            // 5. PIN 正确：重置计数
+            if ($userInfo['User_PIN_Retry_Count'] > 0) {
+                $conn->prepare("UPDATE User SET User_PIN_Retry_Count = 0 WHERE User_ID = :uid")
+                    ->execute([':uid' => $userId]);
+            }
+
+            // 6. 检查余额
             $currentBalance = getUserBalanceInternal($conn, $userId);
             if ($amount > $currentBalance) {
-                sendResponse(false, 'Insufficient wallet balance. You have $' . number_format($currentBalance, 2) . ' but requested $' . number_format($amount, 2), null, 400);
+                sendResponse(false, 'Insufficient wallet balance. You have RM' . number_format($currentBalance, 2) . ' but requested RM' . number_format($amount, 2), null, 400);
             }
 
-            // Check membership tier for fee waiver
+            // 7. 计算手续费
             $tier = getUserMembershipTier($conn, $userId);
             $isSvip = (strtoupper($tier) === 'SVIP');
 
@@ -181,10 +234,44 @@ function createFundRequest($conn, $request) {
             }
 
             $netAmount = $amount - $fee;
-
-            // Append fee info to admin remark
-            $feeNote = sprintf("\n[System] Fee (%s): $%.2f | Net Pay: $%.2f", $feeRate, $fee, $netAmount);
+            $feeNote = sprintf("\n[System] Fee (%s): RM%.2f | Net Pay: RM%.2f", $feeRate, $fee, $netAmount);
             $adminRemark .= $feeNote;
+        }
+        // =============================================================
+        // END 提现专属检查 (充值直接跳过这里)
+        // =============================================================
+
+        // =====================================================
+        // 🔥 图片处理：将 Base64 转换为图片文件
+        // =====================================================
+        if ($proofImage && strpos($proofImage, 'data:image') === 0) {
+            $uploadDir = __DIR__ . '/../../Public_Assets/proofs/';
+            if (!is_dir($uploadDir)) {
+                mkdir($uploadDir, 0777, true);
+            }
+
+            $parts = explode(';', $proofImage);
+            $typeInfo = $parts[0];
+
+            if (isset($parts[1])) {
+                $dataPart = explode(',', $parts[1]);
+                if (isset($dataPart[1])) {
+                    $data = base64_decode($dataPart[1]);
+                    $extension = 'jpg';
+                    if (strpos($typeInfo, 'png') !== false) $extension = 'png';
+                    if (strpos($typeInfo, 'jpeg') !== false) $extension = 'jpeg';
+                    if (strpos($typeInfo, 'gif') !== false) $extension = 'gif';
+
+                    $filename = 'proof_' . time() . '_' . rand(1000, 9999) . '.' . $extension;
+                    $fileRequestPath = $uploadDir . $filename;
+
+                    if (file_put_contents($fileRequestPath, $data)) {
+                        $proofImage = '../../Public_Assets/proofs/' . $filename;
+                    } else {
+                        $proofImage = '';
+                    }
+                }
+            }
         }
 
         // Insert fund request
@@ -382,7 +469,7 @@ function createWalletLog($conn, $data) {
     $newBalance = $currentBalance + $changeAmount;
 
     // Description
-    $description = ucfirst($type) . ' of $' . abs($amount);
+    $description = ucfirst($type) . ' of RM' . abs($amount);
 
     // Insert log
     $sql = "INSERT INTO Wallet_Logs (User_ID, Amount, Balance_After, Description, Reference_Type, Reference_ID, Created_AT)

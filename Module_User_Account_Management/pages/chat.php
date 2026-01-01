@@ -519,10 +519,9 @@ require_login();
     // 加载目标用户信息（当不在现有对话列表中时）
     async function loadTargetUser(userId, productId, container) {
         try {
-            console.log("Fetching user info for:", userId); // Debug
+            console.log("Fetching user info for:", userId);
             const res = await fetch(`../api/get_user_public_info.php?user_id=${userId}`);
             const json = await res.json();
-            console.log("User info response:", json); // Debug
 
             let productImageUrl = null;
             if (productId) {
@@ -540,27 +539,34 @@ require_login();
 
             if (json.status === 'success') {
                 const user = json.data;
+
                 // 构造一个伪 contact 对象
                 const contact = {
                     User_ID: user.User_ID,
                     User_Username: user.User_Username,
-                    User_Avatar_Url: user.User_Avatar_Url,
+                    // ✅ 修正：使用数据库正确的字段名 User_Profile_Image
+                    User_Profile_Image: user.User_Profile_Image,
                     Product_ID: productId,
                     Product_Image_Url: productImageUrl,
-                    Message_Content: '', // 空消息
+                    Message_Content: '',
                     Created_At: null,
                     Is_Read: 1,
                     Sender_ID: 0
                 };
-                
-                // 移除 "No conversations yet" 提示（如果存在）
+
                 if (container.innerHTML.includes('No conversations yet')) {
                     container.innerHTML = '';
                 }
 
                 renderContactItem(contact, container);
-                // 自动打开
-                const avatar = contact.Product_Image_Url || contact.User_Avatar_Url;
+
+                // ✅ 修正：获取头像逻辑
+                let avatar = contact.Product_Image_Url || contact.User_Profile_Image;
+                // 简单的路径修复：如果头像存在且不是http开头也不是相对路径，加上 ../../
+                if (avatar && !avatar.startsWith('http') && !avatar.startsWith('../')) {
+                    avatar = '../../' + avatar;
+                }
+
                 openChat(contact.User_ID, contact.User_Username, avatar, contact.Product_ID);
             } else {
                 console.error("Failed to load user info:", json.message);
@@ -568,35 +574,64 @@ require_login();
             }
         } catch (err) {
             console.error("Failed to load target user info", err);
-            alert("Error loading user info: " + err.message); // 添加用户可见的报错
+            alert("Error loading user info: " + err.message);
         }
     }
 
     // 渲染单个联系人项
     function renderContactItem(contact, container) {
         const div = document.createElement('div');
-        // 只有当 UserID 和 ProductID 都匹配时才激活
         const isActive = currentContactId == contact.User_ID && currentProductId == contact.Product_ID;
         div.className = `contact-item ${isActive ? 'active' : ''}`;
-        div.dataset.userId = contact.User_ID; // 方便查找
-        div.dataset.productId = contact.Product_ID || ''; // 新增
-        
-        div.onclick = () => {
-            const avatar = contact.Product_Image_Url || contact.User_Avatar_Url;
-            openChat(contact.User_ID, contact.User_Username, avatar, contact.Product_ID);
+        div.dataset.userId = contact.User_ID;
+        div.dataset.productId = contact.Product_ID || '';
+
+        // ===============================================
+        // 🛠️ 核心逻辑：左侧列表优先显示“商品图”，但传给聊天头部的是“用户头像”
+        // ===============================================
+
+        // 1. 定义两个头像路径
+        //    A. 列表显示的 (List Image): 优先商品图 -> 没有才显示用户图
+        let listImg = contact.Product_Image_Url || contact.User_Profile_Image;
+
+        //    B. 聊天头部显示的 (Header Image): 始终显示用户头像
+        let headerImg = contact.User_Profile_Image;
+
+        // 2. 路径修复辅助函数 (统一加 ../../)
+        const fixPath = (p) => {
+            if (p) {
+                if (!p.startsWith('http') && !p.startsWith('/') && !p.startsWith('../')) {
+                    return '../../' + p;
+                }
+                // 如果是 assets/ 开头，可能需要补全 Public_Assets
+                if (p.startsWith('assets/')) {
+                    return '../../Public_Assets/' + p;
+                }
+            }
+            return p;
         };
-        
-        // 头像处理：优先显示商品图片
-        let avatarUrl = contact.Product_Image_Url || contact.User_Avatar_Url;
+
+        // 修复路径
+        listImg = fixPath(listImg);
+        headerImg = fixPath(headerImg);
+        // ===============================================
+
+        // 3. 点击事件：把 headerImg (用户头像) 传给 openChat
+        div.onclick = () => {
+            openChat(contact.User_ID, contact.User_Username, headerImg, contact.Product_ID);
+        };
+
+        // 4. 列表渲染：使用 listImg (商品图)
         let avatarHtml = '';
-        if (avatarUrl) {
-            avatarHtml = `<img src="${avatarUrl}" class="contact-avatar">`;
+        if (listImg) {
+            avatarHtml = `<img src="${listImg}" class="contact-avatar" onerror="this.onerror=null;this.parentNode.innerHTML='<div class=\'contact-avatar\'>${(contact.User_Username || '?').charAt(0).toUpperCase()}</div>'">`;
         } else {
-            avatarHtml = `<div class="contact-avatar">${contact.User_Username.charAt(0).toUpperCase()}</div>`;
+            avatarHtml = `<div class="contact-avatar">${(contact.User_Username || '?').charAt(0).toUpperCase()}</div>`;
         }
 
-        // 未读红点
-        const unreadHtml = contact.Is_Read == 0 && contact.Sender_ID != <?php echo $_SESSION['user_id']; ?> 
+        // 未读消息红点
+        const myId = <?php echo isset($_SESSION['user_id']) ? $_SESSION['user_id'] : 'null'; ?>;
+        const unreadHtml = contact.Is_Read == 0 && contact.Sender_ID != myId
             ? `<span class="unread-badge">NEW</span>` : '';
 
         div.innerHTML = `
@@ -612,14 +647,14 @@ require_login();
                 </div>
             </div>
         `;
-        // 如果是新对话，插入到最前面
+
+        // 插入到列表
         if (!contact.Created_At) {
-             container.insertBefore(div, container.firstChild);
+            container.insertBefore(div, container.firstChild);
         } else {
-             container.appendChild(div);
+            container.appendChild(div);
         }
     }
-
 
 
     // 移除商品上下文

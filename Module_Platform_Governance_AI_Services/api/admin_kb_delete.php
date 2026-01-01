@@ -1,43 +1,47 @@
 <?php
-// ============================================
-// File: api/admin_kb_delete.php
-// Description: Delete a specific knowledge base entry
-// ============================================
+// Deletes a KnowledgeBase entry by ID.
+//
+// Request:
+// - Method: POST (JSON)
+// - Body: { "id": <KB_ID> }
+//
+// Response:
+// - { "success": true } on success
+// - { "success": false, "error": "..." } on failure
 
 session_start();
 require_once __DIR__ . '/config/treasurego_db_config.php';
 
-// Set JSON header
+// CORS + JSON response headers.
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
 header("Content-Type: application/json; charset=UTF-8");
 
-// Handle preflight request
+// CORS preflight.
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit(0);
 }
 
-// 1. Auth Check
+// Session-based authentication guard.
 if (!isset($_SESSION['user_id'])) {
     echo json_encode(['success' => false, 'error' => 'Authentication Required']);
     exit;
 }
 
-// 2. Get Input Data
+// Parse JSON request body.
 $input = json_decode(file_get_contents('php://input'), true);
 
-// 3. Validation: Delete only needs an ID
+// Deletion requires a KnowledgeBase primary key.
 if (empty($input['id'])) {
     echo json_encode(['success' => false, 'error' => 'ID is missing']);
     exit;
 }
 
 try {
-    // 4. Connect DB
+    // Use the DB connection provided by the module config.
     if (!isset($conn) && isset($pdo)) { $conn = $pdo; }
 
-    // 5. Execute Delete
     $sql = "DELETE FROM KnowledgeBase WHERE KB_ID = ?";
     $stmt = $conn->prepare($sql);
     $success = $stmt->execute([$input['id']]);

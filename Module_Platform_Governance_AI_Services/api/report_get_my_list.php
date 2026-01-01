@@ -1,23 +1,18 @@
 <?php
-// 文件名: report_get_my_list.php
-// 路径: Module_Platform_Governance_AI_Services/api/
+// report_get_my_list.php
+// Module_Platform_Governance_AI_Services/api/
 
-// 1. 禁止错误直接打印破坏 JSON
 ini_set('display_errors', 0);
 error_reporting(E_ALL);
 header('Content-Type: application/json');
 
-// 开启缓冲区
 ob_start();
-
-// 2. Session 设置
 session_set_cookie_params(0, '/');
 session_start();
 
 try {
-    // 3. 引入数据库配置
+    // Load the database configuration (local module path first, then fallback).
     $config_path = __DIR__ . '/config/treasurego_db_config.php';
-
     if (file_exists($config_path)) {
         require_once $config_path;
     } else {
@@ -29,35 +24,40 @@ try {
         }
     }
 
+    // Ensure a valid database connection.
     if (!isset($conn) || !$conn) {
         throw new Exception("Database connection failed.");
     }
 
-    // 4. 权限检查
+    // Require a logged-in user.
     if (!isset($_SESSION['user_id'])) {
         throw new Exception("Unauthorized: Please log in.");
     }
 
     $current_user_id = $_SESSION['user_id'];
 
-    // 5. SQL 查询 (🔥 关键修改：读取 Report_Reply_To_Reporter)
-    // 注意：不再读取不存在的 Report_Admin_Reply，改为读取专门给举报人的回复
+    // Query reports created by the current user.
+    // Evidence images are aggregated into a comma-separated list and expanded into an array in PHP.
     $sql = "SELECT 
                 r.Report_ID,
                 r.Report_Reason,
                 r.Report_Description,
                 r.Report_Status,
                 r.Report_Creation_Date,
-                r.Report_Reply_To_Reporter,  /* ✅ 修改：读取 '给举报人的回复' */
-                r.Report_Updated_At,         /* ✅ 读取处理时间 */
+                r.Report_Reply_To_Reporter,
+                r.Report_Updated_At,
                 r.Reported_Item_ID,
                 r.Reported_User_ID,
                 u.User_Username AS Reported_Username,
-                p.Product_Title AS Reported_Product_Name
+                p.Product_Title AS Reported_Product_Name,
+                /* Evidence image paths (comma-separated) */
+                GROUP_CONCAT(re.File_Path SEPARATOR ',') AS Evidence_Paths
             FROM Report r
             LEFT JOIN User u ON r.Reported_User_ID = u.User_ID
             LEFT JOIN Product p ON r.Reported_Item_ID = p.Product_ID
+            LEFT JOIN Report_Evidence re ON r.Report_ID = re.Report_ID /* Evidence join */
             WHERE r.Reporting_User_ID = :user_id
+            GROUP BY r.Report_ID  /* Group by report to support evidence aggregation */
             ORDER BY r.Report_Creation_Date DESC";
 
     $stmt = $conn->prepare($sql);
@@ -68,6 +68,7 @@ try {
     $reports = [];
 
     foreach ($rows as $row) {
+        // Infer the report target type (user vs product) based on whether a product ID is present.
         $type = 'user';
         $targetName = $row['Reported_Username'] ?? ('User #' . $row['Reported_User_ID']);
 
@@ -76,7 +77,12 @@ try {
             $targetName = $row['Reported_Product_Name'] ?? ('Product #' . $row['Reported_Item_ID']);
         }
 
-        // 6. 数组构造
+        // Convert a comma-separated evidence path list into an array.
+        $evidenceImages = [];
+        if (!empty($row['Evidence_Paths'])) {
+            $evidenceImages = explode(',', $row['Evidence_Paths']);
+        }
+
         $reports[] = [
             'id' => $row['Report_ID'],
             'type' => $type,
@@ -85,12 +91,11 @@ try {
             'details' => $row['Report_Description'] ?? '',
             'status' => ucfirst($row['Report_Status']),
             'date' => $row['Report_Creation_Date'],
-
-            // ✅ 映射：将数据库的 Report_Reply_To_Reporter 映射为前端需要的 adminReply
-            // 这样前端 HTML 页面不需要修改
             'adminReply' => $row['Report_Reply_To_Reporter'] ?? '',
+            'updatedAt' => $row['Report_Updated_At'] ?? '',
 
-            'updatedAt' => $row['Report_Updated_At'] ?? ''
+            // Evidence image URLs/paths for the frontend.
+            'evidence' => $evidenceImages
         ];
     }
 

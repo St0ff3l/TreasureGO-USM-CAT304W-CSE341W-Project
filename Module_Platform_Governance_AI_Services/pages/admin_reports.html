@@ -12,7 +12,7 @@
 
   <style>
     /* ========================================= */
-    /* 1. 核心变量 & 基础布局 */
+    /* 1. Core variables & base layout */
     /* ========================================= */
     :root {
       --bg-color: #F3F6F9;
@@ -44,7 +44,7 @@
               radial-gradient(circle at 90% 80%, rgba(245, 158, 11, 0.05) 0%, transparent 40%);
     }
 
-    /* --- 背景浮动动画 --- */
+    /* --- Floating background animation --- */
     #floating-container {
       position: fixed;
       top: 0;
@@ -72,12 +72,12 @@
       100% { transform: translateY(-10vh) rotate(20deg); opacity: 0; }
     }
 
-    /* 页面主要内容区域 */
+    /* Main content header */
     .page-header { text-align: center; padding: 60px 20px 40px; position: relative; z-index: 10; }
     .page-title { font-size: 2.5rem; line-height: 1.1; margin-bottom: 0.5rem; background: linear-gradient(to right, #1F2937 0%, #4F46E5 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
     .page-subtitle { color: var(--text-gray); font-size: 1.1rem; }
 
-    /* --- 统计卡片 --- */
+    /* --- Stats cards --- */
     .stats-container { max-width: 1200px; margin: 0 auto 40px; padding: 0 20px; position: relative; z-index: 10; }
     .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; }
 
@@ -93,7 +93,7 @@
     .stat-card.dismissed { border-color: var(--neutral); }
     .stat-card.cancelled { border-color: var(--cancelled); }
 
-    /* 列表区域 */
+    /* Reports list section */
     .requests-container { max-width: 1200px; margin: 0 auto 100px; padding: 0 20px; position: relative; z-index: 10; }
     .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px; }
     .section-title { font-size: 1.5rem; font-weight: 700; display: flex; align-items: center; gap: 10px; }
@@ -145,7 +145,7 @@
     .spinner { width: 50px; height: 50px; border: 4px solid #f3f4f6; border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 15px; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* 弹窗样式 */
+    /* Modal styles */
     .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 2000; transition: opacity 0.3s; }
     .modal-overlay.active { display: flex; }
     .modal { background: white; border-radius: 24px; padding: 30px; width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto; animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); }
@@ -174,10 +174,11 @@
     .toggle-checkbox { width: 20px; height: 20px; cursor: pointer; accent-color: var(--danger); }
 
     /* --- [关键修复] 网格与布局样式 --- */
+    /* Grid and spacing for duration chips */
     .duration-options {
-      display: none; /* 默认隐藏，JS控制 */
-      grid-template-columns: repeat(4, 1fr); /* 强制4列 */
-      gap: 10px; /* 间距 */
+      display: none; /* Hidden by default; toggled by JS */
+      grid-template-columns: repeat(4, 1fr); /* Fixed 4 columns */
+      gap: 10px; /* Spacing */
       margin-top: 15px;
       padding-top: 15px;
       border-top: 1px solid rgba(0,0,0,0.05);
@@ -195,7 +196,7 @@
       color: var(--text-gray);
       cursor: pointer;
       transition: all 0.2s;
-      /* Flex 居中 */
+      /* Center content using flexbox */
       display: flex;
       align-items: center;
       justify-content: center;
@@ -343,7 +344,9 @@
 <script src="../assets/js/admin_report_modal.js"></script>
 
 <script>
-  // --- A. 初始化导航栏 ---
+  // ===============================================
+  // A. Page bootstrap
+  // ===============================================
   document.addEventListener('DOMContentLoaded', () => {
     TreasureGoHeaderbar.mount({ basePath: '../../' });
     initFloatingItems();
@@ -351,11 +354,13 @@
     initFilterTabs();
   });
 
-  // --- B. 数据获取与渲染 ---
+  // ===============================================
+  // B. Data loading & rendering
+  // ===============================================
   let allReports = [];
   let currentFilter = 'All';
 
-  // 背景动画
+  // Background animation items.
   function initFloatingItems() {
     const container = document.getElementById('floating-container');
     const items = ['🚩', '🛡️', '⚠️', '🔨', '📢', '🚫', '🔍'];
@@ -375,12 +380,13 @@
       const response = await fetch('../api/admin_report_get.php');
       const data = await response.json();
       if (data.success) {
-        // 数据映射：确保字段名统一，防止 API 返回 Report_ID 前端却用 id
+        // Normalize field names so the UI can rely on consistent keys.
+        // Some APIs may return `id/type/status` instead of `Report_ID/Report_Type/Report_Status`.
         allReports = data.reports.map(r => ({
           ...r,
-          Report_ID: r.Report_ID || r.id,          // 确保 Report_ID 存在
-          Report_Type: r.Report_Type || r.type,    // 确保 Report_Type 存在
-          status: r.Report_Status || r.status      // 确保 status 存在
+          Report_ID: r.Report_ID || r.id,
+          Report_Type: r.Report_Type || r.type,
+          status: r.Report_Status || r.status
         }));
 
         document.getElementById('stat-total').textContent = data.stats.total;
@@ -411,7 +417,7 @@
     }
 
     container.innerHTML = filtered.map(r => {
-      // 兼容字段名
+      // Support multiple field names.
       const rId = r.Report_ID || r.id;
       const rType = r.Report_Type || r.type || 'user';
       const rStatus = r.status || 'Pending';
@@ -419,14 +425,30 @@
       const iconChar = rType === 'product' ? '📦' : (rType === 'user' ? '👤' : '💬');
       const typeClass = 'type-' + rType;
 
+      // Left column display rules:
+      // - Product report: show product image when available
+      // - User report: show reported user's avatar when available
+      // - Otherwise: fall back to the type icon
       let leftContentHtml = '';
+
       if (rType === 'product' && r.productImage) {
         const imgPath = `../../${r.productImage}`;
         leftContentHtml = `
-            <img src="${imgPath}" class="report-product-img" alt="Product" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+            <img src="${imgPath}" class="report-product-img" alt="Product"
+                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
             <div class="report-icon-box ${typeClass}" style="display:none">${iconChar}</div>
           `;
-      } else {
+      }
+      else if (rType === 'user' && r.reportedUserImage) {
+        const avatarPath = `../../${r.reportedUserImage}`;
+        leftContentHtml = `
+            <img src="${avatarPath}" class="report-product-img" alt="User"
+                 style="border-radius: 50%; object-fit: cover;"
+                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+            <div class="report-icon-box ${typeClass}" style="display:none">${iconChar}</div>
+        `;
+      }
+      else {
         leftContentHtml = `<div class="report-icon-box ${typeClass}">${iconChar}</div>`;
       }
 
@@ -468,11 +490,63 @@
   }
 
   function openDetailsModal(id) {
-    // 查找时使用 Report_ID
+    // Look up the selected report.
     const r = allReports.find(x => (x.Report_ID || x.id) == id);
     if (!r) return;
 
-    // 显示详情，包括 Contact Email
+    // ID value used for profile navigation.
+    const reporterId = r.reporterId || r.Reporting_User_ID;
+
+    // Base path for public profile pages.
+    const profileBasePath = '../../Module_User_Account_Management/views/public_profile.html';
+
+    // Render evidence image thumbnails (if any).
+    let evidenceHtml = '';
+    if (r.evidence && Array.isArray(r.evidence) && r.evidence.length > 0) {
+      const images = r.evidence.map(img => `
+            <a href="${img}" target="_blank" class="evidence-link">
+                <img src="${img}"
+                     alt="Evidence"
+                     onerror="this.src='https://placehold.co/80x80?text=Error'; this.style.opacity=0.5;"
+                     style="width:80px; height:80px; object-fit:cover; border-radius:8px; border:1px solid #E5E7EB; transition:transform 0.2s;">
+            </a>
+        `).join('');
+
+      evidenceHtml = `
+            <div class="detail-row">
+                <div class="detail-label">Evidence Images</div>
+                <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                    ${images}
+                </div>
+            </div>
+        `;
+    }
+
+    // Build the Target section based on report type.
+    let targetInfoHtml = '';
+    if (r.Report_Type === 'product') {
+      // Product reports: show product title and seller info.
+      targetInfoHtml = `
+            <div style="font-size:1.05rem; font-weight:700; margin-bottom:6px; color:var(--text-dark);">
+                ${r.targetName}
+            </div>
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+                 <i class="fa-solid fa-store" style="color:#9CA3AF; font-size:0.85rem;"></i>
+                 <strong>${r.reportedUserName}</strong>
+                 <span style="color:#9CA3AF; font-size:0.9rem;">(ID: ${r.reportedUserId})</span>
+            </div>
+        `;
+    } else {
+      // User reports: show reported user info.
+      targetInfoHtml = `
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+                 <strong>${r.reportedUserName}</strong>
+                 <span style="color:#9CA3AF; font-size:0.9rem;">(ID: ${r.reportedUserId})</span>
+            </div>
+        `;
+    }
+
+    // Render modal content.
     document.getElementById('details-content').innerHTML = `
       <div class="detail-row">
         <div class="detail-label">Report ID</div>
@@ -482,9 +556,9 @@
       <div class="detail-row">
         <div class="detail-label">Reporter</div>
         <div class="detail-value">
-          <div style="display:flex; align-items:center; gap:8px; margin-bottom:5px;">
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
              <strong>${r.reporter || 'Unknown'}</strong>
-             <span style="color:#9CA3AF; font-size:0.9rem;">(ID: ${r.reporterId || r.Reporting_User_ID})</span>
+             <span style="color:#9CA3AF; font-size:0.9rem;">(ID: ${reporterId})</span>
           </div>
 
           ${r.contactEmail || r.Report_Contact_Email ? `
@@ -494,7 +568,7 @@
           </div>` : ''}
 
           <div>
-             <button class="btn-action-view" onclick="window.location.href='../../Module_User_Account_Management/views/public_profile.html?user_id=${r.reporterId}'">View Profile</button>
+             <button class="btn-action-view" onclick="window.location.href='${profileBasePath}?user_id=${reporterId}'">View Profile</button>
           </div>
         </div>
       </div>
@@ -502,13 +576,13 @@
       <div class="detail-row">
         <div class="detail-label">Target</div>
         <div class="detail-value">
-          <div style="font-size:1.05rem; font-weight:700; margin-bottom:8px;">${r.targetName}</div>
-          <div style="padding:12px; background:#F9FAFB; border-radius:10px; border:1px solid #E5E7EB; margin-bottom:10px;">
-            <div style="margin-bottom:4px;">👤 User: <strong>${r.reportedUserName}</strong> (ID: ${r.reportedUserId})</div>
-          </div>
+
+          ${targetInfoHtml}
+
           <div style="display:flex; gap:10px;">
-            <button class="btn-action-view" onclick="window.location.href='../../Module_User_Account_Management/views/public_profile.html?user_id=${r.reportedUserId}'">Target Profile</button>
-            ${r.reportedItemId ? `<button class="btn-action-view" style="background:#EEF2FF; color:var(--primary);" onclick="window.location.href='../../Module_Product_Ecosystem/pages/Product_Detail.html?id=${r.reportedItemId}'">Product Page</button>` : ''}
+            <button class="btn-action-view" onclick="window.location.href='${profileBasePath}?user_id=${r.reportedUserId}'">Target Profile</button>
+
+            ${r.reportedItemId ? `<button class="btn-action-view" style="background:#EEF2FF; color:var(--primary);" onclick="window.location.href='../../Module_Product_Ecosystem/pages/Product_Detail.html?product_id=${r.reportedItemId}'">Product Page</button>` : ''}
           </div>
         </div>
       </div>
@@ -522,7 +596,10 @@
           </div>
         </div>
       </div>
+
+      ${evidenceHtml}
     `;
+
     document.getElementById('details-modal').classList.add('active');
   }
 
@@ -543,3 +620,5 @@
 </script>
 </body>
 </html>
+
+

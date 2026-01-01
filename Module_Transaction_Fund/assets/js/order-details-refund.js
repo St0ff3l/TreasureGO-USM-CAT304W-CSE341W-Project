@@ -440,38 +440,57 @@
   // =========================================
 
   async function sellerProcessRefund(orderId, action, type) {
+    console.log(`[Debug] Initiating Refund Action: ${action}, Type: ${type}, ID: ${orderId}`);
+
     let confirmMsg = '';
+
+    // 设置初始确认信息
     if (action === 'approve') {
       confirmMsg = type === 'refund_only'
           ? '⚠️ Approve Refund Only?\nMoney will be refunded to buyer immediately.'
           : '⚠️ Accept Return?\nBuyer will be notified to return the item.';
     } else {
-      confirmMsg = '❌ Reject this refund request?';
+      confirmMsg = '❌ Ready to reject this refund request?';
     }
 
-    if (!confirm(confirmMsg)) return;
+    // 第一步：基本确认
+    if (!confirm(confirmMsg)) {
+      return;
+    }
 
     let reject_reason_code = null;
     let reject_reason_text = null;
 
+    // 第二步：拒绝逻辑
     if (action === 'reject') {
-      reject_reason_code = prompt('Reject reason (short code):', 'other');
-      if (reject_reason_code === null) return;
-      reject_reason_text = prompt('Reject reason details (optional):', '');
+      reject_reason_text = prompt('Please enter the rejection reason (Required):');
       if (reject_reason_text === null) return;
+      if (reject_reason_text.trim() === '') {
+        alert('Rejection reason cannot be empty.');
+        return;
+      }
+      reject_reason_code = 'other';
     }
 
+    // 特殊情况：同意退货 (Return & Refund) 需要选地址
+    // 这里的逻辑会拦截“退货”请求，弹出地址选择框
     if (action === 'approve' && type !== 'refund_only') {
+      console.log('[Debug] Triggering address selection...');
       if (global.toggleAddressSelection) {
         await global.toggleAddressSelection(orderId);
       } else {
-        alert('Address module not loaded.');
+        alert('Address module not loaded. Cannot select return address.');
       }
-      return;
+      return; // 🛑 停止执行，等待地址选择模态框处理
     }
 
+    // 第三步：提交 API (仅针对 "仅退款" 或 "拒绝")
+    console.log('[Debug] Sending API request...');
     try {
-      const response = await fetch('../api/Refund_Actions.php', {
+      // ⚠️ 请确保这里的路径是你实际的 API 路径
+      const apiUrl = '../../Module_Transaction_Fund/api/Refund_Actions.php';
+
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -479,15 +498,27 @@
           action: 'seller_decision',
           order_id: orderId,
           decision: action,
+
+          // 🔥🔥🔥 关键修复：必须把退款类型传给后端 🔥🔥🔥
+          refund_type: type,
+
           reject_reason_code,
           reject_reason_text,
         }),
       });
+
       const result = await response.json();
-      if (result && result.success) location.reload();
-      else alert(result?.message || 'Failed');
-    } catch (_) {
-      alert('Network error');
+
+      if (result && result.success) {
+        alert('Success: ' + (result.message || 'Operation completed.'));
+        location.reload();
+      } else {
+        alert('Failed: ' + (result?.message || 'Unknown error'));
+      }
+
+    } catch (err) {
+      console.error('[Error Details]', err);
+      alert('Error occurred: ' + err.message);
     }
   }
 
@@ -631,7 +662,7 @@
     else {
       // 不再直接调用 API，而是跳转到你指定的页面
       // 带上 order_id, received (0或1), reason (原因代码)
-      const url = `../../Module_After_Sales_Dispute/pages/Dispute_Reject_After_Receive_Return.html?order_id=${currentRefundOrderId}&received=${hasReceivedGoods}&reason=${reasonCode}`;
+      const url = `../../Module_After_Sales_Dispute/pages/Dispute_Seller_Statement.html?order_id=${currentRefundOrderId}&reason=${reasonCode}`;
       window.location.href = url;
     }
   }

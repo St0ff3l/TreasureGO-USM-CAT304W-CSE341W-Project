@@ -1,10 +1,10 @@
 <?php
-// 文件位置: api/AI_Check_Product.php
+// File location: api/AI_Check_Product.php
 header('Content-Type: application/json');
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: POST");
 
-// 引入数据库配置和 AI 服务
+// Include database configuration and AI service
 require_once __DIR__ . '/config/treasurego_db_config.php';
 require_once __DIR__ . '/config/Gemini_Service.php';
 
@@ -17,7 +17,7 @@ if (!$productId) {
 }
 
 try {
-    // 1. 获取商品信息
+    // 1. Get product information
     $stmt = $conn->prepare("
         SELECT Product_Title, Product_Description, Product_Price 
         FROM Product 
@@ -31,12 +31,12 @@ try {
         exit;
     }
 
-    // 1.1 单独查询该商品的所有图片
+    // 1.1 Query all images for the product separately
     $stmtImg = $conn->prepare("SELECT Image_URL FROM Product_Images WHERE Product_ID = ?");
     $stmtImg->execute([$productId]);
     $images = $stmtImg->fetchAll(PDO::FETCH_COLUMN);
 
-    // 2. 处理图片绝对路径
+    // 2. Handle absolute image paths
     $localImagePaths = [];
     $baseDir = __DIR__ . '/../../';
 
@@ -53,8 +53,8 @@ try {
         }
     }
 
-    // 3. 🚀 调用封装好的 AI 服务函数
-    // 注意：现在传入的是数组 $localImagePaths
+    // 3. Call the encapsulated AI service function
+    // Note: An array $localImagePaths is passed now
     $aiResult = analyzeProductWithAI(
         $product['Product_Title'],
         $product['Product_Description'],
@@ -62,7 +62,7 @@ try {
         $localImagePaths
     );
 
-    // 4. 返回结果给前端
+    // 4. Return result to frontend
     echo json_encode([
         'success' => true,
         'ai_analysis' => $aiResult

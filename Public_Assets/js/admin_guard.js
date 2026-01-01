@@ -21,20 +21,18 @@
     document.documentElement.appendChild(overlay);
 
     try {
-        // --- 核心修改开始 ---
+        // Run a short delay and the session request in parallel.
 
-        // 定义两个任务：
-        // 1. 强制等待 100 毫秒 (0.1秒)
+        // Two async tasks:
+        // 1) A small forced delay to ensure the loading overlay is visible.
         const delayPromise = new Promise(resolve => setTimeout(resolve, 100));
 
-        // 2. 发起实际的网络请求
+        // 2) The session status request.
         const fetchPromise = fetch('../../Module_User_Account_Management/api/session_status.php');
 
-        // Promise.all 会等待数组中所有的 Promise 都完成
-        // 结果是一个数组: [delayResult, fetchResult]
+        // Wait for both tasks to complete.
+        // The result is an array: [delayResult, fetchResponse].
         const [_, res] = await Promise.all([delayPromise, fetchPromise]);
-
-        // --- 核心修改结束 ---
 
         const data = await res.json();
 
@@ -42,7 +40,7 @@
             // Access granted
             const overlay = document.getElementById('admin-guard-overlay');
             if (overlay) {
-                // 增加淡出效果，让消失更平滑
+                // Fade out the overlay for a smoother transition.
                 overlay.style.opacity = '0';
                 overlay.style.transition = 'opacity 0.5s ease';
                 setTimeout(() => overlay.remove(), 500);
@@ -53,8 +51,7 @@
         }
     } catch (error) {
         console.error('Admin guard error:', error);
-        // 如果发生错误（如断网），为了用户体验，建议不需要强制等2秒，直接报错
-        // 或者如果你希望错误也等2秒，可以把 Promise.all 放在 try 外面（但通常不需要）
+        // On request errors (e.g., offline), show the blocked state immediately.
         showAccessDenied();
     }
 
@@ -70,12 +67,12 @@
                     Go to Home
                 </button>
             `;
-            // 给按钮加个简单的 hover 效果（可选）
+            // Add a simple hover effect to the button.
             const btn = overlay.querySelector('button');
             btn.onmouseover = () => btn.style.background = '#4338CA';
             btn.onmouseout = () => btn.style.background = '#4F46E5';
         } else {
-            // Fallback provided previously (usually not needed if overlay exists)
+            // Fallback when the overlay does not exist.
             document.body.innerHTML = 'Access Denied';
             window.location.href = '../../index.html';
         }

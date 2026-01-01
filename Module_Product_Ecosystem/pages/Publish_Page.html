@@ -200,7 +200,7 @@
       border: 2px dashed #CBD5E1;
       border-radius: 20px;
       padding: 30px;
-      /* 底部增加 padding，防止右下角按钮遮挡图片 */
+      /* Add padding at the bottom to prevent the bottom right button from covering the image */
       padding-bottom: 80px;
       min-height: 250px;
       background: #F8FAFC;
@@ -213,7 +213,7 @@
     .upload-area:hover {
       border-color: var(--primary);
     }
-    /* 拖拽时的高亮样式 */
+    /* Drag over highlight style */
     .upload-area.drag-over {
       border-color: var(--primary);
       background: var(--primary-light);
@@ -238,11 +238,11 @@
       margin: 0 auto;
     }
 
-    /* --- 关键修改：将justify-content 改回 center --- */
+    /* --- Center alignment --- */
     #imagePreview {
       display: none; width: 100%; gap: 15px;
       flex-wrap: wrap;
-      justify-content: center; /* 改回居中排列，多张时会自动向两侧扩展 */
+      justify-content: center; /* Center alignment, automatically expands to both sides when multiple */
     }
     /* ------------------------------------------- */
 
@@ -285,7 +285,7 @@
       cursor: pointer; box-shadow: 0 10px 20px rgba(79, 70, 229, 0.4);
       transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 
-      /* 修改位置到右下角 */
+      /* Position to bottom right */
       position: absolute;
       bottom: 20px;
       right: 20px;
@@ -454,7 +454,7 @@
   let categoryList = []; // Array to store data from backend
   const parentSelect = document.getElementById('parentCategory');
   const subSelect = document.getElementById('subCategory');
-  let isFeeWaived = false; // 新增：状态变量
+  let isFeeWaived = false; // Status variable
 
   // Load categories and User Profile on page load
   document.addEventListener('DOMContentLoaded', async () => {
@@ -474,16 +474,16 @@
 
     // 2. Fetch User Profile to check for Privileges (VIP/SVIP Status)
     try {
-      // 注意：这里用了 ../../ 回到根目录，然后进入用户管理模块
+      // Note: Use ../../ to return to root, then enter user management module
       const profileRes = await fetch('../../Module_User_Account_Management/api/get_profile.php');
       const profileData = await profileRes.json();
 
-      // 检查是否登录成功且包含特权信息
+      // Check if login successful and contains privilege info
       if (profileData.status === 'success' && profileData.data.privileges) {
-        // 读取后端返回的免手续费标志 (VIP和SVIP都是 true)
+        // Read fee waiver flag returned by backend
         isFeeWaived = profileData.data.privileges.waive_platform_fee;
 
-        // 如果用户在数据加载前已经输入了价格，这里手动触发一次输入事件来更新 UI
+        // If user entered price before data loaded, manually trigger input event to update UI
         if (priceInput.value) {
           priceInput.dispatchEvent(new Event('input'));
         }
@@ -534,29 +534,29 @@
     const price = parseFloat(this.value);
 
     if (!isNaN(price) && price > 0) {
-      let fee = price * 0.02; // 默认 2% 手续费
+      let fee = price * 0.02; // Default 2% fee
       let displayHTML = '';
 
-      // --- 判断是否免手续费 (VIP 或 SVIP) ---
+      // --- Check if fee is waived (VIP or SVIP) ---
       if (isFeeWaived) {
-        // 免除手续费
+        // Waive fee
         const originalFee = fee;
         fee = 0;
 
-        // UI 显示：划掉原价，显示 "Waived"
+        // UI Display: Strike through original price, show "Waived"
         displayHTML = `
             Platform Fee (VIP/SVIP):
             <span style="color:#9CA3AF; text-decoration: line-through; margin-right:5px;">-RM${originalFee.toFixed(2)}</span>
             <span style="color:#059669; font-weight:700;">Waived 🎉</span>
         `;
       } else {
-        // 普通用户
+        // Regular user
         displayHTML = `Platform Fee (2%): <span id="feeAmount" style="color:#EF4444">-RM${fee.toFixed(2)}</span>`;
       }
 
       const income = price - fee;
 
-      // 更新 DOM
+      // Update DOM
       feeRow.innerHTML = displayHTML;
       incomeAmount.textContent = `RM${income.toFixed(2)}`;
       priceCalculator.style.display = 'block';
@@ -736,9 +736,9 @@
       const result = await response.json();
 
       if (result.success) {
-        // 根据后端返回的状态判断显示哪种弹窗
+        // Determine which dialog to show based on backend status
         if (result.status === 'Pending') {
-          // AI 拦截 -> 警告/待审核弹窗
+          // AI Intercept -> Warning/Pending Review Dialog
           StatusDialog.warning(
                   'Under Review',
                   'Your item has been flagged by AI for manual review. It will be visible once approved.',
@@ -746,7 +746,7 @@
                   () => { window.location.href = 'My_Listings.html'; }
           );
         } else {
-          // 正常发布 -> 成功弹窗
+          // Normal Publish -> Success Dialog
           StatusDialog.success(
                   'Published!',
                   'Your item is now live on the marketplace.',

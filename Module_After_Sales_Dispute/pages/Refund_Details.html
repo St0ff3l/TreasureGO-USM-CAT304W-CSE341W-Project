@@ -4,34 +4,83 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Refund Details - TreasureGO</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+
+  <script src="../../Public_Assets/js/headerbar.js"></script>
+
   <style>
-    /* 基础设置 */
-    :root { --bg-color: #F3F6F9; --primary: #4F46E5; --text-dark: #1F2937; --text-gray: #6B7280; }
+    /* =========================================
+       1. Global Variables & Reset (Referencing Refund_Request)
+       ========================================= */
+    :root {
+      --primary: #4F46E5;
+      --primary-hover: #4338CA;
+      --primary-light: #EEF2FF;
+      --text-dark: #111827;
+      --text-gray: #6B7280;
+      --input-bg: #F3F4F6;
+      --border-radius: 16px;
+      --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Poppins', sans-serif; background: var(--bg-color); color: var(--text-dark); padding-bottom: 50px; }
 
-    /* 布局容器 */
-    .container { max-width: 800px; margin: 40px auto; padding: 0 20px; }
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: #F0F2F5;
+      /* Signature background pattern from Request page */
+      background-image: url('data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%234f46e5" fill-opacity="0.03"%3E%3Cpath d="M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E'), linear-gradient(to bottom right, #f3f4f6, #e5e7eb);
+      color: var(--text-dark);
+      min-height: 100vh;
+      padding-bottom: 40px;
+    }
 
-    /* 顶部导航 */
-    .header-nav { display: flex; align-items: center; gap: 15px; margin-bottom: 25px; }
-    .back-btn { text-decoration: none; color: var(--text-dark); font-size: 1.1rem; font-weight: 700; display: flex; align-items: center; gap: 5px; transition: 0.2s; }
-    .back-btn:hover { color: var(--primary); transform: translateX(-3px); }
+    /* Container Styles (Referencing .publish-container) */
+    .publish-container {
+      max-width: 800px;
+      margin: 40px auto;
+      background: #ffffff;
+      border-radius: 24px;
+      padding: 50px;
+      box-shadow: var(--shadow-lg);
+      border: 1px solid rgba(255,255,255,0.6);
+      animation: fadeInPage 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
 
-    /* 状态横幅 */
+    @keyframes fadeInPage {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .page-title {
+      font-size: 2rem;
+      font-weight: 800;
+      margin-bottom: 30px;
+      color: var(--text-dark);
+      text-align: center;
+      letter-spacing: -1px;
+      background: linear-gradient(135deg, #111827 0%, #4F46E5 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* =========================================
+       2. Specific Styles for Details Components
+       ========================================= */
+
+    /* Status Banners */
     .status-banner {
-      padding: 20px 25px; border-radius: 16px; margin-bottom: 25px;
+      padding: 20px 25px; border-radius: 16px; margin-bottom: 30px;
       display: flex; gap: 15px; align-items: flex-start;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.03);
       animation: fadeIn 0.3s ease-out;
     }
     .status-banner i { font-size: 1.4rem; margin-top: 2px; }
-    .status-content h3 { margin: 0 0 5px 0; font-size: 1.1rem; }
-    .status-content p { margin: 0; font-size: 0.95rem; opacity: 0.9; line-height: 1.5; }
+    .status-content h3 { margin: 0 0 5px 0; font-size: 1.1rem; font-weight: 700; }
+    .status-content p { margin: 0; font-size: 0.95rem; opacity: 0.9; line-height: 1.5; font-weight: 500; }
 
-    /* 状态颜色风格 */
+    /* Status Colors */
     .banner-pending { background: #FFF7ED; border: 1px solid #FED7AA; color: #9A3412; }
     .banner-pending i { color: #F97316; }
 
@@ -44,36 +93,71 @@
     .banner-return { background: #EFF6FF; border: 1px solid #BFDBFE; color: #1E40AF; }
     .banner-return i { color: #3B82F6; }
 
-    .banner-action { background: #EEF2FF; border: 1px solid #C7D2FE; color: #4338CA; } /* 卖家专用 */
+    .banner-action { background: #EEF2FF; border: 1px solid #C7D2FE; color: #4338CA; }
     .banner-action i { color: #4F46E5; }
 
-    /* 争议状态颜色 (紫色) */
     .banner-dispute { background: #F5F3FF; border: 1px solid #DDD6FE; color: #5B21B6; }
     .banner-dispute i { color: #7C3AED; }
 
-    /* 信息网格 */
+    /* Layout Grid */
     .details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px; }
-    .info-card { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.02); }
 
-    .label { font-size: 0.8rem; color: #9CA3AF; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; margin-bottom: 8px; }
+    /* Info Card (Adapted to match Request page's gray boxes) */
+    .info-card {
+      background: #F8FAFC;
+      padding: 25px;
+      border-radius: 16px;
+      border: 1px solid #E2E8F0;
+    }
+
+    .label { font-size: 0.75rem; color: #6B7280; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; margin-bottom: 8px; }
     .value { font-size: 1.1rem; font-weight: 600; color: #1F2937; }
-    .amount-text { color: var(--primary); font-size: 1.6rem; font-weight: 800; }
+    .amount-text { color: var(--primary); font-size: 1.8rem; font-weight: 800; }
 
-    /* 凭证图片 */
-    .gallery-grid { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
-    .evidence-img { width: 90px; height: 90px; border-radius: 12px; object-fit: cover; cursor: pointer; border: 1px solid #E5E7EB; transition: 0.2s; }
-    .evidence-img:hover { transform: scale(1.05); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    /* Description Box */
+    .desc-box {
+      background: white; border: 1px solid #E5E7EB;
+      padding: 15px; border-radius: 12px;
+      color: #4B5563; line-height: 1.7; font-size: 0.95rem;
+    }
+
+    /* Evidence Gallery */
+    .gallery-grid { display: flex; gap: 12px; margin-top: 15px; flex-wrap: wrap; }
+    .evidence-img {
+      width: 100px; height: 100px; border-radius: 12px;
+      object-fit: cover; cursor: pointer; border: 2px solid white;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); transition: 0.2s;
+    }
+    .evidence-img:hover { transform: scale(1.05); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+
+    /* Buttons */
+    .btn-group { display: flex; justify-content: center; margin-top: 40px; }
+    .btn-back {
+      padding: 15px 40px; background: white; color: var(--text-gray); border: 2px solid #E5E7EB;
+      border-radius: 50px; font-size: 1rem; font-weight: 600; cursor: pointer; text-decoration: none;
+      display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s;
+    }
+    .btn-back:hover { background: #F3F4F6; color: var(--text-dark); border-color: #D1D5DB; }
 
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    @media (max-width: 768px) {
+      .publish-container { padding: 30px 20px; margin: 20px; }
+      .details-grid { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
 
-<div class="container">
-  <div class="header-nav">
-    <a href="#" onclick="history.back()" class="back-btn"><i class="ri-arrow-left-line"></i> Back to Order</a>
-    <h2 style="margin:0; margin-left: 15px; font-size: 1.5rem;">Refund Details</h2>
-  </div>
+<script>
+  if (typeof TreasureGoHeaderbar !== 'undefined') {
+    TreasureGoHeaderbar.mount({ basePath: '../../' });
+  }
+</script>
+
+<div class="publish-container">
+
+  <h1 class="page-title">Refund Details</h1>
 
   <div id="statusMessageContainer"></div>
 
@@ -95,9 +179,9 @@
 
   <div class="info-card">
     <div class="label">Detailed Description</div>
-    <p style="color:#4B5563; line-height:1.7; font-size: 0.95rem; background:#F9FAFB; padding:15px; border-radius:10px;" id="refundDesc">
+    <div class="desc-box" id="refundDesc">
       No description provided.
-    </p>
+    </div>
 
     <div style="margin-top:30px;">
       <div class="label">Evidence / Photos</div>
@@ -105,6 +189,10 @@
         <span style="color:#9CA3AF; font-size:0.9rem; font-style:italic;">No photos uploaded.</span>
       </div>
     </div>
+  </div>
+
+  <div class="btn-group">
+    <a href="javascript:history.back()" class="btn-back"><i class="ri-arrow-left-line"></i> Back to Orders</a>
   </div>
 
 </div>
@@ -141,12 +229,12 @@
       if(order) {
         renderPage(order);
       } else {
-        document.body.innerHTML = "<div style='text-align:center; margin-top:50px;'><h3>Order Not Found</h3><button onclick='history.back()'>Go Back</button></div>";
+        document.body.innerHTML = "<div class='publish-container' style='text-align:center;'><h3>Order Not Found</h3><a href='javascript:history.back()' class='btn-back'>Go Back</a></div>";
       }
 
     } catch(e) {
       console.error(e);
-      document.getElementById('statusMessageContainer').innerHTML = `<div style="padding:15px; color:red; text-align:center;">Error: ${e.message}</div>`;
+      document.getElementById('statusMessageContainer').innerHTML = `<div class="status-banner banner-rejected"><i class="ri-error-warning-fill"></i><div class="status-content"><h3>Error</h3><p>${e.message}</p></div></div>`;
     }
   }
 
@@ -160,8 +248,7 @@
     else if (order.Refund_Type === 'return_refund') typeText = 'Return & Refund';
     document.getElementById('refundType').innerText = typeText;
 
-    // 🔥🔥🔥【这里是修改点】🔥🔥🔥
-    // 定义理由映射表 (Reason Map)
+    // Reason Map
     const reasonMap = {
       damaged: 'Item Damaged / Defective',
       wrong_item: 'Received Wrong Item',
@@ -170,11 +257,9 @@
       fake: 'Counterfeit / Fake Item',
       other: 'Other',
     };
-    // 优先使用映射表里的文字，如果没有就显示原代码，如果原代码也空就显示 'Not Specified'
     const readableReason = reasonMap[order.Refund_Reason] || order.Refund_Reason || 'Not Specified';
 
     document.getElementById('refundReason').innerText = readableReason;
-    // 🔥🔥🔥【修改结束】🔥🔥🔥
 
     const dateStr = order.Refund_Updated_At || order.Refund_Created_At || new Date().toISOString();
     document.getElementById('refundDate').innerText = new Date(dateStr).toLocaleDateString();
@@ -183,7 +268,7 @@
       document.getElementById('refundDesc').innerText = order.Refund_Description;
     }
 
-    // 2. 根据状态 + 身份 渲染 Banner
+    // 2. Render the status banner based on refund state and user role.
     const statusDiv = document.getElementById('statusMessageContainer');
     const status = order.Refund_Status;
     const isBuyer = (order.Orders_Buyer_ID == currentUserId);
@@ -252,7 +337,6 @@
             </div>`;
     }
     else {
-      // 默认格式化
       const displayStatus = status
               ? status.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
               : 'Unknown';
@@ -266,7 +350,7 @@
 
     statusDiv.innerHTML = bannerHtml;
 
-    // 3. 处理图片
+    // 3. Render evidence images (if any).
     const gallery = document.getElementById('evidenceGallery');
     if(order.Refund_Images) {
       gallery.innerHTML = '';

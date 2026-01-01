@@ -1,20 +1,25 @@
 /*
  * TreasureGO Headerbar Component (Navbar Only)
- * 更新说明：
- * 1. 修复了 navigateWithAuth 未导出的问题，确保按钮点击有效。
- * 2. 集成了 AuthModal 二次确认弹窗逻辑。
+ *
+ * Self-contained navigation bar that can be mounted on any page.
+ * Responsibilities:
+ * - Inject required fonts and CSS
+ * - Render the navbar HTML
+ * - Check session status to toggle Login/User/Admin UI
+ * - Guard navigation that requires authentication
+ * - Register PWA assets (manifest + service worker) and favicon
  */
 
 (function (global) {
     'use strict';
 
-    // --- 1. 配置常量 ---
+    // --- 1. Configuration constants ---
     const TG_HEADERBAR_STYLE_ID = 'tg-headerbar-style';
     const TG_HEADERBAR_FONTS_LINK_ID = 'tg-headerbar-fonts';
 
-    // --- 自动加载 AuthModal (确保弹窗组件存在) ---
-    // 假设 auth_modal.js 在 Public_Assets/js/ 目录下
+    // --- Ensure AuthModal is available (lazy-load if needed) ---
     function loadAuthModal(basePath) {
+        // Inject auth_modal.js only if it is not already loaded.
         if (!global.AuthModal && !document.querySelector('script[src*="auth_modal.js"]')) {
             const script = document.createElement('script');
             script.src = basePath + 'Public_Assets/js/auth_modal.js';
@@ -22,7 +27,7 @@
         }
     }
 
-    // --- 2. 样式定义 (保持原样) ---
+    // --- 2. Embedded styles ---
     const EMBEDDED_HEADERBAR_CSS = `
     /* ================= CSS Variables ================= */
     :root {
@@ -127,7 +132,7 @@
     }
   `;
 
-    // --- 3. 辅助函数 ---
+    // --- 3. Helpers ---
     function ensureAssets() {
         if(!document.getElementById(TG_HEADERBAR_FONTS_LINK_ID)) {
             const link = document.createElement('link');
@@ -148,22 +153,21 @@
         return basePath ? (basePath + '/') : '';
     }
 
-    // --- 关键：登录检查并处理弹窗的函数 ---
+    // --- Auth-guarded navigation ---
     async function navigateWithAuth(url, basePath) {
         try {
             const apiUrl = `${basePath}Module_User_Account_Management/api/session_status.php`;
 
-            // 1. 发起请求检查 Session
+            // Request the session status.
             const res = await fetch(apiUrl, {
                 method: 'GET',
-                credentials: 'include', // 携带 Cookie
+                credentials: 'include',
                 headers: { 'Accept': 'application/json' },
                 cache: 'no-cache'
             });
 
             if (!res.ok) throw new Error('Session check failed');
 
-            // 确保返回 JSON
             const contentType = res.headers.get('content-type') || '';
             if (!contentType.includes('application/json')) {
                 throw new Error('Invalid response type');
@@ -171,12 +175,10 @@
 
             const data = await res.json();
 
-            // 2. 根据登录状态决定动作
+            // If logged in, navigate to the target page; otherwise show login prompt.
             if (data.is_logged_in) {
-                // 已登录 -> 跳转到目标页面
                 window.location.href = url;
             } else {
-                // 未登录 -> 弹出 AuthModal (二次确认)
                 if (global.AuthModal) {
                     global.AuthModal.show();
                 } else {
@@ -186,7 +188,7 @@
             }
         } catch (err) {
             console.error('[Headerbar] Auth check error:', err);
-            // 接口报错时，作为兜底也显示弹窗（如果能显示的话），或者去登录页
+            // On failure, prefer showing the login prompt; fall back to login page.
             if (global.AuthModal) {
                 global.AuthModal.show();
             } else {
@@ -195,9 +197,9 @@
         }
     }
 
-    // --- 4. HTML 构建 ---
+    // --- 4. HTML generation ---
     function getNavbarHtml(p) {
-        // 注意：onclick 中调用了 TreasureGoHeaderbar.navigateWithAuth
+        // p is the computed base path prefix used to build absolute module URLs.
         return `
     <nav class="navbar" data-component="tg-headerbar">
       <a href="${p}index.html" class="logo">
@@ -224,7 +226,7 @@
     </nav>`.trim();
     }
 
-    // --- 5. Session 逻辑 (用于页面加载时 UI 状态) ---
+    // --- 5. Session-driven UI state ---
     async function checkSession(p) {
         const apiUrl = `${p}Module_User_Account_Management/api/session_status.php`;
         const loginBtn = document.getElementById('nav-login-btn');
@@ -252,27 +254,24 @@
                 userMenu.style.display = 'inline-block';
 
                 if (data.user) {
-                    // 头像处理
+                    // Avatar rendering
                     if (avatarBtn) {
                         if (data.user.avatar_url && data.user.avatar_url.trim() !== '') {
-                            // 如果是 http 开头（外部链接）则直接用，否则加上 basePath
-                            const avatarSrc = data.user.avatar_url.startsWith('http') 
-                                ? data.user.avatar_url 
+                            const avatarSrc = data.user.avatar_url.startsWith('http')
+                                ? data.user.avatar_url
                                 : (p + data.user.avatar_url);
-                                
+
                             const fallbackInitial = (data.user.username || '?').charAt(0).toUpperCase();
                             avatarBtn.innerHTML = `<img src="${avatarSrc}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;" onerror="this.style.display='none'; this.parentNode.innerText='${fallbackInitial}'; this.parentNode.style.background='#EEF2FF';">`;
                             avatarBtn.style.background = 'transparent';
                         } else {
-                            // 重置为文字头像模式
-                            avatarBtn.innerHTML = ''; // 清空可能存在的 img
-                            avatarBtn.style.background = '#EEF2FF'; // 恢复背景色
-                            
+                            avatarBtn.innerHTML = '';
+                            avatarBtn.style.background = '#EEF2FF';
                             const name = data.user.username || '?';
                             avatarBtn.innerText = name.charAt(0).toUpperCase();
                         }
                     }
-                    // 管理员按钮处理
+                    // Admin-only navigation
                     if (adminBtn && data.user.role === 'admin') {
                         adminBtn.style.display = 'inline-block';
                     } else if (adminBtn) {
@@ -292,12 +291,40 @@
         }
     }
 
-    // --- 6. 挂载函数 ---
+    // --- 6. PWA helpers and mount ---
+    function registerServiceWorker(basePath) {
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register(basePath + 'sw.js')
+                    .then(reg => console.log('[PWA] ServiceWorker registered:', reg.scope))
+                    .catch(err => console.error('[PWA] ServiceWorker error:', err));
+            });
+        }
+    }
+
     function mount(options) {
         ensureAssets();
         const basePath = getBasePath(options);
 
-        // 尝试预加载 AuthModal，以便点击时可用
+        // Inject favicon if none exists.
+        if (!document.querySelector("link[rel*='icon']")) {
+            const link = document.createElement('link');
+            link.type = 'image/png';
+            link.rel = 'icon';
+            link.href = basePath + 'Public_Assets/images/TreasureGo_Logo.png';
+            document.head.appendChild(link);
+        }
+
+        // Inject manifest link and register the service worker.
+        if (!document.querySelector("link[rel='manifest']")) {
+            const link = document.createElement('link');
+            link.rel = 'manifest';
+            link.href = basePath + 'manifest.json';
+            document.head.appendChild(link);
+        }
+        registerServiceWorker(basePath);
+
+        // Preload AuthModal.
         loadAuthModal(basePath);
 
         const wrapper = document.createElement('div');
@@ -315,8 +342,8 @@
         return wrapper;
     }
 
-    // --- 7. 导出 (重要修改) ---
-    // 必须导出 navigateWithAuth，否则 HTML 中的 onclick 会报错
+    // --- 7. Public API ---
+    // Export navigateWithAuth so inline onclick handlers can call it.
     global.TreasureGoHeaderbar = {
         mount,
         navigateWithAuth

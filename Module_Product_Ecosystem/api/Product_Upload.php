@@ -1,42 +1,42 @@
 <?php
 // api/Product_Upload.php
 
-// 1. 开启 Session (必须放在第一行)
+// 1. Start Session (must be placed on the first line)
 session_start();
 
-// 引入数据库配置
+// Include database configuration
 require_once __DIR__ . '/config/treasurego_db_config.php';
 
-// 【修改点 1】引入 AI 服务文件
+// Include AI service file
 require_once __DIR__ . '/config/Gemini_Service.php';
 
 header('Content-Type: application/json');
 
 try {
-    // 2. 获取数据库连接
+    // 2. Get database connection
     $pdo = getDatabaseConnection();
     if (!$pdo) {
         throw new Exception("无法连接到远程数据库");
     }
 
-    // 3. 仅允许 POST 请求
+    // 3. Only allow POST requests
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
         http_response_code(405);
         echo json_encode(['success' => false, 'message' => '仅允许 POST 请求']);
         exit();
     }
 
-    // 4. 安全检查：判断用户是否登录
+    // 4. Security check: Determine if the user is logged in
     if (!isset($_SESSION['user_id'])) {
         http_response_code(401);
         echo json_encode(['success' => false, 'message' => '请先登录后再发布商品']);
         exit();
     }
 
-    // 从 Session 获取 User_ID
+    // Get User_ID from Session
     $user_id = $_SESSION['user_id'];
 
-    // 5. 获取表单数据
+    // 5. Get form data
     $product_title = trim($_POST['product_name'] ?? '');
     $price = floatval($_POST['price'] ?? 0);
     $condition = trim($_POST['condition'] ?? '');
@@ -44,14 +44,14 @@ try {
     $location = trim($_POST['address'] ?? 'Online');
     $category_id = intval($_POST['category_id'] ?? 100000005);
 
-    // 新增：获取交易方式，默认为 both
+    // Get delivery method, default is both
     $delivery_method = $_POST['delivery_method'] ?? 'both';
-    // 简单的白名单验证
+    // Simple whitelist validation
     if (!in_array($delivery_method, ['meetup', 'shipping', 'both'])) {
         $delivery_method = 'both';
     }
 
-    // 数据验证
+    // Data validation
     if (empty($product_title)) throw new Exception("商品名称不能为空");
     if ($price <= 0) throw new Exception("价格必须大于 0");
     if (empty($condition)) throw new Exception("请选择商品条件");
@@ -59,15 +59,15 @@ try {
     if (empty($location)) throw new Exception("请填写交易地址");
 
     // =========================================================
-    // 6. 处理图片文件
+    // 6. Process image files
     // =========================================================
     $image_paths = [];
-    $all_physical_image_paths = []; // 用于传给 AI 的所有本地路径
+    $all_physical_image_paths = []; // All local paths to pass to AI
 
-    // 物理存储路径
+    // Physical storage path
     $upload_base_dir = '../Public_Product_Images/';
 
-    // 数据库路径前缀
+    // Database path prefix
     $db_path_prefix = 'Module_Product_Ecosystem/Public_Product_Images/';
 
     if (!is_dir($upload_base_dir)) {
@@ -104,7 +104,7 @@ try {
                 if (move_uploaded_file($file_tmp, $destination)) {
                     $image_paths[] = $db_path_prefix . $new_filename;
 
-                    // 记录所有上传成功的图片的物理路径，给 AI 用
+                    // Record the physical paths of all successfully uploaded images for AI use
                     $all_physical_image_paths[] = $destination;
                 } else {
                     throw new Exception("上传失败：无法保存图片文件。请联系管理员检查文件夹写入权限。");
@@ -116,35 +116,35 @@ try {
     }
 
     // =========================================================
-    // 【修改点 2】 加入 AI 自动审核逻辑
+    // Add AI automatic audit logic
     // =========================================================
 
-    // 默认状态（如果没有 AI，或者 AI 挂了）
-    $final_product_status = 'Pending';       // 默认待审核
+    // Default status (if no AI, or AI is down)
+    $final_product_status = 'Pending';       // Default pending review
     $final_review_status = 'Pending';
     $ai_audit_comment = NULL;
 
     try {
-        // 调用我们封装好的函数
-        // 注意：传入的是物理路径数组 $all_physical_image_paths
+        // Call the encapsulated function
+        // Note: Passing the physical path array $all_physical_image_paths
         $aiResult = analyzeProductWithAI($product_title, $description, $price, $all_physical_image_paths);
 
         if ($aiResult) {
-            // 策略：风险分 < 50 且 建议 Approve -> 直接上架
-            // (原先是 < 30，现在放宽到 50，避免误伤低风险商品)
+            // Strategy: Risk score < 50 and suggestion is Approve -> List directly
+            // (Originally < 30, now relaxed to 50 to avoid flagging low-risk products)
             if ($aiResult['suggestion'] === 'Approve' && $aiResult['risk_score'] < 50) {
-                $final_product_status = 'Active';      // 直接上架
-                $final_review_status = 'approved';     // 审核状态通过
-                $ai_audit_comment = NULL;              // 清空备注
+                $final_product_status = 'Active';      // Direct listing
+                $final_review_status = 'approved';     // Review status approved
+                $ai_audit_comment = NULL;              // Clear comments
             } else {
-                // 风险较高 -> 保持 Pending，写入理由
+                // High risk -> Keep Pending, write reason
                 $final_product_status = 'Pending';
                 $final_review_status = 'pending';
                 $ai_audit_comment = "[AI Auto-Flagged] Risk Score:" . $aiResult['risk_score'] . "%. Reason: " . $aiResult['reason'];
             }
         }
     } catch (Exception $aiEx) {
-        // 如果 AI 报错，不应该阻止商品发布，而是转为人工审核
+        // If AI fails, it should not block product listing, but switch to manual review
         // error_log("AI Audit Failed: " . $aiEx->getMessage());
         $final_product_status = 'Pending';
         $ai_audit_comment = "AI Service Unavailable, flagged for manual review.";
@@ -152,14 +152,14 @@ try {
 
     // =========================================================
 
-    // 7. 开启事务
+    // 7. Start transaction
     $pdo->beginTransaction();
 
-    // 8. 插入商品
-    // 【修改点 3】 SQL 语句变了：
-    //  - Product_Status 不再写死 'Active'，而是变成 ?
-    //  - Product_Review_Status 不再写死 'Pending'，而是变成 ?
-    //  - 增加了 Product_Review_Comment 字段用来存 AI 的拒绝理由
+    // 8. Insert product
+    // SQL statement changes:
+    //  - Product_Status is no longer hardcoded 'Active', but becomes ?
+    //  - Product_Review_Status is no longer hardcoded 'Pending', but becomes ?
+    //  - Added Product_Review_Comment field to store AI rejection reasons
     $sql_product = "INSERT INTO Product (
         Product_Title,
         Product_Description,
@@ -177,22 +177,22 @@ try {
 
     $stmt = $pdo->prepare($sql_product);
     $stmt->execute([
-        $product_title,         // 1. 标题
-        $description,           // 2. 描述
-        $price,                 // 3. 价格
-        $condition,             // 4. 成色
-        $final_product_status,  // 5. 【动态】状态 (Active/Pending)
-        $location,              // 6. 地址
-        $final_review_status,   // 7. 【动态】审核状态 (approved/pending)
-        $ai_audit_comment,      // 8. 【新增】AI 审核备注
-        $delivery_method,       // 9. 配送方式
-        $user_id,               // 10. 用户ID
-        $category_id            // 11. 分类ID
+        $product_title,         // 1. Title
+        $description,           // 2. Description
+        $price,                 // 3. Price
+        $condition,             // 4. Condition
+        $final_product_status,  // 5. Dynamic Status (Active/Pending)
+        $location,              // 6. Location
+        $final_review_status,   // 7. Dynamic Review Status (approved/pending)
+        $ai_audit_comment,      // 8. AI Review Comment
+        $delivery_method,       // 9. Delivery Method
+        $user_id,               // 10. User ID
+        $category_id            // 11. Category ID
     ]);
 
     $product_id = $pdo->lastInsertId();
 
-    // 9. 插入图片路径
+    // 9. Insert image paths
     if (!empty($image_paths)) {
         $sql_image = "INSERT INTO Product_Images (
             Product_ID,
@@ -216,11 +216,11 @@ try {
         'success' => true,
         'message' => '商品发布成功！' . ($final_product_status === 'Pending' ? ' (AI检测到风险，已转入人工审核)' : ''),
         'product_id' => $product_id,
-        'status' => $final_product_status // 新增：返回商品状态 (Active 或 Pending)
+        'status' => $final_product_status // Return product status (Active or Pending)
     ]);
 
 } catch (Exception $e) {
-    // 10. 如果出错，回滚事务
+    // 10. If error occurs, rollback transaction
     if (isset($pdo) && $pdo->inTransaction()) {
         $pdo->rollBack();
     }

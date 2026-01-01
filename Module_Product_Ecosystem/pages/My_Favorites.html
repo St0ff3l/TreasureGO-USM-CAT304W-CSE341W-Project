@@ -80,7 +80,7 @@
 
         .card-info { padding: 1.2rem; position: relative; }
 
-        /* New: Trend Badge */
+        /* Trend Badge */
         .trend-badge {
             display: inline-flex; align-items: center; gap: 4px;
             font-size: 0.7rem; padding: 2px 8px; border-radius: 6px; font-weight: 700;
@@ -164,15 +164,15 @@
 <script>
     let isSelectMode = false;
 
-    // 页面加载时获取收藏列表
+    // Fetch favorites list on page load
     document.addEventListener('DOMContentLoaded', () => {
         loadFavorites();
     });
 
-    // 1. 加载数据
+    // 1. Load data
     async function loadFavorites() {
         try {
-            // 请确保这个 API 路径是正确的
+            // Ensure this API path is correct
             const response = await fetch('../api/Get_User_Favorites.php');
             const result = await response.json();
 
@@ -207,7 +207,7 @@
         }
     }
 
-    // 2. 生成卡片 HTML (关键修改：添加 data-product-id)
+    // 2. Generate card HTML (Add data-product-id)
     function createFavoriteCard(item, container) {
         let imgSrc = '../../Public_Assets/images/placeholder.jpg';
         if (item.Main_Image) {
@@ -226,7 +226,7 @@
             trendBadge = `<div class="trend-badge trend-down">▼ Drop RM${Math.abs(diff).toFixed(2)}</div>`;
         }
 
-        // 🔥 注意：这里增加了 data-product-id="${item.Product_ID}" 以便批量删除时读取
+        // Note: Added data-product-id="${item.Product_ID}" to read during batch deletion
         const cardHTML = `
             <div class="product-card" data-product-id="${item.Product_ID}" onclick="handleCardClick(this, 'Product_Detail.html?id=${item.Product_ID}')">
                 <div class="select-checkbox">✓</div>
@@ -246,7 +246,7 @@
         container.innerHTML += cardHTML;
     }
 
-    // 3. 切换选择模式
+    // 3. Toggle selection mode
     function toggleSelectMode() {
         isSelectMode = !isSelectMode;
         const btnSelect = document.getElementById('btnSelect');
@@ -273,7 +273,7 @@
         }
     }
 
-    // 4. 卡片点击处理
+    // 4. Handle card click
     function handleCardClick(card, url) {
         if (isSelectMode) {
             card.classList.toggle('selected');
@@ -283,13 +283,13 @@
         }
     }
 
-    // 5. 更新选中数量
+    // 5. Update selection count
     function updateSelectionCount() {
         const count = document.querySelectorAll('.product-card.selected').length;
         document.getElementById('selectedCount').innerText = count;
     }
 
-    // 🔥🔥🔥 6. 核心修复：批量删除真正调用 API 🔥🔥🔥
+    // 6. Batch delete functionality calling actual API
     function deleteSelectedItems() {
         const selectedCards = document.querySelectorAll('.product-card.selected');
         const count = selectedCards.length;
@@ -301,13 +301,13 @@
             `Are you sure you want to remove ${count} items?`,
             'Yes, Remove',
             async function() {
-                // 创建一个 Promise 数组，并行发送所有删除请求
+                // Create an array of Promises to send all delete requests in parallel
                 const deletePromises = Array.from(selectedCards).map(card => {
                     const pid = card.getAttribute('data-product-id');
                     const formData = new FormData();
                     formData.append('product_id', pid);
 
-                    // 调用 Toggle API (在收藏夹里 Toggle 就是删除)
+                    // Call Toggle API (Toggling in favorites implies deletion)
                     return fetch('../api/Toggle_Favorite.php', {
                         method: 'POST',
                         body: formData
@@ -315,11 +315,11 @@
                 });
 
                 try {
-                    // 等待所有请求完成
+                    // Wait for all requests to complete
                     const results = await Promise.all(deletePromises);
 
-                    // 检查是否有失败的（可选），这里简单处理：全部移除视觉元素
-                    // 只要请求发送成功，我们就假设删除了
+                    // Check for failures (optional), simple handling here: remove all visual elements
+                    // Assume deleted as long as the request is sent successfully
                     selectedCards.forEach(card => {
                         card.style.opacity = '0';
                         setTimeout(() => card.remove(), 300);
@@ -339,9 +339,9 @@
         );
     }
 
-    // 🔥🔥🔥 7. 核心修复：单个删除确保 API 调用成功 🔥🔥🔥
+    // 7. Single item deletion ensuring successful API call
     function deleteSingleItem(event, btn, productId) {
-        event.stopPropagation(); // 阻止跳转
+        event.stopPropagation(); // Prevent navigation
 
         StatusDialog.confirm(
             'Remove Item?',
@@ -359,7 +359,7 @@
                     const result = await res.json();
 
                     if (result.success) {
-                        // 只有后端返回 success 才删除 DOM
+                        // Only remove from DOM if backend returns success
                         const card = btn.closest('.product-card');
                         card.style.opacity = '0';
                         setTimeout(() => {
@@ -367,7 +367,7 @@
                             checkEmpty();
                         }, 300);
                     } else {
-                        // 如果失败，打印后端返回的错误信息
+                        // Log backend error message if failed
                         console.error('Backend Error:', result);
                         StatusDialog.fail('Error', result.msg || 'Could not remove item.');
                     }
@@ -379,7 +379,7 @@
         );
     }
 
-    // 8. 检查是否为空
+    // 8. Check if empty
     function checkEmpty() {
         const remaining = document.querySelectorAll('.product-card');
         if (remaining.length === 0) {
@@ -394,4 +394,3 @@
 
 </body>
 </html>
-

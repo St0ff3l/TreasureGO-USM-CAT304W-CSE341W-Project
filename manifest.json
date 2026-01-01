@@ -1,0 +1,20 @@
+{
+  "name": "TreasureGo",
+  "short_name": "TreasureGo",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#4F46E5",
+  "icons": [
+    {
+      "src": "Public_Assets/images/TreasureGo_Logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "Public_Assets/images/TreasureGo_Logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

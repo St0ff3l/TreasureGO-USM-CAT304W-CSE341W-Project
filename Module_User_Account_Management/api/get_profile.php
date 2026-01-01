@@ -21,12 +21,35 @@ $user_id = get_current_user_id();
 
 try {
     $pdo = getDBConnection();
-    // 2. 查询数据 (不查密码!)
-    $stmt = $pdo->prepare("SELECT User_ID, User_Username, User_Email, User_Role, User_Created_At, User_Profile_Image AS User_Profile_image, User_Average_Rating FROM User WHERE User_ID = ?");
+
+    // 2. 查询数据
+    // 🔥 修改点 1: 在这里添加了 User_Payment_PIN_Hash
+    $stmt = $pdo->prepare("
+        SELECT 
+            User_ID, 
+            User_Username, 
+            User_Email, 
+            User_Role, 
+            User_Created_At, 
+            User_Profile_Image AS User_Profile_image, 
+            User_Average_Rating,
+            User_Payment_PIN_Hash 
+        FROM User 
+        WHERE User_ID = ?
+    ");
     $stmt->execute([$user_id]);
-    $user = $stmt->fetch();
+    $user = $stmt->fetch(PDO::FETCH_ASSOC); // 建议明确使用关联数组
 
     if ($user) {
+        // =================================================================
+        // 🔥 修改点 2: 检查是否有 PIN，生成 has_pin 字段给前端
+        // =================================================================
+        $user['has_pin'] = !empty($user['User_Payment_PIN_Hash']);
+
+        // 为了安全，把密码 Hash 删掉，绝对不要传给前端
+        unset($user['User_Payment_PIN_Hash']);
+        // =================================================================
+
         // 3. 计算统计数据 (分开处理，防止一个失败影响其他)
 
         // A. Published Count

@@ -11,7 +11,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
 
   <style>
-    /* ================= 样式部分 ================= */
+    /* =================
+       Styles
+       ================= */
     :root {
       --bg-color: #F3F6F9;
       --primary: #4F46E5;
@@ -56,7 +58,7 @@
     }
     .report-card:hover { transform: translateY(-3px); box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.08); }
 
-    /* Cancel 按钮样式 */
+    /* Cancel button */
     .btn-pill-cancel {
       padding: 6px 14px;
       border-radius: 99px;
@@ -77,7 +79,7 @@
       box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.3);
     }
 
-    /* 状态颜色 */
+    /* Status colors */
     .status-Cancelled .status-indicator { background: #9CA3AF; }
     .status-Cancelled .status-badge { background: #F3F4F6; color: #6B7280; }
     .status-Pending .status-indicator { background: #F59E0B; }
@@ -100,7 +102,7 @@
     .status-Resolved .status-badge { background: #D1FAE5; color: #065F46; }
     .status-Dismissed .status-badge { background: #F3F4F6; color: #374151; }
 
-    /* Admin Reply 样式优化 */
+    /* Admin reply container */
     .admin-reply-box { margin-top: 15px; background: #F8FAFC; border-radius: 12px; padding: 14px; border: 1px dashed #CBD5E1; display: flex; gap: 10px; }
     .admin-avatar { font-size: 1.5rem; }
     .reply-content { flex: 1; }
@@ -108,6 +110,31 @@
     .reply-header h4 { font-size: 0.9rem; color: #1F2937; font-weight: 700; }
     .reply-time { font-size: 0.75rem; color: #6B7280; font-weight: 500; }
     .reply-content p { font-size: 0.9rem; color: #4B5563; line-height: 1.4; }
+
+    /* Evidence image gallery */
+    .evidence-gallery {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+      margin-bottom: 15px;
+      flex-wrap: wrap;
+    }
+
+    .evidence-img {
+      width: 70px;
+      height: 70px;
+      object-fit: cover; /* Keep aspect ratio by cropping center */
+      border-radius: 8px;
+      border: 1px solid #E5E7EB;
+      cursor: pointer;
+      transition: transform 0.2s;
+      background-color: #f9fafb;
+    }
+
+    .evidence-img:hover {
+      transform: scale(1.05);
+      border-color: var(--primary);
+    }
 
     .empty-state { text-align: center; padding: 60px 0; color: #9CA3AF; }
     .empty-icon { font-size: 4rem; display: block; margin-bottom: 15px; opacity: 0.5; }
@@ -134,9 +161,11 @@
 </div>
 
 <script>
-  // ================= 逻辑部分 =================
+  /* =================
+     Page logic
+     ================= */
 
-  // 1. 获取列表
+  // Fetch the current user's report list.
   async function fetchReports() {
     const listContainer = document.getElementById('reportList');
     try {
@@ -153,7 +182,7 @@
     }
   }
 
-  // 2. 取消举报
+  // Cancel a report (allowed only while status is Pending).
   function handleCancel(reportId) {
     if (typeof StatusDialog === 'undefined') {
       console.error('StatusDialog not loaded');
@@ -177,7 +206,7 @@
 
                 if (data.success) {
                   StatusDialog.success('Cancelled', 'Report has been cancelled.', 'Okay', () => {
-                    fetchReports(); // 刷新列表
+                    fetchReports(); // Refresh the list
                   });
                 } else {
                   StatusDialog.fail('Error', data.message);
@@ -189,9 +218,12 @@
     );
   }
 
-  // 3. 渲染列表 (核心修改：添加了时间显示逻辑)
+  // Render report cards into the list container.
   function renderList(data) {
     const container = document.getElementById('reportList');
+
+    // Base path used to build evidence image URLs.
+    const basePath = '../../';
 
     if (!data || data.length === 0) {
       container.innerHTML = `
@@ -206,7 +238,7 @@
     }
 
     container.innerHTML = data.map(r => {
-      // 状态标签处理
+      // Map backend status to UI label and CSS class.
       let statusLabel = 'Processing';
       let statusClass = r.status;
 
@@ -215,19 +247,16 @@
       else if(r.status === 'Cancelled') statusLabel = 'Cancelled';
       else statusLabel = 'Pending Review';
 
-      // 取消按钮仅在 Pending 时显示
       const cancelButton = r.status === 'Pending'
               ? `<button onclick="handleCancel(${r.id})" class="btn-pill-cancel">Cancel Report</button>`
               : '';
 
-      // 🔥 核心修改：处理管理员回复部分 🔥
+      // Admin reply section (if provided).
       let adminReplyHtml = '';
       if (r.adminReply) {
         let timeHtml = '';
-        // 如果有处理时间，进行格式化显示
         if (r.updatedAt) {
           const dateObj = new Date(r.updatedAt);
-          // 格式化为: 2025/12/23 14:30
           const dateStr = dateObj.toLocaleDateString() + ' ' + dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
           timeHtml = `<span class="reply-time">${dateStr}</span>`;
         }
@@ -246,6 +275,23 @@
           `;
       }
 
+      // Evidence images (if provided).
+      let evidenceHtml = '';
+      if (r.evidence && Array.isArray(r.evidence) && r.evidence.length > 0 && r.evidence[0] !== "") {
+        const images = r.evidence.map(img => {
+          if(!img) return '';
+          // Build the image URL from the base path and the stored relative path.
+          const fullPath = basePath + img.trim();
+          return `<a href="${fullPath}" target="_blank">
+                    <img src="${fullPath}" class="evidence-img" alt="Proof" onerror="this.style.display='none'">
+                  </a>`;
+        }).join('');
+
+        if(images) {
+          evidenceHtml = `<div class="evidence-gallery">${images}</div>`;
+        }
+      }
+
       return `
         <div class="report-card status-${statusClass}">
           <div class="status-indicator"></div>
@@ -259,6 +305,8 @@
             <h3>${r.targetName || 'Unknown Target'}</h3>
             <span class="reason-tag">${r.reason}</span>
             <p class="details-text">"${r.details}"</p>
+
+            ${evidenceHtml}
           </div>
 
           ${adminReplyHtml}
@@ -275,7 +323,7 @@
     }).join('');
   }
 
-  // 初始化加载
+  // Initial page load.
   document.addEventListener('DOMContentLoaded', fetchReports);
 </script>
 

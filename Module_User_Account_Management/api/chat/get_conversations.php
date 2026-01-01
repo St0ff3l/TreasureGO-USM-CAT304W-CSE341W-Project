@@ -14,16 +14,22 @@ $current_user_id = $_SESSION['user_id'];
 
 try {
     $pdo = getDBConnection();
-    
+
     // 获取最近联系人列表及其最后一条消息
     // 只返回商品咨询：排除 Product_ID 为 NULL 的客服/工单聊天
     $sql = "
         SELECT 
             u.User_ID, 
             u.User_Username, 
-            u.User_Profile_image as User_Avatar_Url,
+            -- ❌ 修改前: u.User_Profile_image as User_Avatar_Url,
+            -- ✅ 修改后: 直接使用原字段名，确保和前端 JS 读取的字段一致
+            u.User_Profile_Image, 
+            
             p.Product_Title as Product_Name,
+            
+            -- 商品图片逻辑保持不变
             pi.Image_URL as Product_Image_Url,
+            
             m.Product_ID,
             m.Message_Content,
             m.Message_Type,
@@ -52,7 +58,7 @@ try {
 
     $stmt = $pdo->prepare($sql);
     $stmt->execute([$current_user_id, $current_user_id, $current_user_id]);
-    $conversations = $stmt->fetchAll();
+    $conversations = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     echo json_encode(['status' => 'success', 'data' => $conversations]);
 

@@ -210,7 +210,7 @@
   }
 
   // ===============================================
-  // 3. Save Data (POST) - Updated with StatusDialog
+  // 3. Save Data (POST)
   // ===============================================
   document.getElementById('kbForm').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -235,7 +235,7 @@
       const json = await res.json();
 
       if (json.success) {
-        // 🔥 成功弹窗，只有一个 Close 按钮
+        // Success dialog with a single close action.
         StatusDialog.success(
                 'Saved Successfully',
                 'New entry has been added to the Knowledge Base.',
@@ -257,10 +257,10 @@
   });
 
   // ===============================================
-  // 4. Delete Data (POST) - Updated with StatusDialog
+  // 4. Delete Data (POST)
   // ===============================================
   async function deleteKB(id) {
-    // 🔥 二次确认弹窗
+    // Confirmation dialog before deleting an entry.
     StatusDialog.confirm(
             'Delete Entry?',
             'Are you sure you want to delete this? The AI will no longer use it.',
@@ -288,6 +288,7 @@
     );
   }
 
+  // Minimal HTML-escaping for user-provided content rendered into the table.
   function escapeHtml(text) {
     if (!text) return "";
     return text

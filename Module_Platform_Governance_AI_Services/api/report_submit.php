@@ -1,26 +1,12 @@
 <?php
-// ==============================================================================
-// API: Submit Report (Product focus)
-// Path: Module_Platform_Governance_AI_Services/api/report_submit.php
-// Method: POST (JSON)
-// Auth: Session required (uses $_SESSION['user_id'] as Reporting_User_ID)
-// Inserts into: Report
+// Submits a report against a product or a user.
 //
-// Expected payload (from pages/report.html):
-// {
-//   "type": "product",
-//   "reportReason": "Spam" | "Scam" | ...,
-//   "details": "...",
-//   "reportedUserId": 123,            // optional but recommended
-//   "reportedItemId": 456,            // REQUIRED for product
-//   "contactEmail": "..."            // optional (not stored unless you add column)
-// }
+// Method: POST
+// Content-Type:
+// - application/json (text-only report)
+// - multipart/form-data (report with up to 3 evidence images)
 //
-// Note:
-// - Current implementation supports PRODUCT reports only (type=product).
-// - Report_Status is set to 'Pending'; Report_Creation_Date is NOW().
-// - Admin_Action_ID is NULL.
-// ==============================================================================
+// Auth: requires a logged-in session
 
 session_start();
 require_once __DIR__ . '/config/treasurego_db_config.php';
@@ -28,7 +14,6 @@ require_once __DIR__ . '/config/treasurego_db_config.php';
 header('Content-Type: application/json; charset=UTF-8');
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    // If you later add CORS headers, you can exit early here.
     exit(0);
 }
 
@@ -38,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-// 1) Auth check
+// Authentication guard.
 if (!isset($_SESSION['user_id'])) {
     http_response_code(401);
     echo json_encode(['success' => false, 'message' => 'Auth Required']);
@@ -46,22 +31,20 @@ if (!isset($_SESSION['user_id'])) {
 }
 $reportingUserId = (int)$_SESSION['user_id'];
 
-// 2) Parse JSON
-// 2) Parse JSON OR FormData
+// Read request payload from either JSON or multipart/form-data.
 $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+$input = [];
 
 if (stripos($contentType, 'application/json') !== false) {
-    // JSON 提交（无图片）
-    $input = json_decode(file_get_contents('php://input'), true);
-    if (!is_array($input)) {
-        $input = [];
-    }
+    // JSON submission (no images)
+    $data = json_decode(file_get_contents('php://input'), true);
+    if (is_array($data)) $input = $data;
 } else {
-    // FormData 提交（有图片）
+    // FormData submission (with images)
     $input = $_POST;
 }
 
-
+// Request fields.
 $type = isset($input['type']) ? strtolower(trim((string)$input['type'])) : 'product';
 $reportReason = isset($input['reportReason']) ? trim((string)$input['reportReason']) : '';
 $details = isset($input['details']) ? trim((string)$input['details']) : '';
@@ -76,10 +59,11 @@ if (isset($input['reportedItemId']) && $input['reportedItemId'] !== null && $inp
     $reportedItemId = (int)$input['reportedItemId'];
 }
 
-// 3) Validate (product-only for now)
-if ($type !== 'product') {
+// Validate request.
+$allowedTypes = ['product', 'user'];
+if (!in_array($type, $allowedTypes)) {
     http_response_code(400);
-    echo json_encode(['success' => false, 'message' => 'Only product reports are supported for now (type=product).']);
+    echo json_encode(['success' => false, 'message' => 'Invalid report type. Supported: product, user.']);
     exit;
 }
 
@@ -95,12 +79,20 @@ if ($details === '') {
     exit;
 }
 
-if (!$reportedItemId || $reportedItemId <= 0) {
+// Validate required IDs based on report type.
+if ($type === 'product' && (!$reportedItemId || $reportedItemId <= 0)) {
     http_response_code(400);
-    echo json_encode(['success' => false, 'message' => 'reportedItemId is required for product reports']);
+    echo json_encode(['success' => false, 'message' => 'Product ID (reportedItemId) is required for product reports']);
     exit;
 }
 
+if ($type === 'user' && (!$reportedUserId || $reportedUserId <= 0)) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'message' => 'User ID (reportedUserId) is required for user reports']);
+    exit;
+}
+
+// Resolve database connection handle.
 if (!isset($conn) && isset($pdo)) {
     $conn = $pdo;
 }
@@ -112,35 +104,44 @@ if (!isset($conn)) {
 }
 
 try {
-    // 4) Derive reported user from DB (source of truth)
-    $ctxSql = "SELECT p.User_ID AS Seller_User_ID, p.Product_Title
-               FROM Product p
-               WHERE p.Product_ID = ?
-               LIMIT 1";
-    $ctxStmt = $conn->prepare($ctxSql);
-    $ctxStmt->execute([$reportedItemId]);
-    $ctxRow = $ctxStmt->fetch(PDO::FETCH_ASSOC);
+    $dbProductTitle = null;
 
-    if (!$ctxRow) {
-        http_response_code(404);
-        echo json_encode(['success' => false, 'message' => 'Product not found']);
-        exit;
-    }
+    // Context resolution:
+    // - Product report: verify the product exists and infer the seller as the reported user.
+    // - User report: report the specified user and ignore any reported item ID.
 
-    $dbSellerUserId = (int)$ctxRow['Seller_User_ID'];
-    $dbProductTitle = $ctxRow['Product_Title'] ?? null;
+    if ($type === 'product') {
+        // Product report path.
+        // Verify the product exists and read its seller ID.
+        $ctxSql = "SELECT p.User_ID AS Seller_User_ID, p.Product_Title
+                   FROM Product p
+                   WHERE p.Product_ID = ?
+                   LIMIT 1";
+        $ctxStmt = $conn->prepare($ctxSql);
+        $ctxStmt->execute([$reportedItemId]);
+        $ctxRow = $ctxStmt->fetch(PDO::FETCH_ASSOC);
 
-    // If frontend sent a reportedUserId, we can cross-check (optional)
-    if ($reportedUserId !== null && $reportedUserId > 0 && $reportedUserId !== $dbSellerUserId) {
-        // Not fatal: override to DB value to prevent tampering
-        $reportedUserId = $dbSellerUserId;
+        if (!$ctxRow) {
+            http_response_code(404);
+            echo json_encode(['success' => false, 'message' => 'Product not found']);
+            exit;
+        }
+
+        // Override reportedUserId so the report targets the actual seller for this product.
+        $reportedUserId = (int)$ctxRow['Seller_User_ID'];
+        $dbProductTitle = $ctxRow['Product_Title'] ?? null;
+
     } else {
-        $reportedUserId = $dbSellerUserId;
+        // User report path.
+        // Treat this as a user-only report; no product context is stored.
+        $reportedItemId = null;
+
+        // An optional existence check for the reported user could be added here.
     }
 
     $contactEmail = isset($input['contactEmail']) ? trim((string)$input['contactEmail']) : null;
 
-    // 5) Insert report
+    // Insert the report record.
     $sql = "INSERT INTO Report (
                 Report_Type,
                 Report_Reason,
@@ -162,7 +163,7 @@ try {
         $reportingUserId,
         $contactEmail,
         $reportedUserId,
-        $reportedItemId
+        $reportedItemId // In user mode this is null.
     ]);
 
     if (!$ok) {
@@ -172,28 +173,27 @@ try {
     }
     $reportId = (int)$conn->lastInsertId();
 
-// =======================
-// 处理图片上传（可选）
-// =======================
+    // Save up to 3 evidence images and store their public paths.
     $savedPaths = [];
 
     if (isset($_FILES['images']) && is_array($_FILES['images']['name'])) {
         $maxCount = 3;
-        $maxSize = 2 * 1024 * 1024; // 2MB 每张
+        $maxSize = 2 * 1024 * 1024; // 2MB
         $allowedMime = [
             'image/jpeg' => 'jpg',
             'image/png'  => 'png',
             'image/webp' => 'webp'
         ];
 
-        // 存放目录（确保这个目录在服务器可写）
-        $uploadDir = __DIR__ . '/../../Public_Assets/uploads/report_evidence';
+        // Store uploaded files under this module's assets directory.
+        $uploadDir = __DIR__ . '/../assets/images/report_images';
+
         if (!is_dir($uploadDir)) {
+            // Create the directory if it does not exist.
             @mkdir($uploadDir, 0775, true);
         }
 
         $finfo = new finfo(FILEINFO_MIME_TYPE);
-
         $count = min(count($_FILES['images']['name']), $maxCount);
 
         for ($i = 0; $i < $count; $i++) {
@@ -209,18 +209,18 @@ try {
             if (!isset($allowedMime[$mime])) continue;
 
             $ext = $allowedMime[$mime];
-
-            // 安全文件名：reportId_time_rand.ext
+            // Filename generation is based on the report ID + timestamp + random suffix.
             $filename = $reportId . '_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
+
+            // Absolute filesystem path.
             $absPath = $uploadDir . '/' . $filename;
 
             if (!move_uploaded_file($tmp, $absPath)) continue;
 
-            // 给前端用的 web path
-            $webPath = '/Public_Assets/uploads/report_evidence/' . $filename;
+            // Public URL path stored in the database.
+            $webPath = '/Module_Platform_Governance_AI_Services/assets/images/report_images/' . $filename;
             $savedPaths[] = $webPath;
 
-            // 写入 Report_Evidence
             $evStmt = $conn->prepare("INSERT INTO Report_Evidence (Report_ID, File_Path) VALUES (?, ?)");
             $evStmt->execute([$reportId, $webPath]);
         }
@@ -230,14 +230,13 @@ try {
         'success' => true,
         'report_id' => $reportId,
         'status' => 'Pending',
+        'report_type' => $type,
         'reported_user_id' => $reportedUserId,
         'product_title' => $dbProductTitle,
         'evidence' => $savedPaths
     ]);
 
-
 } catch (PDOException $e) {
-    // Common FK errors can happen here (invalid product/user id)
     http_response_code(500);
     echo json_encode([
         'success' => false,

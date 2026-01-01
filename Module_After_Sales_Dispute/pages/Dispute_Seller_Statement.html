@@ -1,20 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Seller Response | TreasureGO</title>
 
-  <link href="../assets/css/upload_images.css" rel="stylesheet">
-
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
 
   <script src="../../Public_Assets/js/status_dialog.js"></script>
 
   <style>
     /* =========================================
-       核心样式 (直接复用自 Dispute_Reject_Return.html)
+       1. Global Variables & Reset (Aligned with Request Refund)
        ========================================= */
     :root {
       --primary: #4F46E5;
@@ -22,306 +19,505 @@
       --primary-light: #EEF2FF;
       --text-dark: #111827;
       --text-gray: #6B7280;
-      --bg: #F0F2F5;
-      --card: #ffffff;
-      --border: #E5E7EB;
-      --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.10), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      --input-bg: #F3F4F6;
+      --border-radius: 16px;
+      --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
     }
+
     * { margin: 0; padding: 0; box-sizing: border-box; }
+
     body {
       font-family: 'Plus Jakarta Sans', sans-serif;
-      background: var(--bg);
-      /* 背景纹理保持一致 */
+      background: #F0F2F5;
+      /* Background texture */
       background-image: url('data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%234f46e5" fill-opacity="0.03"%3E%3Cpath d="M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E'), linear-gradient(to bottom right, #f3f4f6, #e5e7eb);
       color: var(--text-dark);
       min-height: 100vh;
-      padding: 40px 0;
+      padding-bottom: 40px;
     }
-    .container { max-width: 850px; margin: 0 auto; padding: 0 18px; }
-    .card {
-      background: var(--card);
-      border: 1px solid rgba(255,255,255,0.6);
+
+    /* Container Styles */
+    .publish-container {
+      max-width: 750px;
+      margin: 40px auto;
+      background: #ffffff;
       border-radius: 24px;
-      padding: 42px;
+      padding: 50px;
       box-shadow: var(--shadow-lg);
-      animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+      border: 1px solid rgba(255,255,255,0.6);
+      animation: fadeInPage 0.8s cubic-bezier(0.16, 1, 0.3, 1);
     }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
 
-    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
-    .back-link { display: inline-flex; align-items: center; gap: 8px; text-decoration: none; color: var(--text-gray); font-weight: 700; transition: 0.2s; }
-    .back-link:hover { color: var(--primary); transform: translateX(-3px); }
-
-    .pill { display: inline-flex; align-items: center; gap: 6px; font-size: 0.9rem; padding: 6px 10px; border-radius: 999px; background: var(--primary-light); color: var(--primary); font-weight: 800; }
+    @keyframes fadeInPage {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
 
     .page-title {
-      font-size: 2rem; font-weight: 800; letter-spacing: -1px;
+      font-size: 2rem;
+      font-weight: 800;
+      margin-bottom: 10px;
+      color: var(--text-dark);
+      text-align: center;
+      letter-spacing: -1px;
       background: linear-gradient(135deg, #111827 0%, #4F46E5 100%);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 8px;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
     }
-    .subtitle { color: var(--text-gray); margin-bottom: 22px; line-height: 1.6; }
 
-    /* Order Summary 样式 */
-    .order-summary {
-      background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 18px; padding: 18px;
-      display: flex; align-items: center; gap: 14px; margin-bottom: 22px;
+    .page-subtitle {
+      text-align: center;
+      color: var(--text-gray);
+      margin-bottom: 35px;
+      font-size: 0.95rem;
     }
-    .order-summary i { font-size: 1.5rem; color: var(--primary); }
 
-    .section-title { margin: 18px 0 10px; font-weight: 900; font-size: 1.05rem; color: #111827; }
+    /* Item Summary Box */
+    .item-summary {
+      background: #F8FAFC;
+      border: 1px solid #E2E8F0;
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 30px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    .item-thumb {
+      width: 60px; height: 60px;
+      border-radius: 10px; background: #ddd; object-fit: cover;
+    }
+    .item-details h4 { margin-bottom: 4px; font-weight: 700; }
+    .item-details p { color: var(--text-gray); font-size: 0.9rem; margin: 0; }
+    .item-price { margin-left: auto; font-weight: 700; color: var(--primary); font-size: 1.1rem; }
 
-    label { display: block; font-weight: 800; font-size: 0.85rem; margin-bottom: 10px; color: #374151; text-transform: uppercase; letter-spacing: 0.5px; }
+    /* Form Elements */
+    .form-group {
+      margin-bottom: 28px;
+      transition: all 0.3s ease;
+    }
 
-    textarea, input[type="text"] { width: 100%; padding: 14px 16px; background: #F3F4F6; border: 2px solid transparent; border-radius: 14px; font-family: inherit; font-size: 0.98rem; transition: 0.2s; }
-    textarea:focus { outline: none; border-color: var(--primary); background: #fff; }
-    textarea { min-height: 160px; resize: vertical; line-height: 1.6; }
+    label {
+      display: block; font-weight: 700; font-size: 0.9rem;
+      margin-bottom: 10px; color: #374151;
+      text-transform: uppercase; letter-spacing: 0.5px;
+    }
 
-    .help { font-size: 0.92rem; color: var(--text-gray); line-height: 1.6; margin-top: 8px; }
+    input[type="text"], textarea {
+      width: 100%; padding: 16px 20px;
+      background: var(--input-bg);
+      border: 2px solid transparent;
+      border-radius: var(--border-radius);
+      font-size: 1rem; font-family: inherit; color: var(--text-dark);
+      transition: all 0.3s ease;
+      font-weight: 500;
+    }
+
+    input:hover, textarea:hover {
+      background: #ffffff;
+      border-color: #E5E7EB;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    }
+
+    input:focus, textarea:focus {
+      outline: none;
+      background: #ffffff;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+      transform: translateY(-2px);
+    }
+
+    textarea { resize: vertical; min-height: 160px; line-height: 1.6; }
+
     .char-count { text-align: right; font-size: 0.85rem; color: var(--text-gray); margin-top: 6px; }
 
-    .actions { display: flex; gap: 12px; margin-top: 26px; flex-wrap: wrap; }
-    .btn { border: none; border-radius: 14px; padding: 12px 24px; font-weight: 800; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; gap: 8px; font-size: 1rem; }
-    .btn-primary { background: var(--primary); color: #fff; }
-    .btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3); }
-    .btn-secondary { background: #F3F4F6; color: #374151; }
-    .btn-secondary:hover { background: #E5E7EB; }
-    .btn:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
+    /* Upload Area (Reused from Request Refund) */
+    .upload-area {
+      border: 2px dashed #CBD5E1;
+      border-radius: 20px;
+      padding: 30px;
+      padding-bottom: 60px;
+      min-height: 200px;
+      background: #F8FAFC;
+      transition: all 0.3s ease;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      position: relative;
+      cursor: default;
+    }
+    .upload-area:hover { border-color: var(--primary); }
+    .upload-area.drag-over { border-color: var(--primary); background: var(--primary-light); }
 
-    .line { height: 1px; background: #F3F4F6; margin: 22px 0; }
-    .muted { color: var(--text-gray); }
+    .upload-placeholder { text-align: center; cursor: pointer; width: 100%; padding: 10px; }
+    .upload-icon {
+      font-size: 2.5rem; background: white; width: 80px; height: 80px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 50%; box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+      color: var(--primary); margin: 0 auto;
+    }
 
-    /* 错误提示框 */
-    .status-msg { margin-top: 15px; padding: 12px; border-radius: 12px; display: none; font-weight: 600; font-size: 0.95rem; }
-    .status-err { background: #FEF2F2; color: #DC2626; border: 1px solid #FECACA; }
-    .status-ok { background: #ECFDF5; color: #059669; border: 1px solid #A7F3D0; }
+    .image-preview-container { display: none; width: 100%; gap: 15px; flex-wrap: wrap; justify-content: center; }
+
+    .preview-wrapper { position: relative; width: 100px; height: 100px; animation: popIn 0.4s ease; }
+    @keyframes popIn { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .preview-item { width: 100%; height: 100%; border-radius: 12px; object-fit: cover; border: 3px solid #fff; box-shadow: 0 8px 15px rgba(0,0,0,0.1); }
+
+    .delete-single-btn {
+      position: absolute; top: -8px; right: -8px; width: 24px; height: 24px;
+      background: #EF4444; color: white; border-radius: 50%; border: 2px solid white;
+      display: flex; align-items: center; justify-content: center; cursor: pointer;
+      box-shadow: 0 4px 10px rgba(239, 68, 68, 0.4); z-index: 10; font-size: 12px;
+    }
+
+    .add-more-btn {
+      width: 40px; height: 40px; border-radius: 50%; background: var(--primary); color: white;
+      border: none; font-size: 24px; display: none; align-items: center; justify-content: center;
+      cursor: pointer; position: absolute; bottom: 15px; right: 15px; z-index: 20;
+    }
+    .clear-btn {
+      position: absolute; top: 15px; right: 15px; background: rgba(239, 68, 68, 0.1); color: #EF4444;
+      border: 1px solid rgba(239, 68, 68, 0.2); padding: 5px 12px; border-radius: 30px;
+      font-size: 0.75rem; font-weight: 700; cursor: pointer; z-index: 10; display: none;
+    }
+
+    /* Buttons */
+    .btn-group { display: flex; gap: 20px; margin-top: 50px; }
+    .btn-submit {
+      flex: 2; padding: 18px; background: linear-gradient(135deg, var(--primary) 0%, #4338CA 100%);
+      color: white; border: none; border-radius: 50px; font-size: 1.1rem; font-weight: 700; cursor: pointer;
+      box-shadow: 0 10px 25px rgba(79, 70, 229, 0.3);
+      transition: all 0.3s ease;
+    }
+    .btn-submit:hover { transform: translateY(-3px); box-shadow: 0 15px 35px rgba(79, 70, 229, 0.4); }
+    .btn-submit:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
+
+    .btn-cancel {
+      flex: 1; padding: 18px; background: white; color: var(--text-gray); border: 2px solid #E5E7EB;
+      border-radius: 50px; font-size: 1.1rem; font-weight: 600; cursor: pointer; text-align: center; text-decoration: none;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.3s ease;
+    }
+    .btn-cancel:hover { background: #F3F4F6; color: var(--text-dark); }
+
+    @media (max-width: 768px) {
+      .publish-container { padding: 30px 20px; margin: 20px; }
+      .btn-group { flex-direction: column-reverse; }
+    }
   </style>
 </head>
-
 <body>
-<div class="container">
-  <div class="card">
-    <div class="topbar">
-      <a class="back-link" href="javascript:history.back()"><i class="ri-arrow-left-line"></i>Back</a>
-      <span class="pill"><i class="ri-store-2-line"></i>Seller Portal</span>
+
+<script src="../../Public_Assets/js/headerbar.js"></script>
+<script>
+  if (typeof TreasureGoHeaderbar !== 'undefined') {
+    TreasureGoHeaderbar.mount({ basePath: '../../' });
+  }
+</script>
+<div class="publish-container">
+  <h1 class="page-title">Respond to Dispute</h1>
+  <p class="page-subtitle">Please explain your perspective and provide evidence to help resolve this case.</p>
+
+  <form id="sellerResponseForm" enctype="multipart/form-data">
+
+    <div class="form-group">
+      <label>Order Context</label>
+      <div class="item-summary">
+        <img src="https://via.placeholder.com/100" alt="Product" class="item-thumb">
+        <div class="item-details">
+          <h4>Loading Product Info...</h4>
+          <p id="orderIdDisplay">Order ID: Loading...</p>
+        </div>
+        <div class="item-price" id="orderAmountDisplay">RM-.--</div>
+      </div>
     </div>
 
-    <div class="page-title">Respond to Dispute</div>
-    <div class="subtitle">
-      Please provide your explanation and supporting evidence regarding this dispute.
-      This information will be reviewed by the platform support team.
-    </div>
-
-    <div id="orderSummary" class="order-summary" style="display:none;"></div>
-
-    <div class="line"></div>
-
-    <div class="section-title">Your Statement</div>
-
-    <div style="margin-bottom: 22px;">
-      <label for="statement">Explanation</label>
-      <textarea id="statement" placeholder="Explain your side of the story (timeline, product condition, shipping proof, etc.). Minimum 20 characters."></textarea>
+    <div class="form-group">
+      <label>Your Statement / Explanation <span style="color:#EF4444">*</span></label>
+      <textarea name="seller_response" id="statement" placeholder="Explain your side of the story (timeline, product condition, shipping proof, etc.). Minimum 20 characters." required></textarea>
       <div class="char-count" id="charHint">0 characters</div>
     </div>
 
-    <div class="section-title">Evidence (Optional)</div>
-    <div id="evidence-container" style="margin-bottom: 12px;"></div>
-    <div id="uploadStatus" class="help" style="margin-bottom: 8px;"></div>
-    <div class="help">
-      <span class="muted"><i class="ri-information-line"></i> Note:</span>
-      Supported formats: JPG, PNG, WebP. Max 6 images.
+    <div class="form-group">
+      <label>Supporting Evidence (Optional)</label>
+      <div class="upload-area" id="area_evidence">
+        <button type="button" class="clear-btn" onclick="clearImages('evidence')">Clear</button>
+
+        <div class="upload-placeholder" onclick="triggerUpload('evidence')">
+          <div class="upload-icon">📷</div>
+          <p style="margin-top: 15px; color: #6B7280; font-weight: 500;">Click or Drag to upload photos</p>
+          <p style="font-size: 0.8rem; color: #9CA3AF; margin-top:5px;">Supported: JPG, PNG, WebP (Max 6)</p>
+        </div>
+
+        <div class="image-preview-container" id="preview_evidence"></div>
+
+        <button type="button" class="add-more-btn" onclick="triggerUpload('evidence')">+</button>
+        <input type="file" id="input_evidence" name="evidence[]" multiple style="display: none;" onchange="handleFiles(this.files, 'evidence')">
+      </div>
     </div>
 
-    <div class="actions">
-      <button class="btn btn-primary" id="btnSubmit">
-        <i class="ri-send-plane-fill"></i> Submit Response
-      </button>
-      <button class="btn btn-secondary" id="btnBackToOrder">
-        Cancel
-      </button>
+    <div class="btn-group">
+      <a href="javascript:history.back()" class="btn-cancel">Cancel</a>
+      <button type="submit" class="btn-submit">Submit Response</button>
     </div>
 
-    <div id="msgBox" class="status-msg"></div>
-
-  </div>
+  </form>
 </div>
 
-<script src="../assets/js/upload_images.js"></script>
-
 <script>
-  (function () {
-    'use strict';
+  // ==========================================
+  // Global & Init
+  // ==========================================
+  const fileStores = {
+    evidence: new DataTransfer()
+  };
 
-    // ================= 配置区域 =================
-    // 注意：这里沿用 Seller 端的 API，但逻辑上模拟 Buyer 端的“先上传后提交”
-    const API_SELLER_DISPUTE_SUBMIT = '../api/dispute_seller_submit.php';
-    const API_GET_ORDER_DETAILS = '../../Module_Transaction_Fund/api/Get_User_Orders.php'; // 假设用于获取订单详情
+  document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const orderId = urlParams.get('order_id') || urlParams.get('id');
 
-    // 全局变量
-    let currentOrderId = null;
-    let evidenceUploader = null;
-    let uploadedEvidenceUrls = []; // 存储已存在的或新上传的图片链接
-
-    // 工具函数
-    function getQueryParam(name) { return new URL(window.location.href).searchParams.get(name); }
-    function setMsg(text, type) {
-      const el = document.getElementById('msgBox');
-      el.style.display = 'block';
-      el.className = `status-msg ${type === 'err' ? 'status-err' : 'status-ok'}`;
-      el.innerHTML = text;
+    if (orderId) {
+      document.getElementById('orderIdDisplay').innerText = `Order ID: #${orderId}`;
+      // Fallback: Fetch details if not passed via URL
+      fetchOrderDetails(orderId);
+    } else {
+      document.getElementById('orderIdDisplay').innerText = "Order ID: Not Provided";
+      if(typeof StatusDialog !== 'undefined') StatusDialog.fail('Error', 'Missing Order ID');
     }
 
-    // ================= 核心逻辑：上传图片 =================
-    // 类似于 Buyer 端的 uploadImagesFirst，但指向 Seller API
-    async function uploadImagesFirst(files, orderId) {
-      if (files.length === 0) return [];
+    // Initialize Drag & Drop
+    initDragDrop('area_evidence', 'evidence');
 
-      const statusDiv = document.getElementById('uploadStatus');
-      statusDiv.innerHTML = '<span style="color:var(--primary)"><i class="ri-loader-4-line ri-spin"></i> Uploading evidence images...</span>';
+    // Char count listener
+    document.getElementById('statement').addEventListener('input', function() {
+      document.getElementById('charHint').innerText = this.value.length + ' characters';
+    });
+  });
 
-      const fd = new FormData();
-      fd.append('order_id', orderId);
-      // 注意：字段名需与 PHP 接收端一致 (evidence[])
-      Array.from(files).forEach(f => fd.append('evidence[]', f));
+  // ==========================================
+  // 1. Fetch Order Data (Frontend Display)
+  // ==========================================
+  async function fetchOrderDetails(orderId) {
+    try {
+      // Reusing the Order Management API to get details
+      const response = await fetch(`../../Module_Transaction_Fund/api/Orders_Management.php?action=get_order&order_id=${orderId}`);
+      const result = await response.json();
 
-      // 调用 Seller API 进行上传
-      // 假设该 API 检测到 POST 包含文件且没有 JSON body 时会处理上传
-      const res = await fetch(API_SELLER_DISPUTE_SUBMIT, { method: 'POST', body: fd });
-      const data = await res.json();
+      if (result.success && result.data) {
+        const data = result.data;
+        const imgEl = document.querySelector('.item-thumb');
 
-      if (!data.success) throw new Error(data.message || 'Image upload failed');
-
-      statusDiv.innerHTML = '<span style="color:#059669"><i class="ri-check-line"></i> Images uploaded successfully.</span>';
-      return data.files.map(f => f.url);
-    }
-
-    // ================= 核心逻辑：提交表单 =================
-    async function handleSubmit() {
-      const statement = document.getElementById('statement').value.trim();
-
-      // 1. 🔥 新增：从 URL 获取上一步选好的原因和收货状态
-      const reasonCode = getQueryParam('reason');
-      const receivedStatus = getQueryParam('received');
-
-      if (!currentOrderId) return setMsg('Missing Order ID.', 'err');
-
-      // 检查：如果 URL 里没有 reason，说明流程可能有问题，给个默认值防止报错
-      const finalReason = reasonCode || 'Seller_Refused_Return';
-
-      if (statement.length < 20) return setMsg('Please provide a detailed explanation (min 20 chars).', 'err');
-
-      if (!confirm('Are you sure you want to submit this response?')) return;
-
-      const btn = document.getElementById('btnSubmit');
-      btn.disabled = true;
-      btn.innerHTML = '<i class="ri-loader-4-line ri-spin"></i> Processing...';
-      setMsg('', '');
-
-      try {
-        const files = evidenceUploader.getFiles();
-        let newUploadedUrls = [];
-
-        if (files.length > 0) {
-          newUploadedUrls = await uploadImagesFirst(files, currentOrderId);
+        // Image handling
+        if (data.Main_Image) {
+          imgEl.src = data.Main_Image.startsWith('http') || data.Main_Image.startsWith('../')
+                  ? data.Main_Image : `../../${data.Main_Image}`;
         }
 
-        const finalEvidenceList = [...uploadedEvidenceUrls, ...newUploadedUrls];
+        if (data.Product_Title) document.querySelector('.item-details h4').innerText = data.Product_Title;
+        if (data.Orders_Total_Amount) document.getElementById('orderAmountDisplay').innerText = `RM${parseFloat(data.Orders_Total_Amount).toFixed(2)}`;
+      }
+    } catch (error) {
+      console.error("Failed to load order:", error);
+    }
+  }
 
-        // 2. 🔥 修改：构建 Payload，把原因传给后端
-        const payload = {
-          order_id: currentOrderId,
-          seller_response: statement,
-          evidence_images: finalEvidenceList,
-          // 新增字段
-          reason_code: finalReason,       // 传给后端填入 Dispute_Details
-          received_status: receivedStatus // 传给后端记录是否收到货
+  // ==========================================
+  // 2. Drag & Drop Upload Logic
+  // ==========================================
+  function initDragDrop(areaId, typeKey) {
+    const area = document.getElementById(areaId);
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+      area.addEventListener(eventName, (e) => { e.preventDefault(); e.stopPropagation(); }, false);
+    });
+    area.addEventListener('dragover', () => area.classList.add('drag-over'), false);
+    area.addEventListener('dragleave', () => area.classList.remove('drag-over'), false);
+    area.addEventListener('drop', (e) => {
+      area.classList.remove('drag-over');
+      handleFiles(e.dataTransfer.files, typeKey);
+    }, false);
+  }
+
+  window.triggerUpload = function(typeKey) {
+    document.getElementById('input_' + typeKey).click();
+  }
+
+  window.handleFiles = function(files, typeKey) {
+    const dt = fileStores[typeKey];
+    for (let file of files) {
+      if (file.type.startsWith('image/') || file.type.startsWith('video/')) {
+        // Simple client-side validation for Seller Response
+        if(dt.items.length >= 6) { alert('Max 6 files allowed'); break; }
+        dt.items.add(file);
+      }
+    }
+    // Update input files
+    document.getElementById('input_' + typeKey).files = dt.files;
+    renderPreview(typeKey);
+  }
+
+  window.clearImages = function(typeKey) {
+    fileStores[typeKey].items.clear();
+    document.getElementById('input_' + typeKey).files = fileStores[typeKey].files;
+    renderPreview(typeKey);
+  }
+
+  window.removeImage = function(index, typeKey) {
+    const dt = fileStores[typeKey];
+    const newDt = new DataTransfer();
+    for(let i = 0; i < dt.files.length; i++) {
+      if(i !== index) newDt.items.add(dt.files[i]);
+    }
+    fileStores[typeKey] = newDt;
+    document.getElementById('input_' + typeKey).files = newDt.files;
+    renderPreview(typeKey);
+  }
+
+  function renderPreview(typeKey) {
+    const dt = fileStores[typeKey];
+    const previewContainer = document.getElementById('preview_' + typeKey);
+    const area = document.getElementById('area_' + typeKey);
+
+    const placeholder = area.querySelector('.upload-placeholder');
+    const clearBtn = area.querySelector('.clear-btn');
+    const addMoreBtn = area.querySelector('.add-more-btn');
+
+    previewContainer.innerHTML = '';
+
+    if (dt.files.length > 0) {
+      placeholder.style.display = 'none';
+      clearBtn.style.display = 'block';
+      addMoreBtn.style.display = 'flex';
+      previewContainer.style.display = 'flex';
+
+      Array.from(dt.files).forEach((file, index) => {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+          const wrapper = document.createElement('div');
+          wrapper.className = 'preview-wrapper';
+          const content = file.type.startsWith('video/')
+                  ? `<video src="${event.target.result}" class="preview-item"></video>`
+                  : `<img src="${event.target.result}" class="preview-item">`;
+          wrapper.innerHTML = `${content}<div class="delete-single-btn" onclick="event.stopPropagation(); removeImage(${index}, '${typeKey}')">✕</div>`;
+          previewContainer.appendChild(wrapper);
         };
+        reader.readAsDataURL(file);
+      });
+    } else {
+      placeholder.style.display = 'block';
+      clearBtn.style.display = 'none';
+      addMoreBtn.style.display = 'none';
+      previewContainer.style.display = 'none';
+    }
+  }
 
-        const res = await fetch(API_SELLER_DISPUTE_SUBMIT, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
+  // ==========================================
+  // 3. Form Submission (To Seller API)
+  // ==========================================
+  document.getElementById('sellerResponseForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
 
-        const data = await res.json();
+    const urlParams = new URLSearchParams(window.location.search);
+    const orderId = urlParams.get('order_id') || urlParams.get('id');
+    const reasonCode = urlParams.get('reason') || 'Seller_Refused_Return'; // Default fallback
+    const receivedStatus = urlParams.get('received');
 
-        if (data.success) {
-          setMsg('Response submitted successfully! Redirecting...', 'ok');
-          setTimeout(() => {
-            window.location.href = `../../Module_Transaction_Fund/pages/Order_Details.html?id=${currentOrderId}`;
-          }, 1500);
-        } else {
-          throw new Error(data.message); // 如果后端还有问题，这里会捕获
-        }
+    if (!orderId) { alert('Error: Missing Order ID.'); return; }
 
-      } catch (e) {
-        console.error(e);
-        setMsg('Error: ' + e.message, 'err');
-        btn.disabled = false;
-        btn.innerHTML = '<i class="ri-send-plane-fill"></i> Submit Response';
-        document.getElementById('uploadStatus').innerHTML = '';
-      }
+    // Validation
+    const statement = document.getElementById('statement').value.trim();
+    if (statement.length < 20) {
+      if(typeof StatusDialog !== 'undefined') StatusDialog.fail('Validation', 'Explanation is too short. Please enter at least 20 characters.');
+      else alert('Explanation too short (min 20 chars).');
+      return;
     }
 
-    // ================= 初始化 =================
-    async function init() {
-      currentOrderId = getQueryParam('order_id') || getQueryParam('id');
+    const submitBtn = document.querySelector('.btn-submit');
+    const originalText = submitBtn.innerText;
+    submitBtn.innerText = 'Uploading & Submitting...';
+    submitBtn.disabled = true;
 
-      if (!currentOrderId) {
-        setMsg('Critical Error: No Order ID provided in URL.', 'err');
-        document.getElementById('btnSubmit').disabled = true;
-        return;
+    try {
+      // 1. Prepare Upload Logic (Similar to Seller logic but using FormData)
+      // Note: We are sending files directly in one go if the API supports it,
+      // OR we can do the 2-step process. Assuming the PHP endpoint handles standard FormData for simplicity here.
+      // If strict 2-step is needed, we would implement uploadImagesFirst here.
+
+      // Let's stick to the Robust FormData approach used in Request Refund
+      // but point to the Seller Dispute API.
+
+      const formData = new FormData(this);
+      formData.append('order_id', orderId);
+      formData.append('reason_code', reasonCode);
+      if(receivedStatus) formData.append('received_status', receivedStatus);
+
+      // We need to fetch the uploaded images first IF the API is strictly JSON based.
+      // However, typical simple PHP endpoints accept $_FILES + $_POST.
+      // We will assume the endpoint "../api/dispute_seller_submit.php" can handle multipart/form-data
+      // OR adapt to the JSON logic from the previous file.
+
+      // Hybrid approach: Upload images first via a helper endpoint if needed,
+      // but for "Reference consistency", let's use the Request Refund style (Direct POST).
+
+      // NOTE: Since the previous file used `dispute_seller_submit.php` with JSON + image URLs,
+      // We will simulate that logic here using the `uploadImagesFirst` strategy but kept inside the submit function.
+
+      let imageUrls = [];
+      const fileInput = document.getElementById('input_evidence');
+
+      if (fileInput.files.length > 0) {
+        // Step 1: Upload Images
+        const uploadData = new FormData();
+        uploadData.append('order_id', orderId);
+        Array.from(fileInput.files).forEach(f => uploadData.append('evidence[]', f));
+
+        // Use the same endpoint, assuming it handles 'evidence[]' in $_FILES
+        const uploadRes = await fetch('../api/dispute_seller_submit.php', { method: 'POST', body: uploadData });
+        const uploadJson = await uploadRes.json();
+
+        if (!uploadJson.success) throw new Error(uploadJson.message || 'Image upload failed');
+        imageUrls = uploadJson.files.map(f => f.url);
       }
 
-      // 1. 设置返回按钮
-      document.getElementById('btnBackToOrder').onclick = () => {
-        window.location.href = `../../Module_Transaction_Fund/pages/Order_Details.html?id=${currentOrderId}`;
+      // Step 2: Submit JSON Data
+      const payload = {
+        order_id: orderId,
+        seller_response: statement,
+        evidence_images: imageUrls,
+        reason_code: reasonCode,
+        received_status: receivedStatus
       };
 
-      // 2. 初始化上传组件
-      evidenceUploader = new TreasureGoUploader('#evidence-container', {
-        inputName: 'evidence[]',
-        maxFiles: 6
+      const finalRes = await fetch('../api/dispute_seller_submit.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
       });
 
-      // 3. 加载已有数据 (如果有，例如查看之前的证据)
-      // 这里可以复用 "list_evidence" 逻辑，如果卖家之前上传过图片想回显
-      try {
-        const res = await fetch(`${API_SELLER_DISPUTE_SUBMIT}?action=list_evidence&order_id=${currentOrderId}`);
-        const data = await res.json();
-        if (data.success && data.files && data.files.length > 0) {
-          uploadedEvidenceUrls = data.files.map(f => f.url);
-          // 注意：TreasureGoUploader 主要用于上传新图。
-          // 如果需要显示旧图，可以在 #evidence-container 上方或下方手动渲染一个 grid，
-          // 或者修改 TreasureGoUploader 支持 setInitialFiles (如果支持的话)。
-          // 为保持简单，这里暂不显示旧图预览，仅在逻辑层保留数据。
-        }
+      const result = await finalRes.json();
 
-        // 尝试加载订单摘要 (可选，增加用户体验)
-        // 这里的 API 调用逻辑取决于您的系统是否允许卖家读取此端点
-        document.getElementById('orderSummary').style.display = 'flex';
-        document.getElementById('orderSummary').innerHTML = `
-          <i class="ri-file-list-3-line"></i>
-          <div>
-            <div style="font-weight:800; color:#111827;">Order #${currentOrderId}</div>
-            <div style="font-size:0.9rem; color:#6B7280;">Dispute Resolution</div>
-          </div>
-        `;
-      } catch (e) {
-        console.log("Details load warning:", e);
+      if (result.success) {
+        if(typeof StatusDialog !== 'undefined') {
+          StatusDialog.success('Response Submitted', 'Your response has been recorded.', 'Back to Order', () => {
+            window.location.href = `../../Module_Transaction_Fund/pages/Order_Details.html?id=${orderId}`;
+          });
+        } else {
+          alert('Success: Response Submitted');
+          window.location.href = `../../Module_Transaction_Fund/pages/Order_Details.html?id=${orderId}`;
+        }
+      } else {
+        throw new Error(result.message || 'Unknown error');
       }
 
-      // 4. 绑定提交事件
-      document.getElementById('btnSubmit').addEventListener('click', handleSubmit);
-
-      // 5. 字数监听
-      document.getElementById('statement').addEventListener('input', function() {
-        document.getElementById('charHint').innerText = this.value.length + ' characters';
-      });
+    } catch (error) {
+      console.error(error);
+      if(typeof StatusDialog !== 'undefined') StatusDialog.fail('Submission Failed', error.message);
+      else alert('Error: ' + error.message);
+    } finally {
+      submitBtn.innerText = originalText;
+      submitBtn.disabled = false;
     }
-
-    init();
-
-  })();
+  });
 </script>
+
 </body>
 </html>
+

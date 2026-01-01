@@ -18,7 +18,7 @@
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { font-family: 'Poppins', 'Noto Sans SC', sans-serif; background: var(--bg-color); color: var(--text-dark); min-height: 100vh; padding-bottom: 80px; /* 增加底部留白给悬浮栏 */ }
+        body { font-family: 'Poppins', 'Noto Sans SC', sans-serif; background: var(--bg-color); color: var(--text-dark); min-height: 100vh; padding-bottom: 80px; /* Increase bottom padding for the floating bar */ }
 
         /* --- Page Layout --- */
         .container { max-width: 1000px; margin: 40px auto; padding: 0 20px; }
@@ -47,11 +47,11 @@
         }
         .product-card:hover { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(0,0,0,0.1); }
 
-        /* ✨ Selection Style ✨ */
+        /* Selection Style */
         .product-card.selected { border-color: var(--primary); background: #EEF2FF; }
         .product-card.selected .card-img-container { opacity: 0.8; }
 
-        /* ✨ Checkbox Circle (Hidden by default) ✨ */
+        /* Checkbox Circle (Hidden by default) */
         .select-checkbox {
             position: absolute; top: 10px; left: 10px; width: 24px; height: 24px;
             background: white; border: 2px solid #ddd; border-radius: 50%;
@@ -74,7 +74,7 @@
         .card-title { font-size: 1rem; margin-bottom: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; color: var(--primary); font-weight: 800; }
 
-        /* ✨ Bottom Floating Action Bar ✨ */
+        /* Bottom Floating Action Bar */
         .selection-bar {
             position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(100px);
             background: var(--text-dark); color: white; padding: 12px 24px; border-radius: 50px;
@@ -101,7 +101,6 @@
 </head>
 <body>
 
-<!-- Navbar replaced by headerbar.js -->
 <script src="../../Public_Assets/js/headerbar.js"></script>
 <script>TreasureGoHeaderbar.mount({ basePath: '../../' });</script>
 
@@ -251,7 +250,7 @@
             return;
         }
 
-        // ✨ Confirmation Dialog ✨
+        // Confirmation Dialog
         if (confirm(`Are you sure you want to delete these ${count} items?`)) {
             selectedCards.forEach(card => {
                 card.style.opacity = '0';
