@@ -5,8 +5,6 @@
  * - render order UI (except refund status card)
  * - image gallery
  * - confirm receipt
- *
- * Updated: Removed old refund modal logic, delegates to OrderDetailsRefund for pre-check modal.
  */
 
 (function (global) {
@@ -237,11 +235,11 @@
     const isBuyer = order.type === 'buy';
     const statusClass = getStatusClass(order.Orders_Status);
 
-    // 1) images
+    // Parse and load product images from order data
     state.globalOrderImages = parseOrderImages(order);
     state.currentOrderImageIndex = 0;
 
-    // 2) Auto-confirm countdown
+    // Calculate and display auto-confirmation countdown timer
     let autoConfirmHtml = '';
     const orderStatus = String(order.Orders_Status || '').toLowerCase();
 
@@ -253,15 +251,15 @@
       if (order.Orders_Shipped_At) {
         startTime = new Date(order.Orders_Shipped_At);
         showCountdown = true;
-        msgPrefix = '🚚 Shipped! Auto-confirm in';
+        msgPrefix = 'Shipped! Auto-confirm in';
       } else if (String(order.Delivery_Method || '').toLowerCase() === 'meetup') {
         startTime = new Date(order.Orders_Created_AT);
         showCountdown = true;
-        msgPrefix = '🤝 Meet-up Order. Auto-confirm in';
+        msgPrefix = 'Meet-up Order. Auto-confirm in';
       } else {
         if (isBuyer) {
           autoConfirmHtml =
-              '<div class="auto-confirm-text" style="background:#EEF2FF; color:#4F46E5; border-color:#C7D2FE;">📦 Waiting for seller to ship. 7-day timer starts after shipment.</div>';
+              '<div class="auto-confirm-text" style="background:#EEF2FF; color:#4F46E5; border-color:#C7D2FE;">Waiting for seller to ship. 7-day timer starts after shipment.</div>';
         }
       }
 
@@ -271,28 +269,27 @@
         const daysLeft = Math.ceil((autoConfirmDate - now) / (1000 * 3600 * 24));
 
         if (daysLeft > 0) {
-          autoConfirmHtml = `<div class="auto-confirm-text">⏳ ${msgPrefix} <strong>${daysLeft} days</strong> (${autoConfirmDate.toLocaleDateString()}).</div>`;
+          autoConfirmHtml = `<div class="auto-confirm-text"><strong>${daysLeft} days</strong> remaining for auto-confirmation (${autoConfirmDate.toLocaleDateString()}).</div>`;
         } else {
           autoConfirmHtml =
-              '<div class="auto-confirm-text" style="color:#EF4444; border-color:#EF4444; background:#FEF2F2;">⏳ Time\'s up. Please confirm receipt.</div>';
+              '<div class="auto-confirm-text" style="color:#EF4444; border-color:#EF4444; background:#FEF2F2;">Time limit exceeded. Please confirm receipt.</div>';
         }
       }
     }
 
-    // 3) Refund / Actions Logic (🔥核心修改处🔥)
+    // Determine and render action buttons based on refund and dispute status
     let actionButtons = '';
     const hasRefundOrDispute = order.Refund_Status || (order.Dispute_Status && order.Dispute_Status !== 'None');
 
     if (hasRefundOrDispute && global.OrderDetailsRefund && typeof global.OrderDetailsRefund.renderRefundStatusCard === 'function') {
       actionButtons = global.OrderDetailsRefund.renderRefundStatusCard(order, isBuyer);
     } else if (isBuyer && orderStatus !== 'completed' && orderStatus !== 'cancelled') {
-      // 🔥🔥🔥 这里改为调用 openRefundPreCheck 🔥🔥🔥
       actionButtons = `
         <div class="actions-box">
-          <div style="font-weight:700; margin-bottom:10px;">⚡ Actions</div>
+          <div style="font-weight:700; margin-bottom:10px;">Actions</div>
           <div class="btn-group">
-            <button class="btn btn-confirm" onclick="openConfirmDialog(${Number(order.Orders_Order_ID)})">✅ Confirm Receipt</button>
-            <button class="btn btn-refund" onclick="if(window.openRefundPreCheck) window.openRefundPreCheck(${Number(order.Orders_Order_ID)}); else alert('Refund module not ready');">↩️ Request Refund</button>
+            <button class="btn btn-confirm" onclick="openConfirmDialog(${Number(order.Orders_Order_ID)})">Confirm Receipt</button>
+            <button class="btn btn-refund" onclick="if(window.openRefundPreCheck) window.openRefundPreCheck(${Number(order.Orders_Order_ID)}); else alert('Refund module not ready');">Request Refund</button>
           </div>
           ${autoConfirmHtml}
         </div>
@@ -301,19 +298,19 @@
       actionButtons = `<div class="status-badge status-completed" style="margin-top:20px; width:100%; text-align:center;">Order Completed</div>`;
     }
 
-    // 4) Tracking / Delivery UI
+    // Build tracking number or shipment input field for delivery
     const deliveryMethod = String(order.Delivery_Method || '').toLowerCase();
     const trackingNum = order.Tracking_Number || '';
 
     let deliveryHtml = '';
     if (deliveryMethod === 'meetup') {
-      deliveryHtml = '<span style="color:#6B7280; font-size:0.9rem;"><i class="ri-walk-line"></i> Not Required (Meet-up)</span>';
+      deliveryHtml = '<span style="color:#6B7280; font-size:0.9rem;">Not Required (Meet-up)</span>';
     } else {
       if (trackingNum) {
         deliveryHtml = `<div class="tracking-display">${escapeHtml(trackingNum)}</div>`;
       } else {
         if (isBuyer) {
-          deliveryHtml = '<span style="color:#F59E0B; font-size:0.9rem;">⏳ Awaiting Shipment</span>';
+          deliveryHtml = '<span style="color:#F59E0B; font-size:0.9rem;">Awaiting Shipment</span>';
         } else {
           if (orderStatus !== 'cancelled' && orderStatus !== 'completed') {
             deliveryHtml = `
@@ -329,7 +326,7 @@
       }
     }
 
-    // 5) Render Details
+    // Extract and normalize order details for display
     const condition = order.Product_Condition || order.Condition || order.condition || '-';
     const category = order.Category_Name || order.Category || '-';
     const otherPartyLabel = isBuyer ? 'Seller' : 'Buyer';
@@ -361,7 +358,7 @@
           <div class="thumbnails" id="thumbnailContainer"></div>
 
           <div style="margin-top: 20px;">
-            <button class="btn btn-contact" onclick="alert('Chat system connecting...')">💬 Contact ${escapeHtml(otherPartyLabel)}</button>
+            <button class="btn btn-contact" onclick="alert('Chat system connecting...')">Contact ${escapeHtml(otherPartyLabel)}</button>
           </div>
         </div>
 
@@ -371,7 +368,7 @@
           <span class="price-tag">RM${escapeHtml(amountText)}</span>
 
           <div class="specs-grid">
-            <div class="spec-item"><span class="spec-key">Role</span><span class="spec-value">${isBuyer ? '🛒 Buying' : '🏷️ Selling'}</span></div>
+            <div class="spec-item"><span class="spec-key">Role</span><span class="spec-value">${isBuyer ? 'Buying' : 'Selling'}</span></div>
             <div class="spec-item"><span class="spec-key">${escapeHtml(otherPartyLabel)}</span><span class="spec-value">${escapeHtml(otherPartyName)}</span></div>
             <div class="spec-item"><span class="spec-key">Condition</span><span class="spec-value">${escapeHtml(capitalizeFirst(condition))}</span></div>
             <div class="spec-item"><span class="spec-key">Category</span><span class="spec-value">${escapeHtml(category)}</span></div>
@@ -410,7 +407,7 @@
     updateGalleryDisplay();
   }
 
-  // --- Actions ---
+  // --- Action Handler Functions ---
 
   async function submitTracking(orderId) {
     const input = document.getElementById(`trackingInput_${Number(orderId)}`);
@@ -428,14 +425,14 @@
       });
       const result = await response.json();
       if (result && result.success) {
-        alert('✅ Marked as shipped.');
+        alert('Marked as shipped successfully.');
         location.reload();
       } else {
-        alert(`❌ Failed: ${result?.message || 'Unknown error'}`);
+        alert(`Failed: ${result?.message || 'Unknown error'}`);
       }
     } catch (e) {
       console.error(e);
-      alert('❌ Network error.');
+      alert('Network error occurred.');
     }
   }
 

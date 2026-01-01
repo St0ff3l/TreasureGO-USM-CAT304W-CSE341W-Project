@@ -12,7 +12,7 @@
   const state = {
     currentOrderAddress: null,
 
-    // inline return address selection
+    // State for inline return address selection
     selectedReturnAddressStr: null,
     fetchedAddressList: [],
     currentOrderIdForAddr: null,
@@ -35,8 +35,8 @@
         return;
       }
 
-      // Normalize possible shapes
-      const payload =
+    // Normalize payload structure from different API response formats
+    const payload =
           (json.data && Array.isArray(json.data) ? json.data[0] : json.data) ||
           (json.address && Array.isArray(json.address) ? json.address[0] : json.address) ||
           json.result ||
@@ -61,7 +61,7 @@
         order.shipping_address_id ??
         null;
 
-    // Meetup: show product location card
+    // Meetup delivery: display product location information
     if (deliveryMethod === 'meetup') {
       const location = order.Product_Location || 'Location not specified';
       return `
@@ -77,7 +77,7 @@
       `;
     }
 
-    // Shipping: render address object if fetched
+    // Shipping delivery: render address object if successfully fetched
     if (state.currentOrderAddress && typeof state.currentOrderAddress === 'object') {
       const a = state.currentOrderAddress;
       const receiverName = a.Address_Receiver_Name ?? a.receiver_name ?? a.name ?? '-';
@@ -103,7 +103,7 @@
       `;
     }
 
-    // Fallback if no address loaded
+    // Fallback if address information is not available
     if (!addrIdFromOrder) {
       return `
         <div class="info-section">
@@ -173,7 +173,7 @@
   }
 
   /**
-   * Updated: Renders the Modern Card Style UI
+   * Renders the address selection list with card-style UI
    */
   function renderInlineAddressList(orderId) {
     const container = document.getElementById(`addr-container-${orderId}`);
