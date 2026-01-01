@@ -229,18 +229,18 @@
 
 <script>
     /* =================================================================
-       ⚙️ CONFIGURATION ZONE (配置区域)
-       在此处修改邮箱地址，页面会自动更新
+       Configuration
+       Set the contact email address here.
        ================================================================= */
 
     const APP_CONFIG = {
-        // 👇👇👇 CHANGE EMAIL HERE 👇👇👇
+        // Contact email used by the page.
         CONTACT_EMAIL: "support@treasurego.com"
     };
 
     /* ================================================================= */
 
-    // 1. 初始化：自动将配置的邮箱填入页面
+    // Initialize the email UI from configuration.
     document.addEventListener('DOMContentLoaded', () => {
         const emailDisplay = document.getElementById('emailDisplay');
         const emailCard = document.getElementById('emailCard');
@@ -249,7 +249,7 @@
             emailDisplay.textContent = APP_CONFIG.CONTACT_EMAIL;
         }
 
-        // 绑定点击事件，使用配置的邮箱
+        // Bind click handler to copy the configured email.
         if(emailCard) {
             emailCard.addEventListener('click', () => {
                 copyToClipboard(APP_CONFIG.CONTACT_EMAIL);
@@ -257,11 +257,11 @@
         }
     });
 
-    // 2. 核心功能：复制逻辑
+    // Copy the provided text to the clipboard.
     function copyToClipboard(text) {
         navigator.clipboard.writeText(text).then(() => {
 
-            // 弹窗提示
+            // Toast notification (SweetAlert2).
             if (typeof Swal !== 'undefined') {
                 const Toast = Swal.mixin({
                     toast: true,
@@ -278,7 +278,7 @@
                 Toast.fire({ icon: 'success', title: 'Email Copied!' });
             }
 
-            // 按钮动画
+            // Copy button feedback animation.
             const btn = document.getElementById('copyIconBtn');
             const icon = document.getElementById('iconInner');
 

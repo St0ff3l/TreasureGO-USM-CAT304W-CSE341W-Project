@@ -17,7 +17,7 @@
       --border-radius: 24px;
       --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 
-      /* Fallback; will be updated via JS by measuring headerbar. */
+      /* Fallback value; updated in JS by measuring the mounted headerbar height. */
       --headerbar-h: 70px;
       --chat-gap-top: 10px;
       --chat-gap-bottom: 10px;
@@ -25,7 +25,7 @@
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
-    /* Screen-reader only utility */
+    /* Screen-reader-only utility class. */
     .sr-only {
       position: absolute;
       width: 1px;
@@ -42,13 +42,13 @@
       font-family: 'Poppins', sans-serif;
       background-color: var(--bg-body);
       color: var(--text-dark);
-      /* Use dynamic viewport height for mobile address-bar behavior */
+      /* Use dynamic viewport height to better handle mobile browser UI. */
       height: 100dvh;
       display: flex;
       flex-direction: column;
       overflow: hidden;
 
-      /* Important: do NOT push the whole page down, otherwise headerbar ends up away from the top */
+      /* Keep the page pinned to the top so the headerbar stays at the top edge. */
       padding-top: 0;
     }
 
@@ -60,13 +60,13 @@
       margin: 0 auto;
       gap: 0;
 
-      /* 10px gap below headerbar + 10px gap from bottom (with safe-area) */
+      /* Provide spacing below the headerbar and above the safe-area inset. */
       padding: var(--chat-gap-top) 16px calc(var(--chat-gap-bottom) + env(safe-area-inset-bottom, 0px)) 16px;
 
-      /* Fill remaining viewport under headerbar */
+      /* Fill the remaining viewport under the mounted headerbar. */
       height: calc(100dvh - var(--headerbar-h));
 
-      /* Avoid flex children overflow issues that can hide the input bar */
+      /* Prevent flex overflow from hiding the input area. */
       min-height: 0;
     }
 
@@ -100,7 +100,7 @@
       min-width: 0;
     }
 
-    /* Fixed support avatar using Remix Icon */
+    /* Fixed support avatar using Remix Icon. */
     .chat-header-avatar {
       width: 42px;
       height: 42px;
@@ -211,7 +211,7 @@
       gap: 15px;
       flex-shrink: 0;
 
-      /* Bottom spacing handled by .main-container padding (prevents double-spacing and layout bugs) */
+      /* Bottom spacing is handled by .main-container padding. */
       margin-bottom: 0;
     }
 
@@ -362,7 +362,7 @@
     window.TreasureGoHeaderbar.mount({ basePath: '../../' });
   }
 
-  // Measure headerbar height and keep a CSS variable updated.
+  // Measure the headerbar height and keep the CSS variable in sync.
   (function syncHeaderbarHeight() {
     const root = document.documentElement;
     const update = () => {
@@ -374,7 +374,7 @@
     };
     update();
     window.addEventListener('resize', update);
-    // Give headerbar.js time to mount
+    // Allow time for headerbar.js to mount.
     setTimeout(update, 50);
     setTimeout(update, 250);
   })();
@@ -418,7 +418,7 @@
         return;
       }
 
-      // Hide empty state once we have connectivity
+      // Hide the empty state once the API responds successfully.
       document.getElementById('emptyState').style.display = 'none';
 
       agentId = json.agent_id ?? agentId;
@@ -494,7 +494,7 @@
     }
   }
 
-  // Boot (no login detection / no redirects)
+  // Startup: bind UI events and start polling.
   (async function boot() {
     try {
       document.getElementById('sendBtn').addEventListener('click', sendMessage);
@@ -505,7 +505,7 @@
       // Default chat
       // setActiveChat('support');
 
-      // Load and poll
+      // Load initial messages and poll for updates.
       await loadMessages(true);
       if (pollingInterval) clearInterval(pollingInterval);
       pollingInterval = setInterval(loadMessages, 2000);

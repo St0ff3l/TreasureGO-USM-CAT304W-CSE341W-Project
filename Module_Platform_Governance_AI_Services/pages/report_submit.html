@@ -1,6 +1,6 @@
-  <!DOCTYPE html>
-  <html lang="en">
-  <head>
+<!DOCTYPE html>
+<html lang="en">
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TreasureGO - Report</title>
@@ -118,14 +118,14 @@
       }
       .locked-note strong { color: #3730a3; }
 
-      /* 微调上传组件在当前页面的显示，防止它太宽或背景不协调 */
+      /* Fit the uploader component to this page layout. */
       .tg-upload-area {
-          background: rgba(255, 255, 255, 0.5); /* 让它稍微透一点背景 */
-          min-height: 200px; /* 稍微调小一点高度适应这个页面 */
+          background: rgba(255, 255, 255, 0.5); /* Slightly translucent background */
+          min-height: 200px; /* Slightly smaller height for this layout */
       }
     </style>
-  </head>
-  <body>
+</head>
+<body>
 
   <script>
     TreasureGoHeaderbar.mount({ basePath: '../../' });
@@ -133,7 +133,7 @@
 
   <div class="page-wrapper">
     <div class="report-container">
-      <!-- 🔎 DEBUG 面板：临时显示从上一页传递的 query（排查用，确认后可移除） -->
+      <!-- Debug panel: temporary display of query parameters for troubleshooting -->
       <div id="tgQueryDebug" class="locked-note" style="display:none;"></div>
 
       <div class="header">
@@ -241,11 +241,11 @@
 
   <script>
     // ==========================================
-    // 1. AuthModal (由外部 js 提供)
+    // 1. AuthModal (provided by external JS)
     // ==========================================
 
     // ==========================================
-    // 2. 辅助工具函数
+    // 2. Helper functions
     // ==========================================
     function normalizeType(t) {
       if (!t) return 'user';
@@ -260,7 +260,7 @@
         type: normalizeType(p.get('type')),
         reportedUserId: p.get('reportedUserId'),
         reportedUserName: p.get('reportedUserName'),
-        // 兼容不同的参数命名
+        // Support multiple parameter names for compatibility.
         itemId: p.get('itemId') || p.get('reportedItemId') || p.get('product_id'),
         itemName: p.get('itemName') || p.get('reportedItemName') || p.get('productName'),
         chatId: p.get('chatId'),
@@ -270,12 +270,12 @@
     }
 
     async function fetchProductContext(productId) {
-      // 防止 productId 为空时发起无效请求
+      // Avoid making a request when productId is empty.
       if (!productId) return null;
       const res = await fetch(`../api/report_product_context.php?product_id=${encodeURIComponent(productId)}`);
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.success) {
-        // 不抛出错误，而是静默失败，这样至少还能显示 URL 里的数据
+        // Fail silently so URL-provided values can still populate the form.
         console.warn("API context fetch failed:", data.message);
         return null;
       }
@@ -368,17 +368,17 @@
     }
 
     // ==========================================
-    // 3. 页面初始化逻辑
+    // 3. Page initialization
     // ==========================================
     document.addEventListener('DOMContentLoaded', async () => {
-      // 1. 解析 URL 参数
+      // 1) Parse URL parameters
       const q = parseQuery();
 
-      // 移除 Debug 面板的显示逻辑 (如果不需要了)
+      // Hide the debug panel (it exists only for troubleshooting).
       const dbg = document.getElementById('tgQueryDebug');
       if (dbg) dbg.style.display = 'none';
 
-      // 2. 登录检查
+      // 2) Login check
       const isLoggedIn = await checkLoginStatus();
       const submitBtn = document.getElementById('submitBtn');
 
@@ -394,7 +394,7 @@
         }
       }
 
-      // 3. 获取 DOM 元素
+      // 3) Grab DOM elements
       const reportTypeEl = document.getElementById('reportType');
       const reportedUserIdEl = document.getElementById('reportedUserId');
       const reportedUserNameEl = document.getElementById('reportedUserName');
@@ -404,13 +404,8 @@
       const reasonEl = document.getElementById('reason');
       const detailsEl = document.getElementById('details');
       const form = document.getElementById('reportForm');
-      // replaced native input with uploader component
-      // const reportImagesEl = document.getElementById('reportImages');
-      // const imagePreviewEl = document.getElementById('imagePreview');
 
-      // Legacy preview/files handled by the uploader component; no local preview logic needed here
-
-      // 初始化 uploader 组件 (来自 Module_After_Sales_Dispute)
+      // Initialize the uploader component.
       let uploader = null;
       try {
           uploader = new TreasureGoUploader('#evidenceUploader', {
@@ -420,36 +415,34 @@
           console.error("Uploader init failed:", e);
       }
 
-
-      // 4. 设置初始状态
+      // 4) Initial UI state
       if(reportTypeEl) reportTypeEl.value = q.type;
       setVisibleByType(q.type);
 
-      // 判断是否锁定
+      // Determine whether this page was opened with a locked context.
       const productLocked = isProductContextLocked(q);
       const userLocked = isUserContextLocked(q);
 
       setLockedProductHintsVisible(productLocked);
 
-      // ============================================================
-      // 🔥 核心修复逻辑在这里 🔥
-      // ============================================================
+      // Core behavior:
+      // - When opened from a product page, lock product type and fill product/seller context.
+      // - When opened from a user page, lock user type and fill user context.
       if (productLocked) {
-        // 1. 锁定 UI
+        // Lock the UI to product mode.
         lockReportTypeUI('product');
         setVisibleByType('product');
 
-        // 2. 【关键修复】立刻使用 URL 参数填充表单
-        // 这样即便 API 很慢或者挂了，用户也能看到从上一页带来的数据
+        // Fill immediately from URL params so the UI is responsive even if the API is slow/unavailable.
         if (reportedItemIdEl) reportedItemIdEl.value = q.itemId || '';
         if (reportedUserIdEl) reportedUserIdEl.value = q.reportedUserId || '';
         if (reportedUserNameEl) reportedUserNameEl.value = q.reportedUserName || '';
         if (reportedItemNameEl) reportedItemNameEl.value = q.itemName || '';
 
-        // 3. 锁定输入框
+        // Lock context fields.
         lockProductContextFields();
 
-        // 4. (可选) 尝试从 API 获取更详细/最新的数据覆盖
+        // Optionally fetch fresher data from the backend and overwrite only when values are present.
         try {
           const ctx = await fetchProductContext(q.itemId);
           if (ctx) {
@@ -457,7 +450,6 @@
             const sellerId = ctx.reported_user_id || ctx.seller_user_id || '';
             const sellerName = ctx.reported_user_name || ctx.seller_username || '';
 
-            // 只有当 API 返回有效值时才覆盖
             if (title && reportedItemNameEl) reportedItemNameEl.value = title;
             if (sellerId && reportedUserIdEl) reportedUserIdEl.value = sellerId;
             if (sellerName && reportedUserNameEl) reportedUserNameEl.value = sellerName;
@@ -467,52 +459,51 @@
         }
 
       } else if (userLocked) {
-
-        // 1️⃣ 锁定 Report Type 为 user
+        // Lock the UI to user mode.
         lockReportTypeUI('user');
         setVisibleByType('user');
 
-        // 2️⃣ 填充被举报用户信息（来自 URL）
+        // Fill reported user info from URL params.
         if (reportedUserIdEl) reportedUserIdEl.value = q.reportedUserId || '';
         if (reportedUserNameEl) reportedUserNameEl.value = q.reportedUserName || '';
 
-        // 3️⃣ 锁死输入框
+        // Lock inputs.
         lockInput(reportedUserIdEl);
         lockInput(reportedUserNameEl);
 
-        // 4️⃣ 清空其他上下文字段，避免混乱
+        // Clear other context fields.
         if (reportedItemIdEl) reportedItemIdEl.value = '';
         if (reportedItemNameEl) reportedItemNameEl.value = '';
         if (chatIdEl) chatIdEl.value = '';
       } else {
-        // 非锁定模式 (User Report / Chat Report)
+        // Unlocked mode: allow prefill from URL params when present.
         if (q.reportedUserId && reportedUserIdEl) reportedUserIdEl.value = q.reportedUserId;
         if (q.reportedUserName && reportedUserNameEl) reportedUserNameEl.value = q.reportedUserName;
-        if (q.itemId && reportedItemIdEl) reportedItemIdEl.value = q.itemId; // 允许填充
+        if (q.itemId && reportedItemIdEl) reportedItemIdEl.value = q.itemId;
         if (q.itemName && reportedItemNameEl) reportedItemNameEl.value = q.itemName;
         if (q.chatId && chatIdEl) chatIdEl.value = q.chatId;
       }
 
-      // 填充公共字段
+      // Fill shared fields.
       if (q.reason && reasonEl) reasonEl.value = q.reason;
       if (q.details && detailsEl) detailsEl.value = q.details;
 
-      // 监听类型切换 (仅限非锁定状态)
+      // Type switch handler (only when not locked).
       if(reportTypeEl) {
         reportTypeEl.addEventListener('change', () => {
           if (productLocked) {
-            reportTypeEl.value = 'product'; // 强制回退
+            reportTypeEl.value = 'product';
             return;
           }
           const t = normalizeType(reportTypeEl.value);
           reportTypeEl.value = t;
           setVisibleByType(t);
-          // 如果切出 product 模式，清空 product ID 防止混淆
+          // Clear product id when leaving product mode.
           if (t !== 'product' && reportedItemIdEl) reportedItemIdEl.value = '';
         });
       }
 
-      // 提交逻辑
+      // Submit handler.
       if(form) {
         form.addEventListener('submit', async (e) => {
           e.preventDefault();
@@ -525,7 +516,7 @@
 
           const type = normalizeType(reportTypeEl.value);
 
-          // 使用 FormData（multipart）提交，以包含图片文件
+          // Use multipart FormData so images can be included.
           const formData = new FormData();
           formData.append('type', type);
           formData.append('reportReason', reasonEl.value);
@@ -544,7 +535,7 @@
              if(rItemId) formData.append('reportedItemId', rItemId);
           }
 
-          // 从 uploader 获取文件
+          // Attach files from the uploader.
           if (uploader && typeof uploader.getFiles === 'function') {
             const files = uploader.getFiles();
             const maxFiles = 3;
@@ -553,7 +544,7 @@
             }
           }
 
-          // 验证逻辑
+          // Validation.
           if (!reasonEl.value) { if(typeof StatusDialog!=='undefined') StatusDialog.fail('Missing Info', 'Please select a reason.'); return; }
           if (type === 'product' && !rItemId) { if(typeof StatusDialog!=='undefined') StatusDialog.fail('Error', 'Product ID is missing.'); return; }
 
@@ -577,7 +568,7 @@
               alert('Report Submitted!');
               handleGoBack();
             }
-            // 重置表单和上传器
+            // Reset the form and uploader state.
             form.reset();
             if(uploader && typeof uploader.reset === 'function') {
                try { uploader.reset(); } catch(e) { /* ignore */ }
@@ -600,5 +591,5 @@
     });
   </script>
 
-  </body>
-  </html>
+</body>
+</html>

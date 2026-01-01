@@ -35,15 +35,15 @@
         }
 
         /* --- Mobile viewport fix ---
-           iOS/Safari 100vh often includes browser UI.
-           Use 100dvh if supported; fallback remains.
+           iOS/Safari `100vh` often includes browser UI.
+           Use `100dvh` when supported.
         */
         @supports (height: 100dvh) {
             body { height: 100dvh; }
             .chat-layout { height: 100dvh; }
         }
 
-        /* --- Main Nav Sidebar (Icon only - 左侧悬浮工具栏) --- */
+        /* --- Main Nav Sidebar (icon-only floating toolbar) --- */
         .main-nav-sidebar {
             position: fixed; top: 50%; left: 25px; transform: translateY(-50%);
             background: rgba(255, 255, 255, 0.95);
@@ -348,11 +348,11 @@
 
 <script>
     // ============================================
-    // 1. Check Session Status (Adapted for Dynamic Header)
+    // 1. Session status (headerbar integration)
     // ============================================
     document.addEventListener('DOMContentLoaded', async () => {
-        // 由于 Header 是 JS 生成的，我们需要确保 DOM 已经存在
-        // headerbar.js 的 mount 是同步执行 DOM 插入的，所以可以直接获取 ID
+        // Header is mounted by JS; ensure DOM is ready before querying elements.
+        // headerbar.js mount runs synchronously, so ids are available after mount.
 
         const loginBtn = document.getElementById('nav-login-btn');
         const userMenu = document.getElementById('nav-user-menu');
@@ -390,13 +390,10 @@
     });
 
     // ============================================
-    // 2. Chat Logic (Existing Code)
+    // 2. Chat logic
     // ============================================
-    const chatMessages = document.getElementById('chatMessages');
-    const userInput = document.getElementById('userInput');
-    const sendBtn = document.getElementById('sendBtn');
 
-    // On mobile, keep the latest message visible when keyboard opens.
+    // Keep the latest message visible (useful on mobile when the keyboard opens).
     function scrollChatToBottom() {
         if (!chatMessages) return;
         // Use rAF so layout (esp. sticky input / dynamic viewport) settles first.
@@ -405,7 +402,7 @@
         });
     }
 
-    // Helper: Add visual message bubble with Markdown Support
+    // Render a chat message bubble (bot messages support simple markdown formatting).
     function addMessage(text, sender) {
         const msgDiv = document.createElement('div');
         const cssClass = (sender === 'ai' || sender === 'bot') ? 'bot' : 'user';
@@ -420,24 +417,22 @@
 
         let contentHtml = '';
         if (cssClass === 'bot') {
-            // --- 🤖 AI 消息美化处理 ---
-            let formatted = text;
+            // Bot message formatting:
+            // 1) Convert **text** to <strong>text</strong>
+            // 2) Convert list markers to bullets
+            // 3) Convert newlines (\n) to <br>
 
-            // 1. 处理加粗：把 **文字** 替换为 <strong>文字</strong>
-            formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-
-            // 2. 处理列表点：把 - 项目 替换为 • 项目
-            formatted = formatted.replace(/^\s*[-•]\s+/gm, '• ');
-
-            // 3. 处理换行：把 \n 替换为 <br>
-            contentHtml = formatted.replace(/\n/g, '<br>');
+            // User messages are HTML-escaped to reduce XSS risk.
+            contentHtml = text
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // bold
+                .replace(/^\s*[-•]\s+/gm, '• ') // list markers
+                .replace(/\n/g, '<br>'); // newlines
         } else {
-            // --- 👤 用户消息安全处理 ---
-            // 严格转义，防止 XSS 攻击
+            // User message: escape HTML to reduce XSS risk.
             contentHtml = text.replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, '<br>');
         }
 
-        // 渲染到页面
+        // Render the message into the chat.
         msgDiv.innerHTML = `${avatarHtml}<div class="bubble">${contentHtml}</div>`;
         chatMessages.appendChild(msgDiv);
         scrollChatToBottom();
@@ -445,7 +440,7 @@
         return { msgId, msgDiv };
     }
 
-    // Helper: Add Feedback Buttons (Yes/No)
+    // Append a simple Yes/No resolution prompt after the last bot response.
     function addFeedbackUI(logId) {
         if (!logId) return;
 
@@ -463,7 +458,7 @@
         scrollChatToBottom();
     }
 
-    // Handler: Process Resolution Click
+    // Submit resolution feedback to the backend.
     async function handleResolution(logId, isResolved) {
         const btnContainer = document.getElementById(`fb-btns-${logId}`);
         const thanksMsg = document.getElementById(`fb-thanks-${logId}`);
@@ -477,12 +472,12 @@
                 thanksMsg.innerText = "Glad I could help! ✅";
             } else {
                 thanksMsg.style.color = '#ef4444';
-                // 修改为 support_human_chat.html
+                // Use the human chat page for escalation.
                 thanksMsg.innerHTML = `Sorry about that. <a href="support_human_chat.html" style="color: #4F46E5; text-decoration: underline;">Click here to contact Support</a>.`;
             }
         }
 
-        // Call Backend API
+        // Backend API call
         try {
             await fetch('../api/support_resolve_chat.php', {
                 method: 'POST',
@@ -536,7 +531,7 @@
                 addMessage(data.choices[0].message.content, 'ai');
                 scrollChatToBottom();
 
-                // 🚀 核心逻辑：只有当后端返回 true 时，才显示反馈按钮
+                // Only show feedback buttons when the backend explicitly enables them.
                 if (data.db_log_id && data.show_resolution_buttons === true) {
                     addFeedbackUI(data.db_log_id);
                 }
@@ -550,6 +545,7 @@
         }
     }
 
+    // Prefill the input with a suggestion and send it.
     function autoAsk(text) {
         userInput.value = text;
         handleSend();
