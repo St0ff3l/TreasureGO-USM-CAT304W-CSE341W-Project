@@ -20,7 +20,7 @@ try {
                 u.User_Username AS Seller_Name,
                 c.Category_Name,
                 
-                -- ✅ 关键：获取该商品所有图片，用逗号拼接
+                -- ✅ Key: Get all images for the product, concatenated by comma
                 (SELECT GROUP_CONCAT(Image_URL SEPARATOR ',') 
                  FROM Product_Images pi 
                  WHERE pi.Product_ID = p.Product_ID) as All_Images,
@@ -52,7 +52,7 @@ try {
 
     $data = [];
     foreach ($products as $row) {
-        // ✅ 关键：将数据库取出的字符串直接传给 image 字段
+        // ✅ Key: Pass the string fetched from the database directly to the image field
         $imageString = $row['All_Images'] ?? '';
 
         $displayDate = ($statusFilter === 'pending') ? $row['Product_Created_Time'] : ($row['Log_Time'] ?? $row['Product_Created_Time']);
@@ -66,7 +66,7 @@ try {
             'seller' => $row['Seller_Name'] ?? 'User#' . $row['User_ID'],
             'admin_auditor' => $row['Admin_Name'] ?? null,
             'status' => $row['Product_Review_Status'],
-            'image' => $imageString, // 这里是 "url1,url2"
+            'image' => $imageString, // Here it is "url1,url2"
             'description' => $row['Product_Description'],
             'date' => $displayDate,
             'condition' => $row['Product_Condition'],

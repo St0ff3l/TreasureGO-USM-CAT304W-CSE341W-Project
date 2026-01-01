@@ -1,7 +1,7 @@
 <?php
 // api/Process_Payment.php
 
-// 1. 基础设置
+// 1. Basic settings
 error_reporting(0);
 ini_set('display_errors', 0);
 header('Content-Type: application/json; charset=utf-8');
@@ -11,21 +11,21 @@ session_start();
 
 $response = ['success' => false, 'msg' => 'Unknown error'];
 
-// 2. 验证登录
+// 2. Verify login
 if (!isset($_SESSION['user_id'])) {
     echo json_encode(['success' => false, 'msg' => 'User not logged in']);
     exit;
 }
 $userId = $_SESSION['user_id'];
 
-// 3. 获取前端传来的支付信息
+// 3. Retrieve payment information from frontend
 $input = json_decode(file_get_contents('php://input'), true);
 $price = isset($input['price']) ? floatval($input['price']) : 0.00;
 $planName = isset($input['plan']) ? $input['plan'] : 'Membership'; // e.g. 'VIP'
 $cycle = isset($input['cycle']) ? $input['cycle'] : 'monthly';     // e.g. 'monthly'
 $pinCode = isset($input['payment_pin']) ? $input['payment_pin'] : '';
 
-// 基础校验
+// Basic validation
 if ($price <= 0) {
     echo json_encode(['success' => false, 'msg' => 'Invalid price']);
     exit;
@@ -39,7 +39,7 @@ try {
     $conn = getDatabaseConnection();
 
     // =================================================================
-    // 🔥 STEP A: 支付密码验证
+    // STEP A: Payment PIN Verification
     // =================================================================
     $stmtUser = $conn->prepare("SELECT User_Payment_PIN_Hash, User_PIN_Retry_Count, User_PIN_Locked_Until FROM User WHERE User_ID = :uid");
     $stmtUser->execute([':uid' => $userId]);
@@ -73,11 +73,11 @@ try {
     }
 
     // =================================================================
-    // 🔥 STEP B: 核心交易事务
+    // STEP B: Core Transaction
     // =================================================================
     $conn->beginTransaction();
 
-    // 1. 查询余额 (Wallet_Logs)
+    // 1. Check balance (Wallet_Logs)
     $sqlCheck = "SELECT Balance_After FROM Wallet_Logs WHERE User_ID = :uid ORDER BY Log_ID DESC LIMIT 1 FOR UPDATE";
     $stmtCheck = $conn->prepare($sqlCheck);
     $stmtCheck->execute([':uid' => $userId]);
@@ -89,7 +89,7 @@ try {
         throw new Exception("Insufficient balance");
     }
 
-    // 2. 扣款
+    // 2. Deduct amount
     $newBalance = $currentBalance - $price;
     $negativeAmount = -1 * $price;
     $desc = "Purchase " . $planName . " (" . ucfirst($cycle) . ")";
@@ -104,10 +104,10 @@ try {
     ]);
 
     // =========================================================
-    // 🔥 STEP C: 会员开通 (适配你的数据库结构)
+    // STEP C: Membership Activation (Adapted to database structure)
     // =========================================================
 
-    // 1. 获取 Plan_ID
+    // 1. Get Plan_ID
     $stmtGetPlan = $conn->prepare("SELECT Plan_ID, Membership_Duration_Days FROM Membership_Plans WHERE Membership_Tier = :tier AND Membership_Price = :price LIMIT 1");
     $stmtGetPlan->execute([':tier' => $planName, ':price' => $price]);
     $planRow = $stmtGetPlan->fetch(PDO::FETCH_ASSOC);
@@ -117,8 +117,8 @@ try {
     $planId = $planRow['Plan_ID'];
     $durationDays = intval($planRow['Membership_Duration_Days']);
 
-    // 2. 计算叠加时间
-    // 逻辑：如果用户当前已有该等级(VIP/SVIP)且未过期，则在原结束时间上续费
+    // 2. Calculate overlap time
+    // Logic: If the user already has this tier (VIP/SVIP) and it hasn't expired, extend from the original end date
     $sqlLastDate = "SELECT m.Memberships_End_Date 
                     FROM Memberships m
                     JOIN Membership_Plans p ON m.Plan_ID = p.Plan_ID
@@ -141,9 +141,9 @@ try {
     $endDateObj = clone $startDateObj;
     $endDateObj->modify("+$durationDays days");
 
-    // 3. 插入 Memberships 表
-    // 🔥 关键修正：你的表里 Memberships_Tier 存的是周期 (Monthly/Quarterly/Yearly)
-    // 我们将前端传来的 'monthly' 转换为 'Monthly' 存进去
+    // 3. Insert into Memberships table
+    // Note: The Memberships_Tier column stores the cycle (Monthly/Quarterly/Yearly)
+    // Convert 'monthly' from frontend to 'Monthly' for storage
     $cycleEnum = ucfirst($cycle); // "monthly" -> "Monthly"
 
     $sqlMember = "INSERT INTO Memberships 
@@ -156,7 +156,7 @@ try {
         ':pid' => $planId,
         ':start' => $startDateObj->format('Y-m-d H:i:s'),
         ':end' => $endDateObj->format('Y-m-d H:i:s'),
-        ':tier' => $cycleEnum // 存入周期
+        ':tier' => $cycleEnum // Store cycle
     ]);
 
     $conn->commit();

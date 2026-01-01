@@ -19,7 +19,7 @@ try {
     $conn = getDatabaseConnection();
 
     if ($conn) {
-        // 🔥 修复：只查 User_Payment_PIN_Hash，不要查 User_Wallet_Balance
+        // 🔥 Fix: Only query User_Payment_PIN_Hash, do not query User_Wallet_Balance
         $sqlUser = "SELECT User_Payment_PIN_Hash FROM User WHERE User_ID = :uid";
         $stmtUser = $conn->prepare($sqlUser);
         $stmtUser->execute([':uid' => $userId]);
@@ -29,7 +29,7 @@ try {
             $response['has_pin'] = true;
         }
 
-        // 🔥 修复：余额依然从 Wallet_Logs 查
+        // 🔥 Fix: Balance is still queried from Wallet_Logs
         $sqlBalance = "SELECT Balance_After FROM Wallet_Logs WHERE User_ID = :uid ORDER BY Log_ID DESC LIMIT 1";
         $stmtBalance = $conn->prepare($sqlBalance);
         $stmtBalance->execute([':uid' => $userId]);

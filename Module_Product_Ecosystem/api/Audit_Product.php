@@ -1,23 +1,23 @@
 <?php
 // Module_Product_Ecosystem/api/Audit_Product.php
 
-// 1. 开启 Session 以获取管理员 ID
+// 1. Start Session to get Admin ID
 session_start();
 
 header('Content-Type: application/json');
 
-// 引入数据库配置文件
+// Include database configuration file
 require_once __DIR__ . '/config/treasurego_db_config.php';
 
-// 获取 POST JSON 数据
+// Get POST JSON data
 $input = json_decode(file_get_contents('php://input'), true);
 
 $productId = $input['product_id'] ?? null;
-$action = $input['action'] ?? null; // 'approve' 或 'reject'
-$reason = $input['reason'] ?? null; // 拒绝理由
+$action = $input['action'] ?? null; // 'approve' or 'reject'
+$reason = $input['reason'] ?? null; // Rejection reason
 
-// 2. 获取管理员 ID (假设登录时存入了 session['user_id'])
-// 如果没有登录，设置为 0 或报错，这里暂时给个默认值防止报错，实际请确保已登录
+// 2. Get Admin ID (Assuming session['user_id'] was set during login)
+// If not logged in, set to 0 or error out. Setting default value here to prevent errors, ensure login in production.
 $adminId = $_SESSION['user_id'] ?? 0;
 
 if (!$productId || !$action) {
@@ -26,23 +26,23 @@ if (!$productId || !$action) {
 }
 
 if ($adminId == 0) {
-    // 可选：如果没有获取到 Admin ID，可以阻止操作
+    // Optional: If Admin ID is not obtained, operation can be blocked
     // echo json_encode(['success' => false, 'msg' => 'Unauthorized']); exit;
 }
 
 try {
-    // 开启事务 (确保两张表操作同时成功)
+    // Start transaction (Ensure operations on both tables succeed simultaneously)
     $conn->beginTransaction();
 
     $newStatus = '';
     $newListingStatus = '';
-    $reviewResult = ''; // 对应 Product_Admin_Review 表的 Result 字段
+    $reviewResult = ''; // Corresponds to the Result field in Product_Admin_Review table
     $comment = null;
 
     if ($action === 'approve') {
-        $newStatus = 'approved';      // Product 表状态
+        $newStatus = 'approved';      // Product table status
         $newListingStatus = 'Active';
-        $reviewResult = 'Approved';   // Review 表状态 (符合你的表结构 Enum/Varchar)
+        $reviewResult = 'Approved';   // Review table status (Matches your table structure Enum/Varchar)
         $comment = 'Approved by Admin';
     } elseif ($action === 'reject') {
         $newStatus = 'rejected';
@@ -53,8 +53,8 @@ try {
         throw new Exception("Invalid action type");
     }
 
-    // --- 第一步：更新 Product 主表 ---
-    // 更新状态，以便前台知道该商品已处理
+    // --- Step 1: Update Product main table ---
+    // Update status so frontend knows the product has been processed
     $sqlProduct = "UPDATE Product 
                    SET Product_Review_Status = ?,
                        Product_Status = ?,
@@ -65,23 +65,23 @@ try {
         throw new Exception("Failed to update Product table");
     }
 
-    // --- 第二步：插入 Product_Admin_Review 审核记录表 ---
-    // 注意：这里使用了 NOW() 记录数据库当前时间
+    // --- Step 2: Insert into Product_Admin_Review audit log table ---
+    // Note: Using NOW() to record current database time
     $sqlReview = "INSERT INTO Product_Admin_Review 
                   (Admin_Review_Result, Admin_Review_Comment, Admin_Review_Time, Product_ID, Admin_ID) 
                   VALUES (?, ?, NOW(), ?, ?)";
     $stmtReview = $conn->prepare($sqlReview);
-    // 绑定参数: Result, Comment, ProductID, AdminID
+    // Bind parameters: Result, Comment, ProductID, AdminID
     if (!$stmtReview->execute([$reviewResult, $comment, $productId, $adminId])) {
         throw new Exception("Failed to insert Audit Log");
     }
 
-    // 提交事务
+    // Commit transaction
     $conn->commit();
     echo json_encode(['success' => true]);
 
 } catch (Exception $e) {
-    // 发生错误，回滚所有操作
+    // Error occurred, rollback all operations
     if ($conn->inTransaction()) {
         $conn->rollBack();
     }
