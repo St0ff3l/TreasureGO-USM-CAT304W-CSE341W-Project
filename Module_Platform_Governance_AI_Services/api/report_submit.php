@@ -1,10 +1,12 @@
 <?php
-// ==============================================================================
-// API: Submit Report (Product OR User)
-// Path: Module_Platform_Governance_AI_Services/api/report_submit.php
-// Method: POST (JSON or Multipart/Form-Data)
-// Auth: Session required
-// ==============================================================================
+// Submits a report against a product or a user.
+//
+// Method: POST
+// Content-Type:
+// - application/json (text-only report)
+// - multipart/form-data (report with up to 3 evidence images)
+//
+// Auth: requires a logged-in session
 
 session_start();
 require_once __DIR__ . '/config/treasurego_db_config.php';
@@ -21,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-// 1) Auth check
+// Authentication guard.
 if (!isset($_SESSION['user_id'])) {
     http_response_code(401);
     echo json_encode(['success' => false, 'message' => 'Auth Required']);
@@ -29,19 +31,20 @@ if (!isset($_SESSION['user_id'])) {
 }
 $reportingUserId = (int)$_SESSION['user_id'];
 
-// 2) Parse JSON OR FormData
+// Read request payload from either JSON or multipart/form-data.
 $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
 $input = [];
 
 if (stripos($contentType, 'application/json') !== false) {
-    // JSON 提交（无图片）
+    // JSON submission (no images)
     $data = json_decode(file_get_contents('php://input'), true);
     if (is_array($data)) $input = $data;
 } else {
-    // FormData 提交（有图片）
+    // FormData submission (with images)
     $input = $_POST;
 }
 
+// Request fields.
 $type = isset($input['type']) ? strtolower(trim((string)$input['type'])) : 'product';
 $reportReason = isset($input['reportReason']) ? trim((string)$input['reportReason']) : '';
 $details = isset($input['details']) ? trim((string)$input['details']) : '';
@@ -56,11 +59,7 @@ if (isset($input['reportedItemId']) && $input['reportedItemId'] !== null && $inp
     $reportedItemId = (int)$input['reportedItemId'];
 }
 
-// ==========================================
-// 3) Validate (Updated Logic)
-// ==========================================
-
-// A. 允许 product 或 user
+// Validate request.
 $allowedTypes = ['product', 'user'];
 if (!in_array($type, $allowedTypes)) {
     http_response_code(400);
@@ -80,7 +79,7 @@ if ($details === '') {
     exit;
 }
 
-// B. 根据类型检查 ID
+// Validate required IDs based on report type.
 if ($type === 'product' && (!$reportedItemId || $reportedItemId <= 0)) {
     http_response_code(400);
     echo json_encode(['success' => false, 'message' => 'Product ID (reportedItemId) is required for product reports']);
@@ -93,7 +92,7 @@ if ($type === 'user' && (!$reportedUserId || $reportedUserId <= 0)) {
     exit;
 }
 
-// Database Connection
+// Resolve database connection handle.
 if (!isset($conn) && isset($pdo)) {
     $conn = $pdo;
 }
@@ -107,13 +106,13 @@ if (!isset($conn)) {
 try {
     $dbProductTitle = null;
 
-    // ==========================================
-    // 4) Context Logic (Product vs User)
-    // ==========================================
+    // Context resolution:
+    // - Product report: verify the product exists and infer the seller as the reported user.
+    // - User report: report the specified user and ignore any reported item ID.
 
     if ($type === 'product') {
-        // --- 商品举报流程 ---
-        // 必须查库确认商品存在，并获取卖家ID (作为被举报人)
+        // Product report path.
+        // Verify the product exists and read its seller ID.
         $ctxSql = "SELECT p.User_ID AS Seller_User_ID, p.Product_Title
                    FROM Product p
                    WHERE p.Product_ID = ?
@@ -128,25 +127,21 @@ try {
             exit;
         }
 
-        // 覆盖 reportedUserId，确保举报的是该商品的真正卖家
+        // Override reportedUserId so the report targets the actual seller for this product.
         $reportedUserId = (int)$ctxRow['Seller_User_ID'];
         $dbProductTitle = $ctxRow['Product_Title'] ?? null;
 
     } else {
-        // --- 用户举报流程 ---
-        // 直接使用前端传来的 reportedUserId
-        // 强制将 item id 设为 null，因为这是针对人的举报
+        // User report path.
+        // Treat this as a user-only report; no product context is stored.
         $reportedItemId = null;
 
-        // (可选) 这里可以加一段 SQL 检查该 user 是否存在，
-        // 但为了性能通常可以直接让外键约束去处理，或者假设前端传的ID是有效的。
+        // An optional existence check for the reported user could be added here.
     }
 
     $contactEmail = isset($input['contactEmail']) ? trim((string)$input['contactEmail']) : null;
 
-    // ==========================================
-    // 5) Insert Report
-    // ==========================================
+    // Insert the report record.
     $sql = "INSERT INTO Report (
                 Report_Type,
                 Report_Reason,
@@ -168,7 +163,7 @@ try {
         $reportingUserId,
         $contactEmail,
         $reportedUserId,
-        $reportedItemId // 注意：user 模式下这里是 null
+        $reportedItemId // In user mode this is null.
     ]);
 
     if (!$ok) {
@@ -178,9 +173,7 @@ try {
     }
     $reportId = (int)$conn->lastInsertId();
 
-    // ==========================================
-    // 6) Handle Image Uploads
-    // ==========================================
+    // Save up to 3 evidence images and store their public paths.
     $savedPaths = [];
 
     if (isset($_FILES['images']) && is_array($_FILES['images']['name'])) {
@@ -192,12 +185,11 @@ try {
             'image/webp' => 'webp'
         ];
 
-        // 1. 修改物理存储路径
-        // __DIR__ 是 /api 目录，向上退一级 (../) 就是 Module_Platform_Governance_AI_Services 目录
+        // Store uploaded files under this module's assets directory.
         $uploadDir = __DIR__ . '/../assets/images/report_images';
 
         if (!is_dir($uploadDir)) {
-            // 递归创建目录
+            // Create the directory if it does not exist.
             @mkdir($uploadDir, 0775, true);
         }
 
@@ -217,16 +209,15 @@ try {
             if (!isset($allowedMime[$mime])) continue;
 
             $ext = $allowedMime[$mime];
-            // 文件名生成逻辑保持不变
+            // Filename generation is based on the report ID + timestamp + random suffix.
             $filename = $reportId . '_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
 
-            // 完整物理路径
+            // Absolute filesystem path.
             $absPath = $uploadDir . '/' . $filename;
 
             if (!move_uploaded_file($tmp, $absPath)) continue;
 
-            // 2. 修改存入数据库的 Web 路径
-            // 对应前端访问的 URL 路径
+            // Public URL path stored in the database.
             $webPath = '/Module_Platform_Governance_AI_Services/assets/images/report_images/' . $filename;
             $savedPaths[] = $webPath;
 

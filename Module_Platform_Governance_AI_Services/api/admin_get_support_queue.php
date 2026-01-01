@@ -1,22 +1,21 @@
 <?php
-// 文件: Module_Platform_Governance_AI_Services/api/admin_get_support_queue.php
+// Returns the admin "support queue".
+//
+// A support conversation is represented by messages where Product_ID IS NULL.
+// This endpoint returns one row per user (non-admin side), showing the latest
+// message so the admin dashboard can render a queue of open threads.
+
 header('Content-Type: application/json');
 
-// ==========================================================================
-// 1. 引用配置
-// ==========================================================================
-
-// 数据库配置：引用当前模块下的 config (您刚才提供的文件)
+// Database connection for this module.
 require_once __DIR__ . '/config/treasurego_db_config.php';
 
-// 身份验证：依然跨模块引用 User 模块的 auth.php
+// Session helpers and role-based access checks.
 require_once __DIR__ . '/../../Module_User_Account_Management/includes/auth.php';
-
-// ==========================================================================
 
 start_session_safe();
 
-// Admin only
+// Admin-only endpoint.
 if (!is_logged_in()) {
     http_response_code(401);
     echo json_encode(['status' => 'error', 'message' => 'Unauthorized']);
@@ -37,7 +36,7 @@ if (!$pdo) {
 
 try {
     // Public pool: any Product_ID IS NULL message between any user and any admin.
-    // We group by the *user* side (non-admin) so the queue shows one entry per user.
+    // Group by the user-side participant so the queue shows one entry per user.
     $sql = "
         SELECT 
             u.User_ID, 
@@ -77,6 +76,7 @@ try {
     echo json_encode(['status' => 'success', 'data' => $conversations]);
 
 } catch (Exception $e) {
+    // Consider returning a generic error message in production to avoid leaking details.
     echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
 }
 ?>

@@ -1,18 +1,24 @@
 <?php
-// Module_Platform_Governance_AI_Services/api/admin_report_get.php
+// Admin reports API.
+//
+// Returns:
+// - Aggregate report counts by status (stats)
+// - A detailed report list, including reporter/reported user details
+// - Optional evidence image paths (as an array)
 
-// 1. 基础配置
+// Basic response / CORS headers.
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 
 require_once __DIR__ . '/config/treasurego_db_config.php';
 
 try {
+    // Database connection is expected to be provided by the config.
     if (!isset($pdo)) {
         throw new Exception("Database connection failed.");
     }
 
-    // 2. 获取统计数据 (Stats)
+    // Summary statistics.
     $statsQuery = "
         SELECT 
             COUNT(*) as total,
@@ -24,7 +30,8 @@ try {
     $statsStmt = $pdo->query($statsQuery);
     $stats = $statsStmt->fetch(PDO::FETCH_ASSOC);
 
-    // 3. 获取详细列表 (Report List)
+    // Detailed report list.
+    // Evidence file paths are aggregated to avoid repeating the same report row.
     $listSql = "
         SELECT 
             r.Report_ID as id,
@@ -35,43 +42,41 @@ try {
             r.Report_Creation_Date as date,
             r.Report_Contact_Email as contactEmail,
             
-            -- 举报者信息
+            -- Reporter details
             u1.User_ID as reporterId,
             u1.User_Username as reporter, 
             u1.User_Email as reporterAccountEmail,
             
-            -- 被举报人信息
+            -- Reported user details
             u2.User_ID as reportedUserId,
             u2.User_Username as reportedUserName,
             u2.User_Email as reportedUserEmail,
             u2.User_Profile_Image as reportedUserImage,
             
-            -- 关联商品信息
+            -- Related product details (when the report targets a product)
             r.Reported_Item_ID as reportedItemId,
             CASE 
                 WHEN r.Report_Type = 'product' AND p.Product_Title IS NOT NULL THEN p.Product_Title
                 ELSE u2.User_Username 
             END as targetName,
 
-            -- 获取商品主图 (用于列表左侧图标)
+            -- Primary product image for list rendering
             (SELECT Image_URL 
              FROM Product_Images pi 
              WHERE pi.Product_ID = p.Product_ID 
              LIMIT 1
             ) as productImage,
 
-            -- 【核心修改】获取举报证据图片 (用于详情弹窗)
-            -- 将多张图片的路径用逗号拼接成一个字符串
+            -- Comma-separated evidence file paths (post-processed into an array)
             GROUP_CONCAT(re.File_Path) as evidence_paths
 
         FROM Report r
         LEFT JOIN User u1 ON r.Reporting_User_ID = u1.User_ID
         LEFT JOIN User u2 ON r.Reported_User_ID = u2.User_ID
         LEFT JOIN Product p ON r.Reported_Item_ID = p.Product_ID
-        -- 【核心修改】关联证据表
         LEFT JOIN Report_Evidence re ON r.Report_ID = re.Report_ID
         
-        -- 【核心修改】必须分组，否则 GROUP_CONCAT 会报错或只返回一行
+        -- Group by report so aggregated evidence stays on the same row
         GROUP BY r.Report_ID
         
         ORDER BY r.Report_Creation_Date DESC";
@@ -79,17 +84,17 @@ try {
     $listStmt = $pdo->query($listSql);
     $rawReports = $listStmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // 4. 数据后处理 (格式化)
+    // Post-process evidence_paths into an evidence array.
     $reports = [];
     foreach ($rawReports as $row) {
-        // 处理证据图片：将字符串 "path1.jpg,path2.jpg" 转为数组 ["path1.jpg", "path2.jpg"]
+        // Convert "path1.jpg,path2.jpg" into ["path1.jpg", "path2.jpg"].
         if (!empty($row['evidence_paths'])) {
             $row['evidence'] = explode(',', $row['evidence_paths']);
         } else {
             $row['evidence'] = [];
         }
 
-        // 移除不需要发送给前端的临时字段
+        // Remove intermediate fields not needed by the frontend.
         unset($row['evidence_paths']);
 
         $reports[] = $row;

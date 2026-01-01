@@ -1,6 +1,11 @@
 <?php
-// Admin Support Dashboard Chat API
-// Provides: list conversations, get messages, send message, upload image
+// Chat API for the Admin Support Dashboard.
+//
+// Supported actions:
+// - GET  ?action=conversations   Returns the latest message for each conversation thread.
+// - GET  ?action=messages       Returns messages for a specific thread.
+// - POST ?action=send           Sends a text message.
+// - POST ?action=upload         Uploads an image and sends it as an image message.
 
 header('Content-Type: application/json');
 
@@ -8,18 +13,19 @@ require_once __DIR__ . '/config/treasurego_db_config.php';
 require_once __DIR__ . '/../../Module_User_Account_Management/includes/auth.php';
 
 function json_ok($data = []) {
+    // Successful JSON response.
     echo json_encode(['status' => 'success', 'data' => $data]);
     exit();
 }
 function json_err($message, $code = 400) {
+    // Error JSON response with HTTP status code.
     http_response_code($code);
     echo json_encode(['status' => 'error', 'message' => $message]);
     exit();
 }
 
+// Session + authorization guard.
 start_session_safe();
-
-// Strict gate
 require_admin();
 
 $admin_id = (int)get_current_user_id();
@@ -33,7 +39,8 @@ $action = $_GET['action'] ?? '';
 
 try {
     if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'conversations') {
-        // Admin sees ALL conversations. Group by (other user, product)
+        // Conversation list: one row per (contact, product) thread with the latest message.
+        // The contact is computed as the other participant relative to the current admin.
         $sql = "
             SELECT 
                 u.User_ID, 
@@ -77,10 +84,11 @@ try {
 
         if (!$contact_id) json_err('Contact ID required');
 
+        // Threads with Product_ID = NULL are treated as generic support chats.
         $isSupport = ($product_id === null || $product_id === '' || strtolower((string)$product_id) === 'null');
 
         if ($isSupport) {
-            // Public pool support: any admin <-> this user messages (Product_ID IS NULL)
+            // Support chat: the user is the selected contact; the other participant is any admin.
             $sql = "
                 SELECT 
                     m.Message_ID,
@@ -100,16 +108,15 @@ try {
                       OR
                       (m.Message_Reciver_ID = ? AND u_sender.User_Role = 'admin')
                   )
+                ORDER BY m.Message_Sent_At
             ";
             $params = [$contact_id, $contact_id];
-
-            $sql .= " ORDER BY m.Message_Sent_At ASC";
 
             $stmt = $pdo->prepare($sql);
             $stmt->execute($params);
             $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-            // Mark user's messages read (any user -> this admin messages are handled per-admin; for pool, mark ALL user->admin as read)
+            // Mark unread messages sent by the user to an admin as read.
             $updateSql = "
                 UPDATE Message m
                 JOIN User u_recv ON u_recv.User_ID = m.Message_Reciver_ID
@@ -125,7 +132,7 @@ try {
             json_ok($messages);
         }
 
-        // Product chat: keep original strict admin<->contact behavior
+        // Product chat: messages between this admin and the selected contact scoped to a product.
         $sql = "
             SELECT 
                 Message_ID,
@@ -140,7 +147,7 @@ try {
             WHERE ((Message_Sender_ID = ? AND Message_Reciver_ID = ?) 
                OR (Message_Sender_ID = ? AND Message_Reciver_ID = ?))
               AND Product_ID = ?
-            ORDER BY Message_Sent_At ASC
+            ORDER BY Message_Sent_At
         ";
         $params = [$admin_id, $contact_id, $contact_id, $admin_id, $product_id];
 
@@ -148,6 +155,7 @@ try {
         $stmt->execute($params);
         $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+        // Mark unread messages from the contact to this admin as read for this product thread.
         $updateSql = "UPDATE Message SET Message_Is_Read = 1 
                       WHERE Message_Sender_ID = ? AND Message_Reciver_ID = ? AND Message_Is_Read = 0 AND Product_ID = ?";
         $updateStmt = $pdo->prepare($updateSql);
@@ -157,6 +165,7 @@ try {
     }
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'send') {
+        // JSON body: { receiver_id, product_id (optional), message }
         $input = json_decode(file_get_contents('php://input'), true);
 
         $receiver_id = $input['receiver_id'] ?? null;
@@ -165,6 +174,7 @@ try {
 
         if (!$receiver_id || $message === '') json_err('receiver_id and message are required');
 
+        // Treat empty / "null" product_id as a support thread.
         if (empty($product_id) || strtolower((string)$product_id) === 'null') {
             $product_id = null;
         }
@@ -178,6 +188,7 @@ try {
     }
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'upload') {
+        // Multipart form-data fields: receiver_id, product_id (optional), image.
         if (!isset($_POST['receiver_id'])) json_err('receiver_id required');
         $receiver_id = $_POST['receiver_id'];
         $product_id = $_POST['product_id'] ?? null;
@@ -191,6 +202,7 @@ try {
         $allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
         $max_size = 5 * 1024 * 1024;
 
+        // Basic server-side validation.
         if (!in_array($file['type'], $allowed_types, true)) {
             json_err('Invalid file type. Only JPG, PNG, GIF, WEBP allowed.');
         }
@@ -198,7 +210,7 @@ try {
             json_err('File too large. Max 5MB.');
         }
 
-        // Store under this module's assets
+        // Persist uploaded images under this module's static assets.
         $upload_dir = __DIR__ . '/../assets/chat_images/';
         if (!is_dir($upload_dir)) {
             mkdir($upload_dir, 0755, true);
@@ -208,7 +220,7 @@ try {
         $filename = uniqid('adminchat_', true) . '.' . $ext;
         $filepath = $upload_dir . $filename;
 
-        // Public path relative to web root (best effort); you may adjust if routing differs.
+        // URL used by the frontend to render the uploaded file.
         $public_path = '/Module_Platform_Governance_AI_Services/assets/chat_images/' . $filename;
 
         if (!move_uploaded_file($file['tmp_name'], $filepath)) {
@@ -226,5 +238,6 @@ try {
     json_err('Unknown action', 404);
 
 } catch (Exception $e) {
+    // Avoid returning internal details in production.
     json_err($e->getMessage(), 500);
 }

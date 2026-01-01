@@ -1,7 +1,13 @@
 <?php
-// ============================================
-// TreasureGO AI Support API (V30: 最终完美版 - 强制纠错 + 闲聊兼容)
-// ============================================
+// AI support endpoint used by the customer support chat UI.
+//
+// Flow overview:
+// - Require a logged-in user.
+// - Read the user's latest message from either {messages:[...]} or {message:"..."}.
+// - Load KnowledgeBase entries and embed them into the system prompt.
+// - Pull recent AIChatLog history to provide conversation context.
+// - Call the model service and parse {TYPE:...} / {INTENT:...} tags from the reply.
+// - Optionally show resolution buttons for solution replies.
 
 session_start();
 ini_set('display_errors', 1);
@@ -18,7 +24,7 @@ header("Content-Type: application/json; charset=UTF-8");
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { exit(0); }
 
 try {
-    // 1. Auth Check
+    // Authentication guard.
     if (!isset($_SESSION['user_id'])) {
         http_response_code(401);
         echo json_encode(['error' => 'Auth Required']);
@@ -26,7 +32,7 @@ try {
     }
     $currentUserId = $_SESSION['user_id'];
 
-    // 2. Input
+    // Read the current user message from the request body.
     $inputJSON = file_get_contents('php://input');
     $input = json_decode($inputJSON, true);
 
@@ -39,13 +45,11 @@ try {
 
     if (empty($currentMsgContent)) { throw new Exception("Empty message"); }
 
-    // 3. DB Connect
+    // Database connection.
     if (!isset($conn) && isset($pdo)) { $conn = $pdo; }
     if (!isset($conn)) { throw new Exception("Database connection failed"); }
 
-    // ---------------------------------------------------------
-    // 🔍 读取知识库
-    // ---------------------------------------------------------
+    // Load KnowledgeBase entries and format them as prompt context.
     $kbStr = "";
     try {
         $conn->exec("SET NAMES utf8mb4");
@@ -65,7 +69,7 @@ try {
         $kbStr = "Error loading KB.";
     }
 
-    // 4. 极简输入拦截
+    // Very short / numeric inputs are treated as low-signal and answered with suggestions.
     if (mb_strlen($currentMsgContent, 'UTF-8') <= 1 || is_numeric($currentMsgContent)) {
         $recSql = "SELECT KB_Question FROM KnowledgeBase ORDER BY RAND() LIMIT 3";
         $recStmt = $conn->query($recSql);
@@ -86,7 +90,7 @@ try {
         exit;
     }
 
-    // 5. 构建 System Prompt (大脑)
+    // Build the system prompt that includes the KnowledgeBase content and response protocol.
     $finalMessages = [];
 
     $systemContent = "You are TreasureGo's AI Customer Support.
@@ -113,9 +117,7 @@ $kbStr
 
     $finalMessages[] = ["role" => "system", "content" => $systemContent];
 
-    // -----------------------------------------------------
-    // 🔮 历史记录 (10条)
-    // -----------------------------------------------------
+    // Load recent chat history for context (up to 10 records).
     $historySql = "SELECT AILog_User_Query, AILog_Response 
                    FROM AIChatLog 
                    WHERE User_ID = ? 
@@ -138,15 +140,13 @@ $kbStr
         }
     }
 
-    // -----------------------------------------------------
-    // 🛑 核心黑科技：动态纠错注入 (Injection)
-    // -----------------------------------------------------
+    // Add a final instruction layer to enforce language matching and tag formatting.
 
-    // 1. 侦测语言
+    // Detect whether the current message contains Han characters (Chinese).
     $isChinese = preg_match("/\p{Han}+/u", $currentMsgContent);
     $langNote = $isChinese ? "User speaks CHINESE." : "User speaks ENGLISH/MALAY.";
 
-    // 2. 构造强力指令 (修复版：强制要求输出标签)
+    // Instruction wrapper that the model receives as the final "user" message.
     $injection = <<<EOT
 User New Input: "$currentMsgContent"
 
@@ -162,12 +162,12 @@ EOT;
 
     $finalMessages[] = ["role" => "user", "content" => $injection];
 
-    // 6. Call AI
+    // Call the model service.
     $aiService = new DeepSeekService();
     $result = $aiService->sendMessage($finalMessages);
     $rawAiContent = $result['choices'][0]['message']['content'] ?? "{TYPE:CHAT} Error";
 
-    // 7. Parse Tags
+    // Extract the TYPE/INTENT tags and remove them from the visible reply.
     $intent = 'General_Inquiry'; $msgType = 'CHAT'; $finalReply = $rawAiContent;
 
     if (preg_match('/\{INTENT:(.*?)\}/', $rawAiContent, $matches)) {
@@ -179,17 +179,16 @@ EOT;
     $finalReply = trim($finalReply);
     $finalReply = preg_replace('/\(🛠️.*?\)/', '', $finalReply);
 
-    // Button Logic
+    // UI hint: show resolution buttons only for solution replies.
     $showButtons = (strtoupper($msgType) === 'SOLUTION');
 
-    // Fallback Logic
+    // Fallback replies include a link to human support.
     if (strtoupper($msgType) === 'FALLBACK') {
-        // 修改为 support_human_chat.html
         $finalReply .= "\n\n🔗 <a href='support_human_chat.html' style='color:#4F46E5; font-weight:bold; text-decoration:underline;'>Click for Human Support / 人工客服</a>";
         $showButtons = false;
     }
 
-    // 8. Log
+    // Persist the interaction in AIChatLog.
     $insertedLogId = null;
     $sqlLog = "INSERT INTO AIChatLog 
             (AILog_User_Query, AILog_Response, AILog_Intent_Recognized, AILog_Is_Resolved, AILog_Timestamp, User_ID) 
@@ -201,6 +200,7 @@ EOT;
         $insertedLogId = $conn->lastInsertId();
     }
 
+    // Return the original API response shape, but replace the message content with the cleaned reply.
     $result['choices'][0]['message']['content'] = $finalReply;
     $result['db_log_id'] = $insertedLogId;
     $result['show_resolution_buttons'] = $showButtons;

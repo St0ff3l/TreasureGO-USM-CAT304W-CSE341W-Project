@@ -1,5 +1,12 @@
 <?php
-// 文件位置: Module_Platform_Governance_AI_Services/api/support_human_chat_api.php
+// Support chat API for connecting a user to an admin.
+//
+// Support chat threads are represented by Message rows where Product_ID IS NULL.
+//
+// Methods:
+// - GET:  returns all support messages between the current user and any admin
+//         and marks unread admin->user messages as read.
+// - POST: sends a text message from the current user to an admin.
 
 header('Content-Type: application/json');
 
@@ -8,7 +15,7 @@ require_once __DIR__ . '/../../Module_User_Account_Management/includes/auth.php'
 
 start_session_safe();
 
-// 2. 权限检查
+// Authentication guard.
 if (!isset($_SESSION['user_id'])) {
     http_response_code(401);
     echo json_encode(['status' => 'error', 'message' => 'Unauthorized']);
@@ -27,8 +34,12 @@ if (!$pdo) {
 // Support chat is defined as Product_ID IS NULL.
 
 function find_admin_recipient(PDO $pdo, int $user_id): ?int {
-    // Prefer the admin the user already talked to most recently; otherwise pick any admin.
-    // Use positional parameters to avoid duplicate named-parameter issues on some PDO drivers.
+    // Select an admin recipient for this user.
+    // Priority:
+    // - Prefer the most recently active admin in this user's support chat history.
+    // - Fall back to any admin if no history exists.
+    //
+    // Note: positional parameters are used to avoid duplicate named-parameter issues.
     $sql = "
         SELECT a.User_ID
         FROM User a
@@ -61,9 +72,7 @@ function find_admin_recipient(PDO $pdo, int $user_id): ?int {
     return $row ? (int)$row['User_ID'] : null;
 }
 
-// ==========================================
-// 🟢 获取聊天记录 (GET)
-// ==========================================
+// Handle GET: fetch support chat messages.
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     try {
         // Get all support messages between this user and ANY admin.
@@ -114,9 +123,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     exit;
 }
 
-// ==========================================
-// 🔵 发送消息给客服 (POST)
-// ==========================================
+// Handle POST: send a support message.
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $input = json_decode(file_get_contents('php://input'), true);
     $text = trim($input['message'] ?? '');

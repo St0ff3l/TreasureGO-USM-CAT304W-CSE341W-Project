@@ -1,31 +1,17 @@
 <?php
-// ==============================================================================
-// API: Get Product Report Context
-// Path: Module_Platform_Governance_AI_Services/api/report_product_context.php
+// Returns basic context for reporting a product.
+//
 // Method: GET
-// Auth: optional for fetch; returns only product title + seller basics needed for report
+// Auth: not required
 //
-// Query params (aliases):
-//   product_id (preferred) OR itemId OR reportedItemId
+// Query parameters (aliases):
+// - product_id (preferred)
+// - itemId
+// - reportedItemId
 //
-// Returns:
-// {
-//   success: true,
-//   data: {
-//     // legacy fields
-//     product_id: 100000014,
-//     product_title: "...",
-//     seller_user_id: 100000001,
-//     seller_username: "...",
-//
-//     // report-friendly fields (aliases)
-//     reported_item_id: 100000014,
-//     reported_item_title: "...",
-//     reported_user_id: 100000001,
-//     reported_user_name: "..."
-//   }
-// }
-// ==============================================================================
+// Response:
+// - success: boolean
+// - data: product and seller details with both legacy keys and report-friendly aliases
 
 session_start();
 require_once __DIR__ . '/config/treasurego_db_config.php';
@@ -69,8 +55,8 @@ if (!isset($conn)) {
 }
 
 try {
-    // Product.User_ID references User.User_ID
-    // User table column for name seems to be User_Username based on existing code.
+    // Product.User_ID is the seller account ID.
+    // User_Username is used as the display name.
     $sql = "SELECT p.Product_ID, p.Product_Title, p.User_ID AS Seller_User_ID, u.User_Username
             FROM Product p
             JOIN User u ON u.User_ID = p.User_ID
