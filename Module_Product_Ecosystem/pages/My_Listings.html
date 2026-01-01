@@ -7,7 +7,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
   <style>
     /* ========================================= */
-    /* 样式部分 (完全保留你的原样式) */
+    /* Styles Section */
     /* ========================================= */
     :root {
       --bg-color: #F3F6F9;
@@ -94,7 +94,7 @@
       justify-content: center;
       font-size: 3.5rem;
       transition: 0.3s;
-      /* 必须设置为 relative 以便放置印章 */
+      /* Set to relative for positioning the stamp */
       position: relative;
     }
 
@@ -129,10 +129,10 @@
     .empty-state.visible { display: block; }
     .empty-icon { font-size: 4rem; margin-bottom: 20px; display: block; opacity: 0.5; }
 
-    /* --- 已售出商品样式 --- */
+    /* --- Sold Item Styles --- */
     .product-card.sold-item .card-img-container img {
-      filter: grayscale(100%); /* 图片变灰 */
-      opacity: 0.5;            /* 图片变淡 */
+      filter: grayscale(100%); /* Grayscale image */
+      opacity: 0.5;            /* Fade image */
     }
 
     .product-card.sold-item .card-img-container::after {
@@ -157,7 +157,7 @@
     @media (max-width: 768px) {
       .product-grid { grid-template-columns: 1fr 1fr; gap: 15px; }
       .card-img-container { height: 140px; font-size: 3rem; }
-      /* 手机端适当调小印章字体 */
+      /* Adjust stamp font size for mobile */
       .product-card.sold-item .card-img-container::after {
         font-size: 1.1rem;
         padding: 4px 10px;
@@ -165,12 +165,12 @@
       }
 
       /* ========================================= */
-      /* ✅ Tabs mobile layout: 方案 B（两行换行，不滚动） */
-      /* 注意：只在手机端生效，不影响桌面端 */
+      /* Tabs mobile layout: Option B (Two lines wrapping, no scrolling) */
+      /* Note: Only active on mobile, does not affect desktop */
       /* ========================================= */
 
       .tabs-container {
-        /* 关闭横向滚动，改为两行换行 */
+        /* Disable horizontal scrolling, switch to two-line wrapping */
         overflow-x: hidden;
         overflow-y: hidden;
 
@@ -178,15 +178,15 @@
         flex-wrap: wrap;
         gap: 10px;
 
-        /* 关键：限制最多两行（第二行之后隐藏），避免把页面顶得太长 */
-        /* tab 高度约 38-40px，两行+gap 约 86-92px，取一个安全值 */
+        /* Key: Limit to max two lines (hide after second line) to avoid excessive height */
+        /* Tab height approx 38-40px, two lines + gap approx 86-92px, use a safe value */
         max-height: 96px;
 
-        /* 去掉之前用于滚动体验的设置 */
+        /* Remove settings previously used for scrolling experience */
         -webkit-overflow-scrolling: auto;
         scroll-snap-type: none;
 
-        /* 去掉“边缘裁切”那套滚动补丁 */
+        /* Remove the edge clipping scrolling patch */
         padding-left: 0;
         padding-right: 0;
         margin-left: 0;
@@ -196,17 +196,17 @@
       }
 
       .tab-btn {
-        /* 让每个按钮在两行布局里更平均 */
+        /* Distribute buttons more evenly in the two-line layout */
         flex: 1 1 auto;
-        min-width: 140px; /* 确保 Under Review/Rejected 不会挤成很奇怪 */
+        min-width: 140px; /* Ensure Under Review/Rejected do not get squeezed awkwardly */
 
-        /* 维持单行文字，不让按钮内部换行 */
+        /* Keep text on one line, prevent button internal wrapping */
         white-space: nowrap;
 
-        /* 移除滚动吸附 */
+        /* Remove scroll snap */
         scroll-snap-align: none;
 
-        /* 适配两行布局的按钮尺寸 */
+        /* Adapt button size for two-line layout */
         padding: 9px 14px;
         font-size: 0.88rem;
         text-align: center;
@@ -219,7 +219,7 @@
       }
     }
 
-    /* 更小屏进一步优化：让 tab 更紧凑，避免一屏显示不下 */
+    /* Further optimization for smaller screens: make tabs more compact to fit on screen */
     @media (max-width: 420px) {
       .container { padding: 0 14px; }
       .page-title { font-size: 1.55rem; }
@@ -332,7 +332,7 @@
     }
   }
 
-  // 🔥 核心渲染函数 🔥
+  // Core Rendering Function
   function renderListings(products) {
     const groups = {
       active: [],
@@ -346,7 +346,7 @@
       const sellerStatus = (item.Product_Status || '').toLowerCase();
       const reviewStatus = (item.Product_Review_Status || 'pending').toLowerCase();
 
-      // 优先级判断
+      // Priority check
       if (sellerStatus === 'sold') {
         groups.sold.push(item);
       } else if (reviewStatus === 'rejected') {
@@ -362,14 +362,14 @@
       }
     });
 
-    // 更新计数
+    // Update counts
     document.getElementById('count-active').textContent = groups.active.length;
     document.getElementById('count-review').textContent = groups.review.length;
     document.getElementById('count-unlisted').textContent = groups.unlisted.length;
     document.getElementById('count-rejected').textContent = groups.rejected.length;
     document.getElementById('count-sold').textContent = groups.sold.length;
 
-    // 渲染网格
+    // Render grids
     renderGrid('grid-active', 'empty-active', groups.active, 'Active');
     renderGrid('grid-review', 'empty-review', groups.review, 'Under Review');
     renderGrid('grid-unlisted', 'empty-unlisted', groups.unlisted, 'Unlisted');
@@ -408,7 +408,7 @@
 
       const soldCssClass = (statusLabel === 'Sold') ? 'sold-item' : '';
 
-      // 🔥 修改处：现在无论是否卖出，都指向 Seller_Product_Management.html
+      // Modification: Now points to Seller_Product_Management.html regardless of sold status
       const targetPage = 'Seller_Product_Management.html';
 
       const cardHtml = `

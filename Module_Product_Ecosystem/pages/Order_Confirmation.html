@@ -424,7 +424,7 @@
     let currentProductPrice = 0;
     let currentShippingCost = 7.00;
     let userCurrentBalance = 0.00;
-    let userHasPin = false; // Tracks if user has set a PIN
+    let userHasPin = false; // User PIN status flag
     let selectedShippingAddress = null;
 
     const urlParams = new URLSearchParams(window.location.search);
@@ -471,13 +471,12 @@
                 userCurrentBalance = parseFloat(result.balance);
                 document.getElementById('user-balance-display').innerText = `RM${userCurrentBalance.toFixed(2)}`;
 
-                // IMPORTANT: Ensure your backend Get_Wallet_Balance.php returns 'has_pin' boolean
-                // If backend doesn't support it yet, maybe defaulting to true for testing is safer,
-                // but for security it should default to false.
+                // Check if 'has_pin' field exists in response
+                // Default to false for security if field is missing
                 if (typeof result.has_pin !== 'undefined') {
                     userHasPin = Boolean(result.has_pin);
                 } else {
-                    // Fallback if backend not updated yet (Assume no PIN to force setup, or true to bypass)
+                    // Fallback logic for PIN status
                     // userHasPin = false;
                     console.warn("Backend missing has_pin");
                 }
@@ -678,15 +677,15 @@
     }
 
     realInput.addEventListener('input', (e) => {
-        // Only allow numbers
+        // Restrict input to numbers only
         realInput.value = realInput.value.replace(/[^0-9]/g, '');
         updatePinVisuals();
 
-        // Enable confirm if 6 digits
+        // Enable confirm button when input length is 6
         if (realInput.value.length === 6) {
             confirmBtn.style.opacity = '1';
             confirmBtn.style.pointerEvents = 'auto';
-            // Optional: Auto submit
+            // Auto submit logic (optional)
             // confirmPinPayment();
         } else {
             confirmBtn.style.opacity = '0.5';
@@ -703,7 +702,7 @@
                 box.classList.remove('active');
             } else if (index === val.length) {
                 box.innerText = '';
-                box.classList.add('active'); // Current focus
+                box.classList.add('active'); // Highlight current input box
                 box.classList.remove('filled');
             } else {
                 box.innerText = '';
@@ -724,7 +723,7 @@
 
     // --- Backend Processing ---
     async function processPayment(totalAmount, pinCode) {
-        // We temporarily disable the pay button on the main UI just in case
+        // Disable payment button to prevent double submission
         const payBtn = document.querySelector('.btn-pay');
         payBtn.disabled = true;
         payBtn.innerText = "Processing...";
@@ -736,7 +735,7 @@
             total_amount: totalAmount,
             shipping_type: shippingType,
             address_id: (shippingType === 'shipping' && selectedShippingAddress) ? selectedShippingAddress.Address_ID : null,
-            payment_pin: pinCode // Send PIN
+            payment_pin: pinCode // Pass PIN code
         };
 
         try {

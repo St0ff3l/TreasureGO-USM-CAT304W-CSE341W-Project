@@ -9,7 +9,7 @@
 
   <style>
     /* ========================================= */
-    /* 核心样式 (Core Styles) */
+    /* Core Styles */
     /* ========================================= */
     :root {
       --bg-color: #F3F6F9;
@@ -33,15 +33,15 @@
       background-image:
               radial-gradient(circle at 10% 20%, rgba(79, 70, 229, 0.05) 0%, transparent 40%),
               radial-gradient(circle at 90% 80%, rgba(245, 158, 11, 0.05) 0%, transparent 40%);
-      padding-bottom: 80px; /* 底部留白增加 */
+      padding-bottom: 80px; /* Increased bottom padding */
     }
 
     /* ========================================= */
-    /* 页面布局 */
+    /* Page Layout */
     /* ========================================= */
     .container {
       max-width: 1200px;
-      margin: 60px auto; /* 顶部间距增加 */
+      margin: 60px auto; /* Increased top margin */
       padding: 0 30px;
     }
 
@@ -49,11 +49,11 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 40px; /* 标题与列表间距增加 */
+      margin-bottom: 40px; /* Increased margin between title and list */
     }
 
     .page-title {
-      font-size: 2.2rem; /* 标题字号微调 */
+      font-size: 2.2rem; /* Adjusted title font size */
       font-weight: 800;
       color: var(--text-dark);
       position: relative;
@@ -64,14 +64,14 @@
       width: 6px; height: 36px; background: var(--primary); border-radius: 4px;
     }
 
-    /* 筛选 Tab */
+    /* Filter Tab */
     .tabs {
-      display: flex; gap: 15px; /* 按钮间距增加 */
-      background: white; padding: 8px; /* 内边距增加 */
+      display: flex; gap: 15px; /* Increased button gap */
+      background: white; padding: 8px; /* Increased padding */
       border-radius: 60px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);
     }
     .tab-btn {
-      border: none; background: transparent; padding: 12px 30px; /* 按钮更大 */
+      border: none; background: transparent; padding: 12px 30px; /* Larger buttons */
       border-radius: 40px; font-weight: 600; color: var(--text-gray);
       cursor: pointer; transition: var(--transition); font-size: 1rem;
     }
@@ -81,12 +81,12 @@
     .tab-btn:hover:not(.active) { background: #f3f4f6; color: var(--text-dark); }
 
     /* ========================================= */
-    /* 列表项样式 (List Item) - 条状设计 */
+    /* List Item Styles - Strip Design */
     /* ========================================= */
     .audit-list {
       display: flex;
       flex-direction: column;
-      gap: 24px; /* 卡片之间的间距变大 */
+      gap: 24px; /* Increased gap between cards */
     }
 
     .audit-item {
@@ -99,24 +99,24 @@
     }
 
     .audit-item:hover {
-      transform: translateY(-4px); /* 悬浮位移增加 */
+      transform: translateY(-4px); /* Increased hover displacement */
       box-shadow: 0 12px 30px rgba(0,0,0,0.08);
     }
 
-    /* --- 主行 (Summary Row) --- */
+    /* --- Summary Row --- */
     .item-summary {
       display: grid;
-      /* 调整列宽比例，给内容更多空间 */
-      grid-template-columns: 90px 2fr 1.5fr 1fr 1fr 160px; /* 微调最后一列宽度 */
+      /* Adjust column width ratios to give more space to content */
+      grid-template-columns: 90px 2fr 1.5fr 1fr 1fr 160px; /* Fine-tune last column width */
       align-items: center;
-      padding: 30px; /* 卡片内边距大幅增加 */
-      gap: 30px;     /* 列之间的间距增加 */
+      padding: 30px; /* Significantly increased card padding */
+      gap: 30px;     /* Increased gap between columns */
       cursor: pointer;
     }
 
-    /* 图片 */
+    /* Images */
     .item-thumb {
-      width: 90px; height: 90px; /* 图片变大一点 */
+      width: 90px; height: 90px; /* Slightly larger images */
       border-radius: 16px;
       object-fit: cover; background: #f3f4f6;
       box-shadow: 0 4px 10px rgba(0,0,0,0.05);
@@ -126,10 +126,10 @@
       background: #f3f4f6; display: flex; align-items: center; justify-content: center; font-size: 2.2rem;
     }
 
-    /* 文本列 */
+    /* Text Column */
     .col-info h4 {
       font-size: 1.25rem; font-weight: 700; color: var(--text-dark);
-      margin-bottom: 10px; /* 标题下边距增加 */
+      margin-bottom: 10px; /* Increased title bottom margin */
       line-height: 1.4;
     }
     .col-info p {
@@ -138,7 +138,7 @@
     }
     .badge-cat {
       background: #EEF2FF; color: var(--primary);
-      padding: 4px 12px; /* 标签内边距增加 */
+      padding: 4px 12px; /* Increased badge padding */
       border-radius: 6px; font-size: 0.8rem; font-weight: 600;
     }
 
@@ -149,7 +149,7 @@
     .col-price { font-weight: 800; color: var(--text-dark); font-size: 1.25rem; letter-spacing: -0.5px; }
 
     .col-status span {
-      padding: 8px 16px; /* 状态标变大 */
+      padding: 8px 16px; /* Larger status badge */
       border-radius: 30px; font-size: 0.85rem; font-weight: 700;
       display: inline-block;
     }
@@ -157,7 +157,7 @@
     .status-approved { background: #D1FAE5; color: #059669; }
     .status-rejected { background: #FEE2E2; color: #DC2626; }
 
-    /* --- 操作按钮 (Actions) - 重点修改 --- */
+    /* --- Action Buttons --- */
     .col-actions {
       display: flex;
       gap: 12px;
@@ -166,10 +166,10 @@
     }
 
     .btn-action {
-      /* 强制正圆的关键属性 */
+      /* Key properties for perfect circle */
       width: 46px;
       height: 46px;
-      min-width: 46px; /* 防止被挤压 */
+      min-width: 46px; /* Prevent squeezing */
       min-height: 46px;
 
       border-radius: 50%;
@@ -178,13 +178,13 @@
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); /* 有弹性的动画 */
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); /* Elastic animation */
       font-size: 1.3rem;
-      flex-shrink: 0; /* 严禁缩小 */
+      flex-shrink: 0; /* Prevent shrinking */
       position: relative;
     }
 
-    /* 通用悬停效果：上浮 + 阴影加深 */
+    /* Common hover effect: Float up + Deepen shadow */
     .btn-action:hover {
       transform: translateY(-3px) scale(1.05);
     }
@@ -192,11 +192,11 @@
       transform: scale(0.95);
     }
 
-    /* 1. 批准按钮 (Approve) - 绿色 */
+    /* 1. Approve Button - Green */
     .btn-approve {
-      background: #ECFDF5; /* 浅绿背景 */
-      color: #059669;      /* 深绿图标 */
-      box-shadow: 0 4px 10px rgba(5, 150, 105, 0.15); /* 绿色柔光 */
+      background: #ECFDF5; /* Light green background */
+      color: #059669;      /* Dark green icon */
+      box-shadow: 0 4px 10px rgba(5, 150, 105, 0.15); /* Green soft glow */
     }
     .btn-approve:hover {
       background: #059669;
@@ -204,11 +204,11 @@
       box-shadow: 0 8px 20px rgba(5, 150, 105, 0.3);
     }
 
-    /* 2. 拒绝按钮 (Reject) - 红色 */
+    /* 2. Reject Button - Red */
     .btn-reject {
-      background: #FEF2F2; /* 浅红背景 */
-      color: #DC2626;      /* 深红图标 */
-      box-shadow: 0 4px 10px rgba(220, 38, 38, 0.15); /* 红色柔光 */
+      background: #FEF2F2; /* Light red background */
+      color: #DC2626;      /* Dark red icon */
+      box-shadow: 0 4px 10px rgba(220, 38, 38, 0.15); /* Red soft glow */
     }
     .btn-reject:hover {
       background: #DC2626;
@@ -216,19 +216,19 @@
       box-shadow: 0 8px 20px rgba(220, 38, 38, 0.3);
     }
 
-    /* 3. AI 按钮 - 紫色渐变 */
+    /* 3. AI Button - Purple Gradient */
     .btn-ai {
       background: linear-gradient(135deg, #8B5CF6 0%, #6366F1 100%);
       color: white;
-      box-shadow: 0 4px 12px rgba(139, 92, 246, 0.35); /* 紫色柔光 */
+      box-shadow: 0 4px 12px rgba(139, 92, 246, 0.35); /* Purple soft glow */
     }
     .btn-ai:hover {
       box-shadow: 0 8px 20px rgba(139, 92, 246, 0.5);
-      transform: translateY(-3px) rotate(-10deg); /* AI按钮特有的旋转动效 */
+      transform: translateY(-3px) rotate(-10deg); /* Rotation effect specific to AI button */
     }
     .btn-ai.loading { cursor: wait; opacity: 0.8; animation: pulse 1.5s infinite; pointer-events: none; }
 
-    /* 分割线 */
+    /* Divider */
     .action-divider {
       width: 1px;
       height: 24px;
@@ -236,22 +236,22 @@
       margin: 0 4px;
     }
 
-    /* --- 详情展开区域 (Details Panel) --- */
+    /* --- Details Panel --- */
     .item-details {
       max-height: 0; overflow: hidden;
       background: #fafafa; border-top: 1px dashed #e5e7eb;
-      transition: max-height 0.5s ease-out; /* 动画稍慢一点更优雅 */
+      transition: max-height 0.5s ease-out; /* Slower animation for elegance */
     }
     .item-details.open { max-height: 1200px; }
 
     .details-content {
-      padding: 40px; /* 详情内边距增加 */
-      display: flex; gap: 60px; /* 左右分栏间距大幅增加 */
+      padding: 40px; /* Increased detail padding */
+      display: flex; gap: 60px; /* Significantly increased gap between left and right columns */
     }
     .detail-desc { flex: 2; }
     .detail-meta {
       flex: 1; border-left: 1px solid #e5e7eb; padding-left: 40px;
-      display: flex; flex-direction: column; gap: 10px; /* 元数据垂直间距 */
+      display: flex; flex-direction: column; gap: 10px; /* Vertical gap for metadata */
     }
 
     .detail-label {
@@ -260,24 +260,24 @@
       margin-bottom: 10px; display: block;
     }
     .detail-text {
-      font-size: 1rem; color: #4b5563; line-height: 1.8; /* 行高增加 */
+      font-size: 1rem; color: #4b5563; line-height: 1.8; /* Increased line height */
       margin-bottom: 30px;
     }
 
-    /* 🖼️ 多图画廊样式 */
+    /* Multi-image Gallery Styles */
     .image-gallery { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 15px; }
     .gallery-img {
-      width: 120px; height: 120px; /* 详情图变大 */
+      width: 120px; height: 120px; /* Larger detail images */
       object-fit: cover; border-radius: 16px; cursor: zoom-in;
       border: 3px solid #fff; box-shadow: 0 6px 12px rgba(0,0,0,0.08);
       transition: transform 0.2s;
     }
     .gallery-img:hover { transform: translateY(-4px); border-color: var(--primary); }
 
-    /* 模态框 (Reject Modal) */
+    /* Modal (Reject Modal) */
     .modal-overlay {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.5); backdrop-filter: blur(8px); /* 模糊度增加 */
+      background: rgba(0,0,0,0.5); backdrop-filter: blur(8px); /* Increased blur */
       z-index: 2000; display: none; align-items: center; justify-content: center;
       opacity: 0; transition: opacity 0.3s;
     }
@@ -305,10 +305,10 @@
     .btn-cancel { background: #f3f4f6; color: #4b5563; }
     .btn-confirm-reject { background: var(--danger); color: white; box-shadow: 0 4px 15px rgba(220, 38, 38, 0.3); }
 
-    /* 图片放大查看器样式 */
+    /* Image Viewer Styles */
     .img-viewer-overlay {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0, 0, 0, 0.92); /* 背景更深 */
+      background: rgba(0, 0, 0, 0.92); /* Darker background */
       z-index: 3000; display: none; align-items: center; justify-content: center;
       opacity: 0; transition: opacity 0.3s ease;
       cursor: zoom-out;
@@ -340,15 +340,15 @@
       .detail-meta { border-left: none; border-top: 1px solid #e5e7eb; padding-left: 0; padding-top: 20px; }
 
       /* ========================= */
-      /* ✅ Mobile-only Enhancements */
-      /* 不影响桌面端：仅在 <=768px 生效 */
+      /* Mobile-only Enhancements */
+      /* Does not affect desktop: Only active at <=768px */
       /* ========================= */
 
-      /* 页面左右留白更舒服，避免横向滚动 */
+      /* Comfortable left/right padding, prevent horizontal scrolling */
       body { padding-bottom: 60px; }
       .container { margin: 28px auto; padding: 0 14px; }
 
-      /* 标题和 Tab 在手机端上下排列 */
+      /* Title and Tab stacked vertically on mobile */
       .page-header { align-items: flex-start; gap: 14px; flex-direction: column; }
       .page-title { font-size: 1.65rem; padding-left: 18px; }
       .page-title::before { height: 28px; }
@@ -356,40 +356,40 @@
       .tabs { width: 100%; justify-content: space-between; padding: 6px; gap: 10px; }
       .tab-btn { flex: 1; padding: 10px 12px; text-align: center; font-size: 0.95rem; }
 
-      /* 摘要行避免内容被挤压溢出 */
+      /* Prevent summary row content from squeezing/overflowing */
       .col-info h4 { font-size: 1.05rem; margin-bottom: 6px; }
       .col-info p { font-size: 0.85rem; gap: 8px; flex-wrap: wrap; }
       .badge-cat { font-size: 0.75rem; padding: 3px 10px; }
 
-      /* 操作按钮缩小一点，适配窄屏但仍保持可点区域 */
+      /* Slightly smaller action buttons, fit narrow screens but keep clickable area */
       .col-actions { gap: 10px; }
       .btn-action { width: 42px; height: 42px; min-width: 42px; min-height: 42px; font-size: 1.15rem; }
       .action-divider { height: 18px; margin: 0 2px; }
 
-      /* 详情区：文本别太挤，长词换行 */
+      /* Details area: prevent text crowding, wrap long words */
       .details-content { padding: 20px; }
       .detail-text { margin-bottom: 18px; overflow-wrap: anywhere; word-break: break-word; }
 
-      /* 图片画廊：手机端更紧凑，避免一行溢出 */
+      /* Image gallery: More compact on mobile, prevent overflow */
       .image-gallery { gap: 10px; }
       .gallery-img { width: 96px; height: 96px; border-radius: 14px; }
 
-      /* 图片查看器：更大利用屏幕 */
+      /* Image viewer: Maximize screen usage */
       .img-viewer-content { max-width: 92%; max-height: 82vh; }
       .img-viewer-close { top: 16px; right: 18px; font-size: 44px; }
 
-      /* 模态框在手机端更贴合 */
+      /* Modal fits better on mobile */
       .modal-card { width: calc(100% - 28px); padding: 22px; border-radius: 22px; }
       .modal-title { font-size: 1.4rem; }
       .modal-textarea { height: 120px; padding: 14px; }
       .modal-btns { gap: 10px; }
       .btn-modal { padding: 10px 16px; border-radius: 12px; }
 
-      /* AI 结果框：更紧凑 */
+      /* AI Result Box: More compact */
       .ai-result-box { padding: 16px; border-radius: 14px; }
     }
 
-    /* 更小屏（比如 iPhone SE）进一步优化，不影响桌面 */
+    /* Further optimization for smaller screens (e.g. iPhone SE), does not affect desktop */
     @media (max-width: 420px) {
       .item-summary { grid-template-columns: 62px 1fr auto; padding: 16px; gap: 12px; }
       .item-thumb, .no-img { width: 62px; height: 62px; border-radius: 14px; }
@@ -398,7 +398,7 @@
       .tab-btn { padding: 9px 10px; font-size: 0.92rem; }
     }
 
-    /* AI 结果框 */
+    /* AI Result Box */
     .ai-result-box {
       margin-top: 20px; padding: 20px; border-radius: 16px;
       background: #F8FAFC; border: 1px solid #E2E8F0;
@@ -454,7 +454,7 @@
   let currentRejectId = null;
   const API_BASE = '../api/';
 
-  // ✨ AI 功能专用路径
+  // AI Feature Specific Paths
   const AI_API_PATH = '../../Module_Product_Ecosystem/api/AI_Check_Product.php';
   const CRON_API_PATH = '../api/Cron_AI_Audit.php';
 
@@ -482,9 +482,9 @@
   document.addEventListener('DOMContentLoaded', () => {
     loadAuditList('pending');
 
-    // ✨ 页面加载3秒后，自动触发一次后台AI扫描
+    // Trigger background AI scan 3 seconds after page load
     setTimeout(triggerBackgroundAudit, 3000);
-    // ✨ 每隔30秒，再次触发
+    // Trigger again every 30 seconds
     setInterval(triggerBackgroundAudit, 30000);
   });
 
@@ -544,7 +544,7 @@
       const statusClass = `status-${normalizedStatus}`;
       const statusText = normalizedStatus.charAt(0).toUpperCase() + normalizedStatus.slice(1);
 
-      // 操作按钮
+      // Action Buttons
       let actionsHtml = '';
       if (normalizedStatus === 'pending') {
         actionsHtml = `
@@ -784,12 +784,12 @@
           document.getElementById('rejectReasonInput').value = "[AI Audit] " + ai.reason;
         }
       } else {
-        alert('AI 报错: ' + data.msg);
+        alert('AI Error: ' + data.msg);
         console.error(data);
       }
     } catch (err) {
       console.error(err);
-      alert('网络错误，请检查控制台');
+      alert('Network error, please check console');
     } finally {
       btn.innerHTML = originalIcon;
       btn.classList.remove('loading');
@@ -801,11 +801,11 @@
             .then(res => res.json())
             .then(data => {
               if (data.processed && data.processed.length > 0) {
-                console.log('🤖 后台已处理:', data.processed);
+                console.log('Background processed:', data.processed);
               }
             })
             .catch(() => {
-              console.log('后台任务静默运行中...');
+              console.log('Background task running silently...');
             });
   }
 
@@ -813,4 +813,3 @@
 
 </body>
 </html>
-

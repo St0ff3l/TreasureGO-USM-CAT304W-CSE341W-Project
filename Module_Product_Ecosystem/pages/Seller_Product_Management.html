@@ -52,7 +52,7 @@
 
     .status-active { background: #ECFDF5; color: var(--success); }
     .status-inactive { background: #F3F4F6; color: var(--text-gray); }
-    /* 🔥 新增 Sold 状态样式 */
+    /* Added Sold status style */
     .status-sold { background: #FEE2E2; color: #EF4444; }
 
     .nav-arrow {
@@ -133,7 +133,7 @@
       background: #FFFBEB; color: #D97706; border: 1px dashed #FCD34D; cursor: default;
     }
 
-    /* 🔥 新增：Sold 状态按钮 (灰色，不可点) */
+    /* Added: Sold status button (gray, unclickable) */
     .btn-sold {
       background: #9CA3AF; color: white; cursor: not-allowed; opacity: 1;
     }
@@ -221,7 +221,7 @@
 <script>
   const urlParams = new URLSearchParams(window.location.search);
   const productId = urlParams.get('id');
-  const urlTab = urlParams.get('tab') || urlParams.get('status'); // 获取 active 或 sold
+  const urlTab = urlParams.get('tab') || urlParams.get('status'); // Get active or sold
   let currentProduct = {};
   let productImages = [];
   let currentImageIndex = 0;
@@ -261,7 +261,7 @@
 
     const statusBadge = document.getElementById('statusBadge');
 
-    // 按钮引用
+    // Button references
     const unlistBtn = document.getElementById('btnUnlist');
     const fullEditBtn = document.getElementById('btnFullEdit');
     const pendingStatusBtn = document.getElementById('btnPendingStatus');
@@ -270,17 +270,17 @@
     const soldBtn = document.getElementById('btnSold');
     const proTipBox = document.getElementById('proTipBox');
 
-    // 获取状态 (数据库状态)
+    // Get status (database status)
     const reviewStatus = (item.Product_Review_Status || 'pending').toLowerCase();
     let sellerStatus = (item.Product_Status || 'active').toLowerCase();
 
-    // 🔥 强制状态覆盖：如果 URL 参数是 sold，强制显示为 Sold 状态
-    // (这确保了从 Profile 的 Reviews 标签页点进来时，UI 是一致的)
+    // Force status override: If URL parameter is sold, force display as Sold status
+    // (This ensures UI consistency when clicking from the Reviews tab in Profile)
     if (urlTab === 'sold') {
       sellerStatus = 'sold';
     }
 
-    // 默认重置所有按钮为隐藏
+    // Default reset all buttons to hidden
     fullEditBtn.style.display = 'none';
     pendingStatusBtn.style.display = 'none';
     priceEditBtn.style.display = 'none';
@@ -288,33 +288,33 @@
     deleteBtn.style.display = 'none';
     soldBtn.style.display = 'none';
 
-    // 默认样式
+    // Default styles
     let badgeText = '● On Sale';
     statusBadge.className = 'status-badge status-active';
 
-    // 🔥🔥🔥 状态展示逻辑 🔥🔥🔥
+    // Status display logic
 
     if (sellerStatus === 'sold') {
-      // --- 1. 已售出 (Sold) ---
+      // --- 1. Sold ---
       badgeText = '● Sold Out';
-      statusBadge.className = 'status-badge status-sold'; // 红色标签
+      statusBadge.className = 'status-badge status-sold'; // Red tag
 
-      // 显示 "Item Sold" 按钮，隐藏其他编辑按钮
+      // Show "Item Sold" button, hide other edit buttons
       soldBtn.style.display = 'flex';
 
-      // 隐藏 Pro Tip
+      // Hide Pro Tip
       if(proTipBox) proTipBox.style.display = 'none';
 
     } else if (reviewStatus === 'rejected') {
-      // --- 2. 被拒绝 (Rejected) ---
+      // --- 2. Rejected ---
       badgeText = '🚫 Rejected';
       statusBadge.style.backgroundColor = '#FEF2F2';
       statusBadge.style.color = '#DC2626';
 
-      fullEditBtn.style.display = 'flex'; // 显示全量编辑
-      deleteBtn.style.display = 'flex';   // 允许删除
+      fullEditBtn.style.display = 'flex'; // Show full edit
+      deleteBtn.style.display = 'flex';   // Allow delete
 
-      // 插入拒绝理由
+      // Insert rejection reason
       const reason = item.Product_Review_Comment || "No specific reason provided.";
       const alertHtml = `
             <div style="background: #FFF5F5; border: 1px solid #FECACA; color: #B91C1C; padding: 15px; border-radius: 12px; margin-bottom: 20px;">
@@ -332,16 +332,16 @@
       document.getElementById('rejection-alert-container').innerHTML = alertHtml;
 
     } else if (reviewStatus === 'pending') {
-      // --- 3. 审核中 (Pending) ---
+      // --- 3. Pending Review ---
       badgeText = '⏳ Under Review';
       statusBadge.style.backgroundColor = '#FFFBEB';
       statusBadge.style.color = '#D97706';
 
-      pendingStatusBtn.style.display = 'flex'; // 显示审核中占位
-      deleteBtn.style.display = 'flex';        // 允许删除
+      pendingStatusBtn.style.display = 'flex'; // Show pending placeholder
+      deleteBtn.style.display = 'flex';        // Allow delete
 
     } else if (sellerStatus === 'unlisted') {
-      // --- 4. 卖家下架 (Unlisted) ---
+      // --- 4. Unlisted by Seller ---
       badgeText = '● Unlisted';
       statusBadge.className = 'status-badge status-inactive';
 
@@ -355,7 +355,7 @@
       deleteBtn.style.display = 'flex';
 
     } else {
-      // --- 5. 正常在售 (Active) ---
+      // --- 5. Active ---
       badgeText = '● On Sale';
       statusBadge.className = 'status-badge status-active';
 
@@ -371,7 +371,7 @@
 
     statusBadge.innerText = badgeText;
 
-    // 图片渲染逻辑
+    // Image rendering logic
     productImages = [];
     if (item.All_Images) {
       productImages = item.All_Images.split(',').map(path => {

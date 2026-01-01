@@ -72,7 +72,7 @@
   /* Terms Text */
   .terms-text { font-size: 0.8rem; color: #888; text-align: center; line-height: 1.5; margin-top: 0px; padding-top: 15px; border-top: 1px solid #f0f0f0; }
 
-  /* --- 🔥 Payment PIN Modal Styles --- */
+  /* --- Payment PIN Modal Styles --- */
   .pin-modal-overlay {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
     background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(8px);
@@ -197,24 +197,24 @@
 </div>
 
 <script>
-  // 1. 获取 URL 参数
+  // 1. Get URL parameters
   const urlParams = new URLSearchParams(window.location.search);
   const planType = urlParams.get('plan') || 'VIP';
   const cycle = urlParams.get('cycle') || 'monthly';
   const rawPrice = urlParams.get('price') || '9.90';
   const priceValue = parseFloat(rawPrice.replace(/[^0-9.]/g, ''));
 
-  // 全局变量
+  // Global variables
   let realUserBalance = 0.00;
-  let userHasPin = false; // 🔥 新增：是否有密码
+  let userHasPin = false; // New: Check if user has PIN
 
-  // 2. 页面加载初始化
+  // 2. Page load initialization
   document.addEventListener('DOMContentLoaded', () => {
     renderPlanDetails();
     fetchUserBalance();
   });
 
-  // --- 获取余额和 PIN 状态 ---
+  // --- Fetch balance and PIN status ---
   async function fetchUserBalance() {
     try {
       const response = await fetch('../api/Get_Wallet_Balance.php');
@@ -223,14 +223,14 @@
       if (data.success) {
         realUserBalance = parseFloat(data.balance);
 
-        // 🔥 新增：检查后端返回的 has_pin 字段
+        // New: Check the has_pin field returned by the backend
         if (typeof data.has_pin !== 'undefined') {
           userHasPin = Boolean(data.has_pin);
         } else {
           console.warn("Backend missing has_pin");
         }
 
-        // 更新页面显示
+        // Update page display
         const balanceDisplay = document.querySelector('.wallet-text p');
         if (balanceDisplay) {
           balanceDisplay.innerText = `Balance: RM${realUserBalance.toFixed(2)}`;
@@ -273,15 +273,15 @@
     }
   }
 
-  // --- 🔥 新增：点击支付按钮逻辑 ---
+  // --- New: Click payment button logic ---
   function handlePayClick() {
-    // 1. 检查余额 (前端简单预判)
+    // 1. Check balance (Frontend preliminary check)
     if (priceValue > realUserBalance) {
       window.location.href = `Payment_Failure.html?type=membership&reason=Insufficient Balance`;
       return;
     }
 
-    // 2. 检查是否有 PIN
+    // 2. Check if PIN exists
     if (!userHasPin) {
       StatusDialog.confirm(
               'Set Payment PIN',
@@ -294,11 +294,11 @@
       return;
     }
 
-    // 3. 打开 PIN 弹窗
+    // 3. Open PIN modal
     openPinModal();
   }
 
-  // --- 🔥 PIN Modal Controls ---
+  // --- PIN Modal Controls ---
   const pinModal = document.getElementById('pin-modal');
   const realInput = document.getElementById('real-pin-input');
   const boxes = document.querySelectorAll('.pin-box');
@@ -353,10 +353,10 @@
     const pinCode = realInput.value;
     if (pinCode.length !== 6) return;
     closePinModal();
-    processPayment(pinCode); // 调用真实支付，传入 PIN
+    processPayment(pinCode); // Call real payment, pass PIN
   }
 
-  // --- 处理支付逻辑 (真实扣款) ---
+  // --- Process payment logic (Real deduction) ---
   async function processPayment(pinCode) {
     const btn = document.getElementById('pay-btn');
     btn.disabled = true;
@@ -367,7 +367,7 @@
       price: priceValue,
       plan: planType,
       cycle: cycle,
-      payment_pin: pinCode // 🔥 新增：传入 PIN 码
+      payment_pin: pinCode // New: Pass PIN code
     };
 
     const urlParamsStr = `type=membership&plan=${encodeURIComponent(planType)}&cycle=${encodeURIComponent(cycle)}&price=${encodeURIComponent(rawPrice)}`;
@@ -386,17 +386,17 @@
       } else {
         console.error("Payment failed:", result.msg);
 
-        // 🔥 处理 PIN 错误
+        // Handle PIN errors
         if (result.msg && (result.msg.includes('PIN') || result.msg.includes('Password'))) {
           StatusDialog.fail('Incorrect PIN', result.msg, 'Try Again', () => {
-            openPinModal(); // 重新打开弹窗
+            openPinModal(); // Re-open modal
           });
         } else {
-          // 其他错误跳转失败页
+          // Redirect to failure page for other errors
           window.location.href = `Payment_Failure.html?${urlParamsStr}&reason=${encodeURIComponent(result.msg)}`;
         }
 
-        // 恢复按钮 (如果是 PIN 错误，用户还在当前页)
+        // Reset button (If it is a PIN error, the user is still on the current page)
         btn.innerText = "Pay";
         btn.disabled = false;
         btn.style.opacity = "1";

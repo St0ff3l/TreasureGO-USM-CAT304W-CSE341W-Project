@@ -58,7 +58,6 @@
 </head>
 <body>
 
-<!-- Navbar replaced by headerbar.js -->
 <script src="../../Public_Assets/js/headerbar.js"></script>
 <script>TreasureGoHeaderbar.mount({ basePath: '../../' });</script>
 
@@ -79,20 +78,20 @@
   document.addEventListener('DOMContentLoaded', () => {
     const params = new URLSearchParams(window.location.search);
     const type = params.get('type');
-    const plan = params.get('plan'); // 获取套餐名 (如 SVIP)
+    const plan = params.get('plan'); // Get plan name (e.g. SVIP)
 
     const title = document.getElementById('status-title');
     const desc = document.getElementById('status-desc');
     const btn = document.getElementById('primary-btn');
 
     if (type === 'membership') {
-      // --- 动态显示：如果是 SVIP 就显示 SVIP ---
+      // Dynamic display: Show SVIP if it is SVIP
       const planName = plan ? plan : "Membership";
       title.innerText = `${planName} Activated! 👑`;
       desc.innerHTML = `Welcome to the club!<br>Your ${planName} benefits are active immediately.`;
 
       btn.innerText = "View My Profile";
-      // --- 关键修改：跳转路径指向 Module_User_Account_Management ---
+      // Redirect path points to Module_User_Account_Management
       btn.href = "../../Module_User_Account_Management/views/profile.html";
 
     } else if (type === 'order') {

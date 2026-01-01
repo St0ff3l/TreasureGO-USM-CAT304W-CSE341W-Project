@@ -8,7 +8,7 @@
   <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
   <style>
     /* =========================================
-       1. 全局样式 & Navbar
+       1. Global Styles & Navbar
        ========================================= */
     :root {
       --primary: #4F46E5;
@@ -67,15 +67,15 @@
        ========================================= */
     .filter-sidebar {
       background: white;
-      /* ⬇️ 改小：原来是 20px */
+      /* Decreased padding */
       padding: 15px;
-      border-radius: 20px; /* 圆角也可以稍微小点 */
+      border-radius: 20px; /* Reduced border radius */
       box-shadow: var(--card-shadow);
       position: sticky;
       top: 90px;
       z-index: 900;
       transition: transform 0.3s ease;
-      min-width: 260px; /* ⬇️ 改小：原来是 280px */
+      min-width: 260px; /* Reduced min-width */
     }
 
     .mobile-sidebar-close { display: none; text-align: right; font-size: 1.5rem; color: #999; cursor: pointer; margin-bottom: 10px; }
@@ -85,8 +85,8 @@
       list-style: none;
       display: flex;
       flex-direction: column;
-      gap: 0px; /* ⬇️ 改小：去掉间隙 */
-      margin-bottom: 15px; /* ⬇️ 改小：原来是 25px */
+      gap: 0px; /* Reduced gap */
+      margin-bottom: 15px; /* Reduced margin */
       position: relative;
     }
 
@@ -96,14 +96,14 @@
       display: flex;
       align-items: center;
       gap: 10px;
-      /* ⬇️ 核心修改：减小内边距，让每一行变矮 */
+      /* Reduced padding for compact rows */
       padding: 8px 12px;
       border-radius: 8px;
       cursor: pointer;
       transition: all 0.2s;
       color: var(--text-dark);
       font-weight: 600;
-      font-size: 0.9rem; /* ⬇️ 改小：字体稍微小一点 */
+      font-size: 0.9rem; /* Slightly smaller font size */
     }
 
     .category-trigger:hover { background-color: #f3f4f6; color: var(--primary); }
@@ -191,7 +191,7 @@
       .search-wrapper { padding: 0 15px; }
       .main-container { display: block; margin-top: 20px; }
 
-      /* ✅ Mobile trigger button polish (icon) */
+      /* Mobile trigger button polish (icon) */
       .mobile-filter-trigger {
         background: #fff;
         border: 1px solid rgba(0,0,0,0.06);
@@ -210,7 +210,7 @@
       }
       .filter-sidebar.active { left: 0; }
 
-      /* ✅ Close button: icon-only, hover effect */
+      /* Close button: icon-only, hover effect */
       .mobile-sidebar-close {
         display: flex;
         justify-content: flex-end;
@@ -235,7 +235,7 @@
       .mobile-sidebar-close button:active { transform: translateY(0); }
       .mobile-sidebar-close i { font-size: 22px; line-height: 0; }
 
-      /* ✅ Condition pills (mobile only) */
+      /* Condition pills (mobile only) */
       .filter-group .filter-option {
         padding: 0;
         margin-bottom: 10px;
@@ -295,8 +295,8 @@
 <script src="../../Public_Assets/js/headerbar.js"></script>
 
 <script>
-  // 1. 🔥 定义全局 AuthModal (适配当前页面的路径)
-  // 必须定义在 window 上，headerbar.js 才能找到它
+  // 1. Define global AuthModal (Adapt to current page path)
+  // Must be defined on window for headerbar.js to access
   if (!globalThis.AuthModal) {
     globalThis.AuthModal = {
       htmlContent: `
@@ -347,7 +347,7 @@
     };
   }
 
-  // 2. 🔥 挂载 Headerbar (必须在定义 AuthModal 之后)
+  // 2. Mount Headerbar (Must be after defining AuthModal)
   TreasureGoHeaderbar.mount({ basePath: '../../' });
 </script>
 
@@ -414,17 +414,17 @@
 </div>
 
 <script>
-  // 1. 全局变量
+  // 1. Global Variables
   let currentCategory = "All";
   let currentSubCategory = "";
-  let currentLoggedInUserId = null; // 🔥 新增：存储当前登录用户的 ID
+  let currentLoggedInUserId = null; // Store current logged-in user ID
 
   const iconMap = { 'Digital': '📱', 'Fashion': '👗', 'Home': '🏠', 'Books': '📚', 'Transport': '🚲', 'default': '📦' };
-  // 2. 🔥 检查登录状态 (已修正路径和大小写)
+  // 2. Check Login Status
   async function checkLoginStatus() {
     try {
-      // ⚠️ 修改点：路径改为 '../api/Session_Status.php'
-      // 因为你的文件在 Product_Ecosystem/api 下，且首字母大写
+      // Path changed to '../api/Session_Status.php'
+      // File located in Product_Ecosystem/api with capitalized first letter
       const response = await fetch('../api/Session_Status.php');
 
       if (!response.ok) {
@@ -550,7 +550,7 @@
     applyAllFilters();
   }
 
-  // ✅ Single, unified category interaction (desktop + mobile)
+  // Single, unified category interaction (desktop + mobile)
   document.addEventListener('click', (e) => {
     const subTag = e.target.closest('.sub-tag');
     if (subTag) {
@@ -673,7 +673,7 @@
       return;
     }
 
-    // ✅ Normalize server-provided image paths to a usable relative URL from /Module_Product_Ecosystem/pages/
+    // Normalize server-provided image paths to a usable relative URL from /Module_Product_Ecosystem/pages/
     const normalizeImageUrl = (rawPath) => {
       if (!rawPath) return '';
       let p = String(rawPath).trim();
@@ -690,7 +690,7 @@
     };
 
     products.forEach(item => {
-      // 1. 图片处理
+      // 1. Image processing
       let imgHtml = '';
       if (item.Main_Image) {
         const imgUrl = normalizeImageUrl(item.Main_Image);
@@ -699,15 +699,15 @@
         imgHtml = `<div style="font-size:3rem;">📦</div>`;
       }
 
-      // 2. 颜色逻辑
+      // 2. Color logic
       let condColor = item.Product_Condition.includes('New') ? '#10B981' : '#4F46E5';
       const location = item.Product_Location ? item.Product_Location : 'Unknown';
 
-      // 3. 🔥 核心逻辑：判断是不是发布者，决定跳转去哪 🔥
-      let targetPage = "Product_Detail.html"; // 默认去详情页
+      // 3. Logic: Determine if user is the publisher to decide redirection target
+      let targetPage = "Product_Detail.html"; // Default to detail page
 
-      // 注意：这里需要确保后端 Get_Products.php 返回了 User_ID 字段！
-      // 如果 item.User_ID (发布者) 等于 currentLoggedInUserId (当前登录者)，就去管理页
+      // Note: Ensure backend Get_Products.php returns User_ID field
+      // If item.User_ID (Publisher) equals currentLoggedInUserId (Logged-in User), go to management page
       if (currentLoggedInUserId && parseInt(item.User_ID) === currentLoggedInUserId) {
         targetPage = "Seller_Product_Management.html";
       }
@@ -747,13 +747,13 @@
     });
   }
 
-  // 🔥 7. 初始化逻辑 (修改为 async，先查登录状态)
+  // 7. Initialization logic (Changed to async, check login status first)
   document.addEventListener('DOMContentLoaded', async () => {
 
-    // A. 等待登录状态检查完成
+    // A. Wait for login status check completion
     await checkLoginStatus();
 
-    // B. 处理 URL 参数
+    // B. Handle URL parameters
     const urlParams = new URLSearchParams(window.location.search);
     const q = urlParams.get('q');
     const urlCatId = urlParams.get('category');
@@ -772,7 +772,7 @@
       }, 500);
     }
 
-    // C. 加载数据 (现在 renderProducts 里有正确的 UserID 了)
+    // C. Load data (renderProducts now has correct UserID)
     loadCategories();
     loadProducts();
   });
