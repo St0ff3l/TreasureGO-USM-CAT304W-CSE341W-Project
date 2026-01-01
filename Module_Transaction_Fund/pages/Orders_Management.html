@@ -8,7 +8,7 @@
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
 
     <style>
-        /* --- 原有 CSS --- */
+        /* --- CSS Styles --- */
         :root {
             --bg-color: #F3F6F9;
             --primary: #4F46E5;
@@ -66,16 +66,16 @@
         td { padding: 15px; border-bottom: 1px solid #F3F4F6; font-size: 0.95rem; }
         tr:hover { background: #F9FAFB; }
 
-        /* 🔥 更新后的状态徽章样式 */
+        /* Status Badge Styles */
         .status-badge { padding: 6px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; display: inline-block; white-space: nowrap;}
 
-        .status-paid { background: #FFEFD5; color: #8B4513; } /* 浅橙/棕色 */
-        .status-shipped { background: #DBEAFE; color: #1E40AF; } /* 浅蓝/深蓝 */
-        .status-after-sales { background: #FEF3C7; color: #92400E; } /* 浅黄/深橙 */
-        .status-completed { background: #D1FAE5; color: #065F46; } /* 浅绿/深绿 */
-        .status-cancelled { background: #F3F4F6; color: #6B7280; } /* 浅灰/深灰 */
+        .status-paid { background: #FFEFD5; color: #8B4513; } /* Light Orange/Brown */
+        .status-shipped { background: #DBEAFE; color: #1E40AF; } /* Light Blue/Dark Blue */
+        .status-after-sales { background: #FEF3C7; color: #92400E; } /* Light Yellow/Dark Orange */
+        .status-completed { background: #D1FAE5; color: #065F46; } /* Light Green/Dark Green */
+        .status-cancelled { background: #F3F4F6; color: #6B7280; } /* Light Gray/Dark Gray */
 
-        /* 默认样式 */
+        /* Default Style */
         .status-default { background: #F3F4F6; color: #374151; }
 
         .action-btns { display: flex; gap: 8px; }
@@ -86,7 +86,7 @@
         .btn-review { background: #FFFBEB; color: #D97706; border: 1px solid #FCD34D; }
         .btn-review:hover { background: #FEF3C7; transform: translateY(-1px); }
 
-        /* 🔥 新增：禁用按钮样式 (已评价) */
+        /* Disabled Button Style (Reviewed) */
         .btn-disabled { background: #E5E7EB; color: #9CA3AF; border: 1px solid #E5E7EB; cursor: not-allowed; pointer-events: none; }
 
         .filter-select-small { padding: 4px 8px; border-radius: 8px; border: 1px solid #E5E7EB; background-color: white; color: var(--text-dark); font-size: 0.85rem; cursor: pointer; outline: none; transition: all 0.2s; }
@@ -324,7 +324,7 @@
             ? `<span style="background:#E0E7FF; color:#3730A3; padding:4px 8px; border-radius:6px; font-size:0.75rem; font-weight:700;">BUYING</span>`
             : `<span style="background:#FEF3C7; color:#92400E; padding:4px 8px; border-radius:6px; font-size:0.75rem; font-weight:700;">SELLING</span>`;
 
-        // 如果后端有图片则用后端图片，否则直接用本地占位图
+        // Use backend image if available, otherwise use local placeholder
         const imgUrl = order.Main_Image ? `../../${order.Main_Image}` : '../../Public_Assets/images/placeholder.png';
 
         const targetUserId = isBuyer ? order.Orders_Seller_ID : order.Orders_Buyer_ID;
@@ -474,7 +474,7 @@
             if (json.success) {
                 closeReviewModal();
                 StatusDialog.success("Success", "Review submitted!", "OK");
-                // 🔥 提交成功后重新加载列表，使按钮状态立即更新
+                // Reload list after successful submission to update button status immediately
                 loadOrders();
             } else {
                 StatusDialog.fail("Error", json.message);
