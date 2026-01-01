@@ -1,5 +1,5 @@
 <?php
-// 文件路径: Module_Product_Ecosystem/api/Get_User_Listings.php
+// File path: Module_Product_Ecosystem/api/Get_User_Listings.php
 
 require_once __DIR__ . '/config/treasurego_db_config.php';
 session_start();
@@ -8,7 +8,7 @@ header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 
 try {
-    // 1. 检查登录
+    // 1. Check login
     $current_user_id = $_SESSION['user_id'] ?? $_SESSION['User_ID'] ?? null;
 
     if (!$current_user_id) {
@@ -21,8 +21,8 @@ try {
         throw new Exception("Database connection failed.");
     }
 
-    // 2. 构建 SQL 查询
-    // 逻辑：子查询获取主图，如果没有主图则取 ID 最小的那张
+    // 2. Build SQL query
+    // Logic: Subquery gets the main image, if there is no main image, take the one with the smallest ID
     // Update: Join Orders to get Order info for Sold items
     // Note: Orders table might use different column names. Based on previous context, it's Orders_Order_ID.
     // Assuming Orders table links Product_ID.

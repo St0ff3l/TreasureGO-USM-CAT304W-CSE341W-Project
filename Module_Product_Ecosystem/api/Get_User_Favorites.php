@@ -4,7 +4,7 @@
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
-// 引用路径 (根据你之前的成功反馈，config 在同级目录)
+// Include path (based on your previous successful feedback, config is in the same directory)
 require_once __DIR__ . '/config/treasurego_db_config.php';
 
 session_start();
@@ -17,8 +17,8 @@ try {
 
     $user_id = $_SESSION['user_id'];
 
-    // 🔥 SQL 修正：使用正确的 Image_URL 字段 🔥
-    // 逻辑：子查询会优先找 Image_is_primary=1 的图，找不到就找最新上传的
+    // SQL Fix: Use the correct Image_URL field
+    // Logic: Subquery prioritizes finding the image with Image_is_primary=1; if not found, it finds the latest uploaded one
     $sql = "
         SELECT 
             F.Favorite_ID, 

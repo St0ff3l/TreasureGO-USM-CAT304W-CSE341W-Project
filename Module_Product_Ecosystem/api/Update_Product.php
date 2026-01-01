@@ -1,5 +1,5 @@
 <?php
-// 文件路径: Module_Product_Ecosystem/api/Update_Product.php
+// File path: Module_Product_Ecosystem/api/Update_Product.php
 
 require_once __DIR__ . '/config/treasurego_db_config.php';
 session_start();
@@ -7,7 +7,7 @@ session_start();
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 
-// 1. 安全检查：必须登录
+// 1. Security Check: Login required
 if (!isset($_SESSION['user_id'])) {
     echo json_encode(['success' => false, 'message' => 'Unauthorized: Please login first.']);
     exit;
@@ -15,12 +15,12 @@ if (!isset($_SESSION['user_id'])) {
 
 $current_user_id = $_SESSION['user_id'];
 
-// 2. 获取前端发送的 JSON 数据
+// 2. Get JSON data sent from frontend
 $input = json_decode(file_get_contents('php://input'), true);
 
 $product_id = isset($input['product_id']) ? intval($input['product_id']) : 0;
 $action = isset($input['action']) ? $input['action'] : ''; // 'update_price', 'toggle_status', 'delete'
-$value = isset($input['value']) ? $input['value'] : null;  // 新价格 (如果是改价)
+$value = isset($input['value']) ? $input['value'] : null;  // New price (if updating price)
 
 if ($product_id <= 0 || empty($action)) {
     echo json_encode(['success' => false, 'message' => 'Invalid parameters.']);
@@ -30,7 +30,7 @@ if ($product_id <= 0 || empty($action)) {
 try {
     $pdo = getDatabaseConnection();
 
-    // 3. 🔥 关键权限检查：确认这个商品属于当前登录用户
+    // 3. Key Permission Check: Verify this product belongs to the current logged-in user
     $checkSql = "SELECT User_ID, Product_Status FROM Product WHERE Product_ID = ?";
     $stmt = $pdo->prepare($checkSql);
     $stmt->execute([$product_id]);
@@ -46,9 +46,9 @@ try {
         exit;
     }
 
-    // 4. 根据动作执行逻辑
+    // 4. Execute logic based on action
     if ($action === 'update_price') {
-        // --- 修改价格 ---
+        // --- Update Price ---
         if (!is_numeric($value)) throw new Exception("Invalid price format.");
 
         $updateSql = "UPDATE Product SET Product_Price = ? WHERE Product_ID = ?";
@@ -58,7 +58,7 @@ try {
         echo json_encode(['success' => true, 'message' => 'Price updated successfully.']);
 
     } elseif ($action === 'toggle_status') {
-        // --- 上下架切换 ---
+        // --- Toggle Status (List/Unlist) ---
         $newStatus = ($product['Product_Status'] === 'Active') ? 'Unlisted' : 'Active';
 
         $updateSql = "UPDATE Product SET Product_Status = ? WHERE Product_ID = ?";
@@ -68,19 +68,19 @@ try {
         echo json_encode(['success' => true, 'new_status' => $newStatus, 'message' => 'Status changed to ' . $newStatus]);
 
     } elseif ($action === 'delete') {
-        // --- 删除商品 (带事务和外键处理) ---
+        // --- Delete Product (With transaction and foreign key handling) ---
         try {
             $pdo->beginTransaction();
 
-            // 1. 先删图片记录
+            // 1. Delete image records first
             $delImg = "DELETE FROM Product_Images WHERE Product_ID = ?";
             $pdo->prepare($delImg)->execute([$product_id]);
 
-            // 2. 再删审核记录 (修复外键报错的关键)
+            // 2. Delete review records (Critical for foreign key constraints)
             $delReview = "DELETE FROM Product_Admin_Review WHERE Product_ID = ?";
             $pdo->prepare($delReview)->execute([$product_id]);
 
-            // 3. 最后删除商品本身
+            // 3. Finally delete the product itself
             $delProd = "DELETE FROM Product WHERE Product_ID = ?";
             $stmt = $pdo->prepare($delProd);
             $stmt->execute([$product_id]);
@@ -89,7 +89,7 @@ try {
             echo json_encode(['success' => true, 'message' => 'Product and related records deleted successfully.']);
 
         } catch (Exception $e) {
-            // 如果出错，回滚所有删除操作
+            // If error occurs, rollback all delete operations
             if ($pdo->inTransaction()) {
                 $pdo->rollBack();
             }
