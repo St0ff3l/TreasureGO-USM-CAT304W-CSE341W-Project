@@ -352,7 +352,7 @@
             border-color: rgba(79, 70, 229, 0.1);
         }
 
-        /* --- 🔥 Payment PIN Modal Styles --- */
+        /* --- Payment PIN Modal Styles --- */
         .pin-modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(8px);
@@ -501,7 +501,7 @@
         } catch (error) { console.error(error); }
     }
 
-    // 🔥 Check PIN status from the Fund_Request API
+    // Check PIN status from the Fund_Request API
     async function checkUserPinStatus() {
         try {
             // Updated path to use local module API
@@ -537,7 +537,7 @@
             return;
         }
 
-        // 🔥 Force re-check status before showing modal
+        // Force re-check status before showing modal
         await checkUserPinStatus();
 
         // 2. Check if user has PIN
@@ -641,7 +641,7 @@
         submitBtn.innerHTML = 'Processing...';
 
         try {
-            // 🔥 Updated API Path
+            // Updated API Path
             const response = await fetch('../api/Fund_Request.php?action=create_fund_request', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -651,7 +651,7 @@
                     amount: parseFloat(amount),
                     proof_image: proofImage,
                     admin_remark: finalRemark,
-                    payment_pin: pinCode // 🔥 Sending PIN to Backend
+                    payment_pin: pinCode // Sending PIN to Backend
                 })
             });
 
