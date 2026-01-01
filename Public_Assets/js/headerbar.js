@@ -1,22 +1,25 @@
 /*
  * TreasureGO Headerbar Component (Navbar Only)
- * 文件路径: Public_Assets/js/headerbar.js
- * 更新说明：
- * 1. 修复了 navigateWithAuth 未导出的问题，确保按钮点击有效。
- * 2. 集成了 AuthModal 二次确认弹窗逻辑。
- * 3. 自动注入网站图标 (Favicon)。
+ *
+ * Self-contained navigation bar that can be mounted on any page.
+ * Responsibilities:
+ * - Inject required fonts and CSS
+ * - Render the navbar HTML
+ * - Check session status to toggle Login/User/Admin UI
+ * - Guard navigation that requires authentication
+ * - Register PWA assets (manifest + service worker) and favicon
  */
 
 (function (global) {
     'use strict';
 
-    // --- 1. 配置常量 ---
+    // --- 1. Configuration constants ---
     const TG_HEADERBAR_STYLE_ID = 'tg-headerbar-style';
     const TG_HEADERBAR_FONTS_LINK_ID = 'tg-headerbar-fonts';
 
-    // --- 自动加载 AuthModal (确保弹窗组件存在) ---
+    // --- Ensure AuthModal is available (lazy-load if needed) ---
     function loadAuthModal(basePath) {
-        // 如果全局对象不存在 AuthModal 且页面上没引入过该脚本
+        // Inject auth_modal.js only if it is not already loaded.
         if (!global.AuthModal && !document.querySelector('script[src*="auth_modal.js"]')) {
             const script = document.createElement('script');
             script.src = basePath + 'Public_Assets/js/auth_modal.js';
@@ -24,7 +27,7 @@
         }
     }
 
-    // --- 2. 样式定义 ---
+    // --- 2. Embedded styles ---
     const EMBEDDED_HEADERBAR_CSS = `
     /* ================= CSS Variables ================= */
     :root {
@@ -129,7 +132,7 @@
     }
   `;
 
-    // --- 3. 辅助函数 ---
+    // --- 3. Helpers ---
     function ensureAssets() {
         if(!document.getElementById(TG_HEADERBAR_FONTS_LINK_ID)) {
             const link = document.createElement('link');
@@ -150,15 +153,15 @@
         return basePath ? (basePath + '/') : '';
     }
 
-    // --- 关键：登录检查并处理弹窗的函数 ---
+    // --- Auth-guarded navigation ---
     async function navigateWithAuth(url, basePath) {
         try {
             const apiUrl = `${basePath}Module_User_Account_Management/api/session_status.php`;
 
-            // 1. 发起请求检查 Session
+            // Request the session status.
             const res = await fetch(apiUrl, {
                 method: 'GET',
-                credentials: 'include', // 携带 Cookie
+                credentials: 'include',
                 headers: { 'Accept': 'application/json' },
                 cache: 'no-cache'
             });
@@ -172,12 +175,10 @@
 
             const data = await res.json();
 
-            // 2. 根据登录状态决定动作
+            // If logged in, navigate to the target page; otherwise show login prompt.
             if (data.is_logged_in) {
-                // 已登录 -> 跳转到目标页面
                 window.location.href = url;
             } else {
-                // 未登录 -> 弹出 AuthModal (二次确认)
                 if (global.AuthModal) {
                     global.AuthModal.show();
                 } else {
@@ -187,7 +188,7 @@
             }
         } catch (err) {
             console.error('[Headerbar] Auth check error:', err);
-            // 接口报错时，作为兜底也显示弹窗（如果能显示的话），或者去登录页
+            // On failure, prefer showing the login prompt; fall back to login page.
             if (global.AuthModal) {
                 global.AuthModal.show();
             } else {
@@ -196,9 +197,9 @@
         }
     }
 
-    // --- 4. HTML 构建 ---
+    // --- 4. HTML generation ---
     function getNavbarHtml(p) {
-        // 使用 ${p}Public_Assets/images/TreasureGo_Logo.png 引用 Logo
+        // p is the computed base path prefix used to build absolute module URLs.
         return `
     <nav class="navbar" data-component="tg-headerbar">
       <a href="${p}index.html" class="logo">
@@ -225,7 +226,7 @@
     </nav>`.trim();
     }
 
-    // --- 5. Session 逻辑 (用于页面加载时 UI 状态) ---
+    // --- 5. Session-driven UI state ---
     async function checkSession(p) {
         const apiUrl = `${p}Module_User_Account_Management/api/session_status.php`;
         const loginBtn = document.getElementById('nav-login-btn');
@@ -253,7 +254,7 @@
                 userMenu.style.display = 'inline-block';
 
                 if (data.user) {
-                    // 头像处理
+                    // Avatar rendering
                     if (avatarBtn) {
                         if (data.user.avatar_url && data.user.avatar_url.trim() !== '') {
                             const avatarSrc = data.user.avatar_url.startsWith('http')
@@ -270,7 +271,7 @@
                             avatarBtn.innerText = name.charAt(0).toUpperCase();
                         }
                     }
-                    // 管理员按钮处理
+                    // Admin-only navigation
                     if (adminBtn && data.user.role === 'admin') {
                         adminBtn.style.display = 'inline-block';
                     } else if (adminBtn) {
@@ -290,7 +291,7 @@
         }
     }
 
-    // --- 6. PWA & 挂载函数 ---
+    // --- 6. PWA helpers and mount ---
     function registerServiceWorker(basePath) {
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
@@ -305,7 +306,7 @@
         ensureAssets();
         const basePath = getBasePath(options);
 
-        // 6.1 自动注入 Favicon (智能优化)
+        // Inject favicon if none exists.
         if (!document.querySelector("link[rel*='icon']")) {
             const link = document.createElement('link');
             link.type = 'image/png';
@@ -314,7 +315,7 @@
             document.head.appendChild(link);
         }
 
-        // 6.2 自动注入 Manifest & 注册 SW
+        // Inject manifest link and register the service worker.
         if (!document.querySelector("link[rel='manifest']")) {
             const link = document.createElement('link');
             link.rel = 'manifest';
@@ -323,7 +324,7 @@
         }
         registerServiceWorker(basePath);
 
-        // 6.3 预加载 AuthModal
+        // Preload AuthModal.
         loadAuthModal(basePath);
 
         const wrapper = document.createElement('div');
@@ -341,8 +342,8 @@
         return wrapper;
     }
 
-    // --- 7. 导出 (关键) ---
-    // 必须导出 navigateWithAuth，否则 HTML 中的 onclick 会报错
+    // --- 7. Public API ---
+    // Export navigateWithAuth so inline onclick handlers can call it.
     global.TreasureGoHeaderbar = {
         mount,
         navigateWithAuth

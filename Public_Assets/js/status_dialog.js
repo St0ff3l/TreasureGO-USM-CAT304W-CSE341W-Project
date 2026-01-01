@@ -1,12 +1,18 @@
 /**
- * StatusDialog.js
- * TreasureGO 通用状态弹窗框架 v2.1
- * 升级点：confirm 支持自定义取消文字，支持危险模式 (红按钮)
+ * StatusDialog
+ *
+ * Lightweight, reusable status dialog utility.
+ * Supported dialog types:
+ * - success
+ * - error
+ * - warning
+ * - confirm (supports a custom cancel label and an optional danger-styled confirm button)
  */
 
 const StatusDialog = {
-    // --- 1. 样式配置 (自动注入) ---
+    // --- 1. Style injection ---
     _injectStyles: function() {
+        // Avoid injecting styles multiple times.
         if (document.getElementById('status-dialog-style')) return;
 
         const css = `
@@ -59,15 +65,15 @@ const StatusDialog = {
             }
             .sd-btn:active { transform: scale(0.96); }
 
-            /* 蓝色按钮 (常规操作) */
+            /* Primary action button. */
             .sd-btn-primary { background: var(--sd-primary); color: white; box-shadow: 0 4px 15px rgba(79, 70, 229, 0.2); }
             .sd-btn-primary:hover { opacity: 0.9; }
             
-            /* 红色按钮 (危险操作) - 修改了这里，使用了红色变量 */
+            /* Danger action button (destructive confirmation). */
             .sd-btn-danger { background: var(--sd-error); color: white; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.2); }
             .sd-btn-danger:hover { opacity: 0.9; }
 
-            /* 黑色/灰色按钮 (用于错误提示的关闭) */
+            /* Dark button used for closing error dialogs. */
             .sd-btn-dark { background: var(--sd-dark); color: white; }
             
             .sd-btn-outline { background: white; border: 1px solid #E5E7EB; color: #4B5563; }
@@ -87,6 +93,7 @@ const StatusDialog = {
         document.head.appendChild(style);
     },
 
+    // Close and remove the current dialog overlay.
     _close: function() {
         const el = document.getElementById('sd-overlay');
         if (el) {
@@ -95,7 +102,7 @@ const StatusDialog = {
         }
     },
 
-    // --- 2. 核心渲染逻辑 (增加 isDanger 参数) ---
+    // --- 2. Rendering ---
     _render: function(type, title, message, btnText, callback, cancelText = 'Cancel', isDanger = false) {
         this._injectStyles();
         const existing = document.getElementById('sd-overlay');
@@ -118,7 +125,7 @@ const StatusDialog = {
             iconHtml = '✕';
             iconClass = 'error';
             animationClass = 'sd-shake';
-            // 错误弹窗通常用深色按钮关闭
+            // Error dialogs use a dark close button.
             buttonsHtml = `<button id="sd-confirm-btn" class="sd-btn sd-btn-dark">${btnText || 'Close'}</button>`;
         } else if (type === 'warning') {
             iconHtml = '!';
@@ -128,7 +135,9 @@ const StatusDialog = {
             iconHtml = '?';
             iconClass = 'warning';
 
-            // 🔥 根据 isDanger 决定确认按钮是 蓝色(primary) 还是 红色(danger)
+            // Confirm dialogs support a custom cancel label and an optional danger-styled confirm button.
+
+            // Choose the confirm button style based on isDanger.
             const confirmBtnClass = isDanger ? 'sd-btn-danger' : 'sd-btn-primary';
 
             buttonsHtml = `
@@ -166,6 +175,7 @@ const StatusDialog = {
         }
     },
 
+    // Convenience methods
     success: function(title, message, btnText, callback) {
         this._render('success', title, message, btnText, callback);
     },
@@ -179,16 +189,18 @@ const StatusDialog = {
     },
 
     /**
-     * [3] 二次确认弹窗 (升级版)
-     * @param {string} title 标题
-     * @param {string} message 内容
-     * @param {string} confirmText 确认按钮文字
-     * @param {string} cancelText 取消按钮文字 (新增)
-     * @param {Function} onConfirm 回调函数
-     * @param {boolean} isDanger 是否为危险操作 (true则显示红色按钮) (新增)
+     * Confirmation dialog.
+     *
+     * @param {string} title Dialog title
+     * @param {string} message Dialog message
+     * @param {string} confirmText Confirm button label
+     * @param {string} cancelText Cancel button label
+     * @param {Function} onConfirm Callback invoked when confirmed
+     * @param {boolean} isDanger When true, use the danger-styled confirm button
      */
     confirm: function(title, message, confirmText, cancelText, onConfirm, isDanger = false) {
-        // 参数兼容处理：如果用户只传了4个参数，把 cancelText 当作默认值
+        // Backward-compatible argument handling.
+        // If cancelText is a function, treat it as onConfirm and use the default cancel label.
         if (typeof cancelText === 'function') {
             isDanger = onConfirm || false;
             onConfirm = cancelText;
