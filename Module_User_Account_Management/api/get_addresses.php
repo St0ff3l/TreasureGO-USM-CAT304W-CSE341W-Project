@@ -10,7 +10,7 @@ if (!isset($_SESSION['user_id'])) {
 require_once __DIR__ . '/config/treasurego_db_config.php';
 
 try {
-    // 获取该用户的所有地址，最新的在前面
+    // Get all addresses for this user, newest first
     $sql = "SELECT * FROM Address WHERE Address_User_ID = :uid ORDER BY Address_Created_At DESC";
     $stmt = $conn->prepare($sql);
     $stmt->execute([':uid' => $_SESSION['user_id']]);

@@ -15,19 +15,19 @@ $current_user_id = $_SESSION['user_id'];
 try {
     $pdo = getDBConnection();
 
-    // 获取最近联系人列表及其最后一条消息
-    // 只返回商品咨询：排除 Product_ID 为 NULL 的客服/工单聊天
+    // Get recent contact list and their last message
+    // Only return product inquiries: Exclude customer service/ticket chats where Product_ID is NULL
     $sql = "
         SELECT 
             u.User_ID, 
             u.User_Username, 
-            -- ❌ 修改前: u.User_Profile_image as User_Avatar_Url,
-            -- ✅ 修改后: 直接使用原字段名，确保和前端 JS 读取的字段一致
+            -- ❌ Before modification: u.User_Profile_image as User_Avatar_Url,
+            -- ✅ After modification: Use original field name directly to ensure consistency with frontend JS reading
             u.User_Profile_Image, 
             
             p.Product_Title as Product_Name,
             
-            -- 商品图片逻辑保持不变
+            -- Product image logic remains unchanged
             pi.Image_URL as Product_Image_Url,
             
             m.Product_ID,

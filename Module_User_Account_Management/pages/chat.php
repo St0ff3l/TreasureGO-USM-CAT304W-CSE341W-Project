@@ -1,12 +1,12 @@
 <?php
-// 开启错误显示 (调试用)
+// Enable error display (for debugging)
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/utils.php';
-// 强制登录
+// Enforce login
 require_login();
 ?>
 <!DOCTYPE html>
@@ -16,11 +16,10 @@ require_login();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TreasureGO - Chat</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
-    <!-- 引入 Headerbar CSS -->
     <link rel="stylesheet" href="../../Public_Assets/css/headerbar.css">
     <style>
         /* ========================================= */
-        /* 复用 index.html 核心样式                */
+        /* Reuse core styles from index.html         */
         /* ========================================= */
         :root {
             --bg-color: #F3F6F9;
@@ -40,16 +39,16 @@ require_login();
             background-color: var(--bg-color);
             color: var(--text-dark);
             height: 100vh;
-            overflow: hidden; /* 防止整个页面滚动 */
+            overflow: hidden; /* Prevent entire page scrolling */
             display: flex;
             flex-direction: column;
         }
 
-        /* 移除旧的 Navbar 样式，使用 headerbar.js 提供的样式 */
-        /* 但为了兼容 chat.php 特有的布局，可能需要微调 */
-        
+        /* Remove old Navbar styles, use styles provided by headerbar.js */
+        /* However, fine-tuning might be needed to compatible with chat.php specific layout */
+
         /* ========================================= */
-        /* Chat 布局样式                           */
+        /* Chat Layout Styles                        */
         /* ========================================= */
         .chat-container {
             flex: 1;
@@ -59,10 +58,10 @@ require_login();
             margin: 20px auto;
             padding: 0 20px;
             gap: 20px;
-            height: calc(100vh - 100px); /* 减去 Navbar 高度 */
+            height: calc(100vh - 100px); /* Subtract Navbar height */
         }
 
-        /* 左侧联系人列表 */
+        /* Left Sidebar (Contact List) */
         .contacts-sidebar {
             width: 350px;
             background: white;
@@ -103,12 +102,12 @@ require_login();
             display: flex; align-items: center; justify-content: center;
             font-size: 1.2rem; color: #6b7280;
         }
-        
+
         .contact-info { flex: 1; min-width: 0; }
         .contact-name { font-weight: 600; font-size: 1rem; margin-bottom: 4px; }
-        .contact-last-msg { 
-            font-size: 0.85rem; color: #9ca3af; 
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
+        .contact-last-msg {
+            font-size: 0.85rem; color: #9ca3af;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
         .contact-time { font-size: 0.75rem; color: #d1d5db; }
         .unread-badge {
@@ -116,7 +115,7 @@ require_login();
             padding: 2px 8px; border-radius: 10px; font-weight: 600;
         }
 
-        /* 右侧聊天区域 */
+        /* Right Chat Area */
         .chat-area {
             flex: 1;
             background: white;
@@ -132,10 +131,10 @@ require_login();
             padding: 15px 20px;
             border-bottom: 1px solid #f3f4f6;
             display: flex;
-            flex-direction: column; /* 改为纵向布局以容纳商品卡片 */
+            flex-direction: column; /* Change to vertical layout to accommodate product card */
             gap: 10px;
         }
-        
+
         .chat-user-info {
             display: flex;
             align-items: center;
@@ -146,9 +145,9 @@ require_login();
         .chat-header-avatar { width: 40px; height: 40px; border-radius: 50%; background: #e5e7eb; }
         .chat-header-name { font-weight: 700; font-size: 1.1rem; }
 
-        /* 商品快照卡片样式 */
+        /* Product Snapshot Card Styles */
         .product-context-card {
-            display: none; /* 默认隐藏 */
+            display: none; /* Hidden by default */
             background: #f9fafb;
             border-radius: 12px;
             padding: 10px;
@@ -157,9 +156,9 @@ require_login();
             align-items: center;
             gap: 12px;
             width: 100%;
-            position: relative; /* 为关闭按钮定位 */
+            position: relative; /* For positioning the close button */
         }
-        
+
         .p-ctx-close {
             position: absolute;
             top: 5px;
@@ -171,7 +170,7 @@ require_login();
             font-weight: bold;
         }
         .p-ctx-close:hover { color: #ef4444; }
-        
+
         .p-ctx-img {
             width: 50px;
             height: 50px;
@@ -179,7 +178,7 @@ require_login();
             object-fit: cover;
             background: #eee;
         }
-        
+
         .p-ctx-info {
             flex: 1;
             display: flex;
@@ -187,7 +186,7 @@ require_login();
             justify-content: center;
             overflow: hidden;
         }
-        
+
         .p-ctx-title {
             font-size: 0.9rem;
             font-weight: 600;
@@ -196,13 +195,13 @@ require_login();
             overflow: hidden;
             text-overflow: ellipsis;
         }
-        
+
         .p-ctx-price {
             font-size: 0.9rem;
             color: var(--primary);
             font-weight: 700;
         }
-        
+
         .p-ctx-btn {
             background: var(--primary);
             color: white;
@@ -316,10 +315,10 @@ require_login();
         }
         .empty-state-icon { font-size: 4rem; margin-bottom: 20px; opacity: 0.5; }
 
-        /* 移动端适配 */
+        /* Mobile Adaptation */
         @media (max-width: 768px) {
             body {
-                height: 100dvh; /* 使用动态高度适配移动端浏览器地址栏 */
+                height: 100dvh; /* Use dynamic height to adapt to mobile browser address bar */
                 overflow: hidden;
             }
 
@@ -329,57 +328,57 @@ require_login();
             .logo { font-size: 1.2rem; }
             .logo-img { width: 32px; height: 32px; }
 
-            /* 移动端隐藏部分导航按钮，只保留头像/登录 */
+            /* Hide some nav buttons on mobile, only keep avatar/login */
             .nav-actions { gap: 10px; }
             .nav-actions .nav-btn { display: none; }
-            
-            .chat-container { 
-                margin: 0; 
-                padding: 0; 
-                height: calc(100dvh - 65px); /* 减去 Navbar 高度 */
-                border-radius: 0; 
+
+            .chat-container {
+                margin: 0;
+                padding: 0;
+                height: calc(100dvh - 65px); /* Subtract Navbar height */
+                border-radius: 0;
             }
-            
-            .contacts-sidebar { 
-                width: 100%; 
-                border-radius: 0; 
+
+            .contacts-sidebar {
+                width: 100%;
+                border-radius: 0;
                 box-shadow: none;
             }
-            
-            .chat-area { 
-                position: fixed; 
-                top: 0; 
-                left: 0; 
-                width: 100%; 
-                height: 100dvh; /* 聊天窗口全屏覆盖 */
-                z-index: 2000; 
-                transform: translateX(100%); 
+
+            .chat-area {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100dvh; /* Chat window covers full screen */
+                z-index: 2000;
+                transform: translateX(100%);
                 transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
                 border-radius: 0;
                 background: #fff;
             }
-            
+
             .chat-area.active { transform: translateX(0); }
-            
-            .back-btn { 
-                display: flex !important; 
+
+            .back-btn {
+                display: flex !important;
                 align-items: center;
                 justify-content: center;
                 width: 36px;
                 height: 36px;
-                margin-right: 5px; 
-                cursor: pointer; 
-                font-size: 1.2rem; 
+                margin-right: 5px;
+                cursor: pointer;
+                font-size: 1.2rem;
                 border-radius: 50%;
             }
             .back-btn:active { background: #f3f4f6; }
 
             .chat-header { padding: 10px 15px; }
-            
+
             .product-context-card { padding: 8px; }
             .p-ctx-img { width: 40px; height: 40px; }
             .p-ctx-title { font-size: 0.85rem; }
-            
+
             .chat-input-area { padding: 10px; gap: 8px; }
             .add-btn { width: 36px; height: 36px; font-size: 1.2rem; }
             .send-btn { width: 36px; height: 36px; }
@@ -391,22 +390,16 @@ require_login();
 </head>
 <body>
 
-<!-- 移除无效的 Custom Element -->
-<!-- <treasurego-headerbar base-path="../../"></treasurego-headerbar> -->
-
 <div class="chat-container">
-    <!-- 左侧联系人列表 -->
     <div class="contacts-sidebar">
         <div class="contacts-header">
             <h2>Messages</h2>
         </div>
         <div class="contacts-list" id="contactsList">
-            <!-- 动态加载 -->
             <div style="text-align: center; padding: 20px; color: #9ca3af;">Loading...</div>
         </div>
     </div>
 
-    <!-- 右侧聊天区域 -->
     <div class="chat-area" id="chatArea">
         <div class="empty-state" id="emptyState">
             <div class="empty-state-icon">💬</div>
@@ -420,8 +413,7 @@ require_login();
                     <img src="" alt="" class="chat-header-avatar" id="currentChatAvatar">
                     <div class="chat-header-name" id="currentChatName">User Name</div>
                 </div>
-                
-                <!-- 商品快照区域 -->
+
                 <div class="product-context-card" id="productContextCard">
                     <div class="p-ctx-close" onclick="removeProductContext(event)" title="Remove product context">×</div>
                     <img src="" class="p-ctx-img" id="pCtxImg">
@@ -432,9 +424,8 @@ require_login();
                     <a href="#" class="p-ctx-btn" id="pCtxBtn">Buy Now</a>
                 </div>
             </div>
-            
+
             <div class="messages-container" id="messagesContainer">
-                <!-- 消息动态加载 -->
             </div>
 
             <div class="chat-input-area">
@@ -449,34 +440,34 @@ require_login();
 
 <script>
     let currentContactId = null;
-    let currentProductId = null; // 新增：当前聊天的商品ID
+    let currentProductId = null; // New: Current chat Product ID
     let pollingInterval = null;
 
-    // 1. 加载联系人列表
+    // 1. Load contact list
     async function loadConversations() {
         try {
             const res = await fetch('../api/chat/get_conversations.php');
             const json = await res.json();
-            
+
             const listEl = document.getElementById('contactsList');
             listEl.innerHTML = '';
 
-            // 获取 URL 中的 contact_id 参数
+            // Get contact_id parameter from URL
             const urlParams = new URLSearchParams(window.location.search);
             const targetContactId = urlParams.get('contact_id');
-            const targetProductId = urlParams.get('product_id'); // 获取商品ID
-            
+            const targetProductId = urlParams.get('product_id'); // Get Product ID
+
             console.log("Target Contact ID:", targetContactId, "Product ID:", targetProductId); // Debug
 
             let targetUserFound = false;
 
             if (json.status === 'success') {
-                // 渲染现有对话列表
+                // Render existing conversation list
                 if (json.data.length > 0) {
                     json.data.forEach(contact => {
-                        // 检查是否匹配目标联系人和商品
-                        // 如果 URL 有 product_id，必须匹配 product_id
-                        // 如果 URL 没有 product_id，匹配 product_id 为 null 的对话 (或者任意? 暂时严格匹配)
+                        // Check if matches target contact and product
+                        // If URL has product_id, it must match product_id
+                        // If URL has no product_id, match conversation where product_id is null (or any? strictly match for now)
                         const isSameUser = contact.User_ID == targetContactId;
                         const isSameProduct = targetProductId ? contact.Product_ID == targetProductId : !contact.Product_ID;
 
@@ -489,17 +480,17 @@ require_login();
                     listEl.innerHTML = '<div style="text-align: center; padding: 20px; color: #9ca3af;">No conversations yet.</div>';
                 }
 
-                // 如果 URL 指定了联系人，且不在现有列表中，则手动添加
+                // If URL specifies a contact and it's not in the existing list, add manually
                 if (targetContactId && !targetUserFound) {
                     console.log("Target user/product not in list, loading info..."); // Debug
                     await loadTargetUser(targetContactId, targetProductId, listEl);
                 } else if (targetContactId && targetUserFound) {
-                    // 如果在列表中，直接打开
+                    // If in the list, open directly
                     console.log("Target found in list, opening chat..."); // Debug
-                    // 找到对应的用户数据
+                    // Find corresponding user data
                     let targetUser = json.data.find(u => u.User_ID == targetContactId && (targetProductId ? u.Product_ID == targetProductId : !u.Product_ID));
                     if (targetUser) {
-                        // 优先使用商品图片作为头像
+                        // Prioritize product image as avatar
                         const avatar = targetUser.Product_Image_Url || targetUser.User_Avatar_Url;
                         openChat(targetUser.User_ID, targetUser.User_Username, avatar, targetUser.Product_ID);
                     }
@@ -510,13 +501,13 @@ require_login();
             }
         } catch (err) {
             console.error("Error loading conversations:", err);
-            alert("Error loading chats: " + err.message); // 添加用户可见的报错
+            alert("Error loading chats: " + err.message); // Add user-visible error alert
         }
     }
 
-    // ... renderContactItem 保持不变 ...
+    // ... renderContactItem remains unchanged ...
 
-    // 加载目标用户信息（当不在现有对话列表中时）
+    // Load target user info (when not in existing conversation list)
     async function loadTargetUser(userId, productId, container) {
         try {
             console.log("Fetching user info for:", userId);
@@ -540,11 +531,11 @@ require_login();
             if (json.status === 'success') {
                 const user = json.data;
 
-                // 构造一个伪 contact 对象
+                // Construct a pseudo contact object
                 const contact = {
                     User_ID: user.User_ID,
                     User_Username: user.User_Username,
-                    // ✅ 修正：使用数据库正确的字段名 User_Profile_Image
+                    // ✅ Fix: Use correct database field name User_Profile_Image
                     User_Profile_Image: user.User_Profile_Image,
                     Product_ID: productId,
                     Product_Image_Url: productImageUrl,
@@ -560,9 +551,9 @@ require_login();
 
                 renderContactItem(contact, container);
 
-                // ✅ 修正：获取头像逻辑
+                // ✅ Fix: Avatar retrieval logic
                 let avatar = contact.Product_Image_Url || contact.User_Profile_Image;
-                // 简单的路径修复：如果头像存在且不是http开头也不是相对路径，加上 ../../
+                // Simple path fix: If avatar exists and doesn't start with http or relative path, add ../../
                 if (avatar && !avatar.startsWith('http') && !avatar.startsWith('../')) {
                     avatar = '../../' + avatar;
                 }
@@ -578,7 +569,7 @@ require_login();
         }
     }
 
-    // 渲染单个联系人项
+    // Render individual contact item
     function renderContactItem(contact, container) {
         const div = document.createElement('div');
         const isActive = currentContactId == contact.User_ID && currentProductId == contact.Product_ID;
@@ -587,23 +578,23 @@ require_login();
         div.dataset.productId = contact.Product_ID || '';
 
         // ===============================================
-        // 🛠️ 核心逻辑：左侧列表优先显示“商品图”，但传给聊天头部的是“用户头像”
+        // 🛠️ Core Logic: Left list prioritizes "Product Image", but passes "User Avatar" to chat header
         // ===============================================
 
-        // 1. 定义两个头像路径
-        //    A. 列表显示的 (List Image): 优先商品图 -> 没有才显示用户图
+        // 1. Define two avatar paths
+        //    A. Displayed in List (List Image): Prioritize product image -> Show user image if none
         let listImg = contact.Product_Image_Url || contact.User_Profile_Image;
 
-        //    B. 聊天头部显示的 (Header Image): 始终显示用户头像
+        //    B. Displayed in Chat Header (Header Image): Always show user avatar
         let headerImg = contact.User_Profile_Image;
 
-        // 2. 路径修复辅助函数 (统一加 ../../)
+        // 2. Path fix helper function (uniformly add ../../)
         const fixPath = (p) => {
             if (p) {
                 if (!p.startsWith('http') && !p.startsWith('/') && !p.startsWith('../')) {
                     return '../../' + p;
                 }
-                // 如果是 assets/ 开头，可能需要补全 Public_Assets
+                // If starts with assets/, might need to complete Public_Assets
                 if (p.startsWith('assets/')) {
                     return '../../Public_Assets/' + p;
                 }
@@ -611,17 +602,17 @@ require_login();
             return p;
         };
 
-        // 修复路径
+        // Fix paths
         listImg = fixPath(listImg);
         headerImg = fixPath(headerImg);
         // ===============================================
 
-        // 3. 点击事件：把 headerImg (用户头像) 传给 openChat
+        // 3. Click event: Pass headerImg (User Avatar) to openChat
         div.onclick = () => {
             openChat(contact.User_ID, contact.User_Username, headerImg, contact.Product_ID);
         };
 
-        // 4. 列表渲染：使用 listImg (商品图)
+        // 4. List render: Use listImg (Product Image)
         let avatarHtml = '';
         if (listImg) {
             avatarHtml = `<img src="${listImg}" class="contact-avatar" onerror="this.onerror=null;this.parentNode.innerHTML='<div class=\'contact-avatar\'>${(contact.User_Username || '?').charAt(0).toUpperCase()}</div>'">`;
@@ -629,7 +620,7 @@ require_login();
             avatarHtml = `<div class="contact-avatar">${(contact.User_Username || '?').charAt(0).toUpperCase()}</div>`;
         }
 
-        // 未读消息红点
+        // Unread message red dot
         const myId = <?php echo isset($_SESSION['user_id']) ? $_SESSION['user_id'] : 'null'; ?>;
         const unreadHtml = contact.Is_Read == 0 && contact.Sender_ID != myId
             ? `<span class="unread-badge">NEW</span>` : '';
@@ -648,7 +639,7 @@ require_login();
             </div>
         `;
 
-        // 插入到列表
+        // Insert into list
         if (!contact.Created_At) {
             container.insertBefore(div, container.firstChild);
         } else {
@@ -657,55 +648,55 @@ require_login();
     }
 
 
-    // 移除商品上下文
+    // Remove product context
     function removeProductContext(e) {
-        e.stopPropagation(); // 防止触发其他点击事件
+        e.stopPropagation(); // Prevent triggering other click events
         document.getElementById('productContextCard').style.display = 'none';
         if (currentContactId) {
             localStorage.removeItem('chat_context_' + currentContactId);
         }
     }
 
-    // 加载商品上下文信息
+    // Load product context information
     async function loadProductContext(productId) {
         try {
-            // 注意路径：chat.php 在 Module_User_Account_Management/pages/
-            // API 在 Module_Product_Ecosystem/api/
+            // Note path: chat.php is in Module_User_Account_Management/pages/
+            // API is in Module_Product_Ecosystem/api/
             const res = await fetch(`../../Module_Product_Ecosystem/api/Get_Products.php?product_id=${productId}`);
             const json = await res.json();
-            
+
             if (json.success && json.data.length > 0) {
                 const product = json.data[0];
                 const card = document.getElementById('productContextCard');
-                
-                // 设置图片
+
+                // Set image
                 let imgUrl = '';
                 if (product.Main_Image) {
-                    // 处理路径：API返回的可能是相对路径，需要调整
-                    // 假设 Main_Image 是 "Module_Product_Ecosystem/Public_Product_Images/..."
-                    // 我们在 chat.php (Module_User_Account_Management/pages/)
-                    // 需要变成 "../../Module_Product_Ecosystem/Public_Product_Images/..."
-                    // 或者如果已经是绝对路径则不动
+                    // Handle path: API might return relative path, needs adjustment
+                    // Assuming Main_Image is "Module_Product_Ecosystem/Public_Product_Images/..."
+                    // We are in chat.php (Module_User_Account_Management/pages/)
+                    // Needs to become "../../Module_Product_Ecosystem/Public_Product_Images/..."
+                    // Or leave it if it's already an absolute path
                     imgUrl = '../../' + product.Main_Image;
                 }
                 document.getElementById('pCtxImg').src = imgUrl;
-                
-                // 设置标题和价格
+
+                // Set title and price
                 document.getElementById('pCtxTitle').innerText = product.Product_Title;
                 document.getElementById('pCtxPrice').innerText = 'RM' + parseFloat(product.Product_Price).toFixed(2);
-                
-                // 设置购买链接
+
+                // Set buy link
                 const buyBtn = document.getElementById('pCtxBtn');
                 buyBtn.href = `../../Module_Product_Ecosystem/pages/Order_Confirmation.html?id=${product.Product_ID}`;
-                buyBtn.onclick = (e) => e.stopPropagation(); // 防止触发卡片点击
-                
-                // 设置卡片点击跳转详情页
+                buyBtn.onclick = (e) => e.stopPropagation(); // Prevent triggering card click
+
+                // Set card click to jump to detail page
                 card.style.cursor = 'pointer';
                 card.onclick = () => {
                     window.location.href = `../../Module_Product_Ecosystem/pages/Product_Detail.html?id=${product.Product_ID}`;
                 };
-                
-                // 显示卡片
+
+                // Show card
                 card.style.display = 'flex';
             }
         } catch (err) {
@@ -713,20 +704,20 @@ require_login();
         }
     }
 
-    // 2. 打开聊天窗口
+    // 2. Open chat window
     function openChat(userId, username, avatarUrl, productId = null) {
-        // 如果已经是当前聊天，就不重复加载（防止循环）
+        // If already current chat, do not reload (prevent loop)
         if (currentContactId == userId && currentProductId == productId) return;
 
         currentContactId = userId;
         currentProductId = productId;
-        
-        // UI 切换
+
+        // UI Switch
         document.getElementById('emptyState').style.display = 'none';
         document.getElementById('chatContent').style.display = 'flex';
-        document.getElementById('chatArea').classList.add('active'); // 移动端显示
+        document.getElementById('chatArea').classList.add('active'); // Show on mobile
 
-        // 设置头部信息
+        // Set header info
         document.getElementById('currentChatName').innerText = username;
         const avatarEl = document.getElementById('currentChatAvatar');
         if (avatarUrl) {
@@ -735,25 +726,25 @@ require_login();
             avatarEl.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="%23e5e7eb"/><text x="50" y="50" font-family="Arial" font-size="40" fill="%236b7280" text-anchor="middle" dy=".3em">' + username.charAt(0).toUpperCase() + '</text></svg>';
         }
 
-        // 加载商品上下文
+        // Load product context
         if (currentProductId) {
             loadProductContext(currentProductId);
         } else {
             document.getElementById('productContextCard').style.display = 'none';
         }
 
-        // 加载消息
+        // Load messages
         loadMessages();
-        
-        // 开启轮询
+
+        // Start polling
         if (pollingInterval) clearInterval(pollingInterval);
         pollingInterval = setInterval(loadMessages, 3000);
 
-        // 手动更新列表项的选中状态
+        // Manually update selection status of list items
         document.querySelectorAll('.contact-item').forEach(item => {
             const isMatch = item.dataset.userId == userId && item.dataset.productId == (productId || '');
             item.classList.toggle('active', isMatch);
-            // 如果是当前选中的，清除未读红点（视觉上）
+            // If currently selected, clear unread red dot (visually)
             if (isMatch) {
                 const badge = item.querySelector('.unread-badge');
                 if (badge) badge.remove();
@@ -761,7 +752,7 @@ require_login();
         });
     }
 
-    // 3. 加载消息记录
+    // 3. Load message history
     async function loadMessages() {
         if (!currentContactId) return;
 
@@ -780,28 +771,28 @@ require_login();
 
             const res = await fetch(url);
             const json = await res.json();
-            
+
             const container = document.getElementById('messagesContainer');
-            // 简单的全量更新（实际生产环境应该做增量更新或 Diff）
-            // 为了保持滚动位置，可以先记录 scrollHeight
+            // Simple full update (production environment should do incremental update or Diff)
+            // To maintain scroll position, record scrollHeight first
             const isAtBottom = container.scrollHeight - container.scrollTop === container.clientHeight;
 
             container.innerHTML = '';
 
             if (json.status === 'success') {
                 const myId = <?php echo $_SESSION['user_id']; ?>;
-                
+
                 json.data.forEach(msg => {
                     const div = document.createElement('div');
                     div.className = `message ${msg.Sender_ID == myId ? 'sent' : 'received'}`;
-                    
+
                     let contentHtml = '';
                     if (msg.Message_Type === 'image') {
-                        // 处理图片路径
-                        // 数据库存的是 ../../Public_Assets/chat_images/xxx.jpg (相对于 api/chat/upload_image.php)
-                        // chat.php 在 pages/ 下，所以路径应该是 ../../Public_Assets/chat_images/xxx.jpg
-                        // 如果存的是绝对路径或者其他格式，需要调整
-                        // 假设存的是 ../../Public_Assets/chat_images/filename.ext
+                        // Handle image path
+                        // Database stores ../../Public_Assets/chat_images/xxx.jpg (relative to api/chat/upload_image.php)
+                        // chat.php is under pages/, so path should be ../../Public_Assets/chat_images/xxx.jpg
+                        // If stored as absolute path or other format, needs adjustment
+                        // Assuming stored as ../../Public_Assets/chat_images/filename.ext
                         contentHtml = `<img src="${msg.Message_Content}" style="max-width: 200px; border-radius: 8px; cursor: pointer;" onclick="window.open(this.src)">`;
                     } else {
                         contentHtml = msg.Message_Content;
@@ -814,8 +805,8 @@ require_login();
                     container.appendChild(div);
                 });
 
-                // 如果之前在底部，或者刚打开，就滚动到底部
-                if (isAtBottom || container.children.length === json.data.length) { // 简单判断
+                // If previously at bottom, or just opened, scroll to bottom
+                if (isAtBottom || container.children.length === json.data.length) { // Simple check
                     scrollToBottom();
                 }
             }
@@ -824,7 +815,7 @@ require_login();
         }
     }
 
-    // 4. 发送消息
+    // 4. Send message
     async function sendMessage() {
         const input = document.getElementById('messageInput');
         const content = input.value.trim();
@@ -841,11 +832,11 @@ require_login();
                 })
             });
             const json = await res.json();
-            
+
             if (json.status === 'success') {
                 input.value = '';
-                loadMessages(); // 立即刷新
-                loadConversations(); // 刷新列表以更新最后一条消息
+                loadMessages(); // Refresh immediately
+                loadConversations(); // Refresh list to update last message
                 scrollToBottom();
             }
         } catch (err) {
@@ -853,7 +844,7 @@ require_login();
         }
     }
 
-    // 6. 上传图片
+    // 6. Upload image
     async function uploadImage(input) {
         if (input.files && input.files[0]) {
             const file = input.files[0];
@@ -887,13 +878,13 @@ require_login();
                 console.error(err);
                 alert('Upload error');
             }
-            
-            // 清空 input，允许重复上传同一张图
+
+            // Clear input, allow uploading the same image again
             input.value = '';
         }
     }
 
-    // 辅助函数
+    // Helper functions
     function scrollToBottom() {
         const container = document.getElementById('messagesContainer');
         container.scrollTop = container.scrollHeight;
@@ -910,12 +901,12 @@ require_login();
         if (pollingInterval) clearInterval(pollingInterval);
     }
 
-    // 回车发送
+    // Send on Enter
     document.getElementById('messageInput').addEventListener('keypress', (e) => {
         if (e.key === 'Enter') sendMessage();
     });
 
-    // 引入 headerbar.js 并初始化
+    // Import headerbar.js and initialize
     const script = document.createElement('script');
     script.src = '../../Public_Assets/js/headerbar.js';
     script.onload = () => {
@@ -925,7 +916,7 @@ require_login();
     };
     document.body.appendChild(script);
 
-    // 初始化
+    // Initialize
     loadConversations();
 
 </script>

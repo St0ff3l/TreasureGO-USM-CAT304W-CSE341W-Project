@@ -1,5 +1,5 @@
 <?php
-// 文件路径: Module_User_Account_Management/api/save_address.php
+// File path: Module_User_Account_Management/api/save_address.php
 header('Content-Type: application/json');
 session_start();
 
@@ -17,7 +17,7 @@ $addr_id    = !empty($data['Address_ID']) ? $data['Address_ID'] : null;
 $name       = trim($data['Address_Receiver_Name'] ?? '');
 $detail     = trim($data['Address_Detail'] ?? '');
 $phone      = trim($data['Address_Phone_Number'] ?? '');
-// 获取前端传来的默认勾选状态
+// Get default selection status from frontend
 $is_default = (int)($data['Address_Is_Default'] ?? 0);
 
 if (empty($name) || empty($detail) || empty($phone)) {
@@ -26,7 +26,7 @@ if (empty($name) || empty($detail) || empty($phone)) {
 }
 
 try {
-    // 🔥 如果当前保存的操作要把地址设为默认，则先把该用户所有其他地址设为非默认(0)
+    // If the current operation sets the address as default, set all other addresses of this user to non-default (0)
     if ($is_default === 1) {
         $reset_sql = "UPDATE Address SET Address_Is_Default = 0 WHERE Address_User_ID = :uid";
         $reset_stmt = $conn->prepare($reset_sql);
@@ -34,7 +34,7 @@ try {
     }
 
     if ($addr_id) {
-        // --- 编辑模式 (UPDATE) ---
+        // --- Edit Mode (UPDATE) ---
         $sql = "UPDATE Address 
                 SET Address_Receiver_Name = :name, 
                     Address_Detail = :detail, 
@@ -54,8 +54,8 @@ try {
         echo json_encode(['status' => 'success', 'message' => 'Address updated successfully']);
 
     } else {
-        // --- 新增模式 (INSERT) ---
-        // 自动逻辑：如果该用户之前没有地址，这第一个地址必须是默认的
+        // --- Insert Mode (INSERT) ---
+        // Automatic logic: If the user has no previous address, this first address must be default
         $count_stmt = $conn->prepare("SELECT COUNT(*) FROM Address WHERE Address_User_ID = :uid");
         $count_stmt->execute([':uid' => $user_id]);
         if ($count_stmt->fetchColumn() == 0) {

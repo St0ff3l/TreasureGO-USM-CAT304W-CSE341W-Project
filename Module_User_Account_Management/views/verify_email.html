@@ -67,7 +67,7 @@
       alert(data.message);
       btn.textContent = "Resend Code";
       if(!data.success) btn.disabled = false;
-      else setTimeout(() => btn.disabled = false, 60000); // 简单前端限流
+      else setTimeout(() => btn.disabled = false, 60000); // Simple frontend rate limiting
     } catch (err) { alert("Network error"); btn.disabled = false; }
   });
 </script>

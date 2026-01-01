@@ -14,7 +14,7 @@ if (!is_admin()) {
 
 try {
     $pdo = getDBConnection();
-    // 修改查询，关联获取最新的封禁结束时间
+    // Modify query to join and get the latest ban end time
     $sql = "SELECT 
                 u.User_ID, 
                 u.User_Username, 

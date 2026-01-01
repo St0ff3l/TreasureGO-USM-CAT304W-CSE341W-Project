@@ -1,8 +1,8 @@
 <?php
 // api/signup_user.php
-// ✅ 修复版：强制验证邮箱成功后再存入数据库
+// Enforce email verification before saving to database
 
-session_start(); // 开启 Session 以读取验证码
+session_start(); // Start Session to read verification code
 error_reporting(E_ALL);
 ini_set('display_errors', 0);
 
@@ -32,51 +32,51 @@ try {
         jsonResponse(false, 'All fields (including verification code) are required.');
     }
 
-    // 1. 验证 Session 中的验证码
+    // 1. Verify code in Session
     if (!isset($_SESSION['signup_verify'])) {
         jsonResponse(false, 'Please click "Send Code" first.');
     }
 
     $verifyData = $_SESSION['signup_verify'];
 
-    // 检查邮箱是否一致
+    // Check if email matches
     if ($verifyData['email'] !== $email) {
         jsonResponse(false, 'Email mismatch. Please resend code.');
     }
 
-    // 检查过期
+    // Check expiration
     if (time() > $verifyData['expires_at']) {
         jsonResponse(false, 'Verification code expired. Please resend.');
     }
 
-    // 检查验证码
+    // Check verification code
     if (!password_verify($code, $verifyData['code_hash'])) {
         jsonResponse(false, 'Invalid verification code.');
     }
 
     // =================================================
-    // 验证通过，开始存入数据库
+    // Verification passed, start saving to database
     // =================================================
     $pdo = getDBConnection();
 
-    // 2. 再次检查邮箱是否已被注册 (防止并发注册)
+    // 2. Check again if email is already registered (prevent concurrent registration)
     $stmt = $pdo->prepare("SELECT User_ID FROM User WHERE User_Email = ? LIMIT 1");
     $stmt->execute([$email]);
     if ($stmt->fetch()) {
         jsonResponse(false, 'Email already registered.');
     }
 
-    // 3. 创建用户 (直接设为 active 和 verified)
+    // 3. Create user (set directly to active and verified)
     $passwordHash = password_hash($password, PASSWORD_BCRYPT);
     
-    // 注意：这里直接设为 'active' 和 User_Email_Verified = 1
+    // Note: Set directly to 'active' and User_Email_Verified = 1
     $sql = "INSERT INTO User (User_Username, User_Email, User_Password_Hash, User_Role, User_Status, User_Email_Verified, User_Created_At)
             VALUES (?, ?, ?, 'user', 'active', 1, NOW())";
     
     $stmt = $pdo->prepare($sql);
     $stmt->execute([$username, $email, $passwordHash]);
     
-    // 4. 清除 Session
+    // 4. Clear Session
     unset($_SESSION['signup_verify']);
 
     jsonResponse(true, 'Signup successful! You can now login.');

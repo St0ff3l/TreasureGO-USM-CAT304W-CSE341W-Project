@@ -6,7 +6,7 @@
     <title>Sign Up - TreasureGo</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
-        /* --- 100% 复用 Login.html 的样式 --- */
+        /* --- Styles reused from Login.html --- */
         :root {
             --bg-color: #F3F6F9;
             --primary: #4F46E5;
@@ -14,7 +14,9 @@
             --text-gray: #6B7280;
             --glass-bg: rgba(255, 255, 255, 0.95);
         }
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
+
         body {
             font-family: 'Poppins', sans-serif;
             background-color: var(--bg-color);
@@ -22,24 +24,46 @@
             min-height: 100vh;
             overflow: hidden;
             position: relative;
-            background-image: radial-gradient(circle at 10% 20%, rgba(79, 70, 229, 0.05) 0%, transparent 40%),
-            radial-gradient(circle at 90% 80%, rgba(245, 158, 11, 0.05) 0%, transparent 40%);
+            background-image:
+                    radial-gradient(circle at 10% 20%, rgba(79, 70, 229, 0.05) 0%, transparent 40%),
+                    radial-gradient(circle at 90% 80%, rgba(245, 158, 11, 0.05) 0%, transparent 40%);
             display: flex;
             justify-content: center;
             align-items: center;
         }
 
-        /* --- Background Animation --- */
-        #floating-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
-        .floating-item { position: absolute; font-size: 4rem; opacity: 0.6; animation: floatUp 15s linear infinite; }
-        @keyframes floatUp {
-            0% { transform: translateY(110vh) rotate(0deg); opacity: 0; }
-            10% { opacity: 0.8; }
-            90% { opacity: 0.8; }
-            100% { transform: translateY(-10vh) rotate(20deg); opacity: 0; }
+        /* --- Floating background animation --- */
+        #floating-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
         }
 
-        /* --- Card Styles --- */
+        .floating-item {
+            position: absolute;
+            font-size: 4rem;
+            opacity: 0.6;
+            animation: floatUp 15s linear infinite;
+        }
+
+        @keyframes floatUp {
+            0% {
+                transform: translateY(110vh) rotate(0deg);
+                opacity: 0;
+            }
+            10% { opacity: 0.8; }
+            90% { opacity: 0.8; }
+            100% {
+                transform: translateY(-10vh) rotate(20deg);
+                opacity: 0;
+            }
+        }
+
+        /* --- Card container styles --- */
         .login-card {
             background: rgba(255, 255, 255, 0.85);
             backdrop-filter: blur(20px);
@@ -47,31 +71,58 @@
             border-radius: 40px;
             box-shadow: 0 20px 50px rgba(0,0,0,0.1);
             width: 100%;
-            max-width: 420px; /* 宽度保持一致 */
+            max-width: 420px;
             z-index: 10;
             text-align: center;
             border: 1px solid rgba(255,255,255,0.6);
-            /* 如果内容太多，允许卡片稍微长一点，或者让页面滚动 */
             max-height: 90vh;
             overflow-y: auto;
         }
 
-        /* 隐藏滚动条但保留滚动功能 */
-        .login-card::-webkit-scrollbar { width: 0; height: 0; }
+        /* Hide scrollbar while keeping scroll functionality */
+        .login-card::-webkit-scrollbar {
+            width: 0;
+            height: 0;
+        }
 
-        .logo-text { font-size: 2rem; font-weight: 800; color: var(--primary); margin-bottom: 0.5rem; display: block; text-decoration: none;}
-        .logo-text span { color: var(--text-dark); }
+        .logo-text {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+            display: block;
+            text-decoration: none;
+        }
 
-        h2 { margin-bottom: 1.5rem; color: #4b5563; font-size: 1.1rem; font-weight: 500; }
+        .logo-text span {
+            color: var(--text-dark);
+        }
+
+        h2 {
+            margin-bottom: 1.5rem;
+            color: #4b5563;
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
 
         #signupForm { width: 100%; }
 
-        .input-group { margin-bottom: 1rem; text-align: left; }
-        .input-label { display: block; font-size: 0.9rem; font-weight: 600; margin-bottom: 0.4rem; color: #374151; }
+        .input-group {
+            margin-bottom: 1rem;
+            text-align: left;
+        }
+
+        .input-label {
+            display: block;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 0.4rem;
+            color: #374151;
+        }
 
         .form-input {
             width: 100%;
-            padding: 12px 20px; /*稍微减小一点padding以适应更多输入框*/
+            padding: 12px 20px;
             border-radius: 15px;
             border: 2px solid transparent;
             background: #fff;
@@ -81,10 +132,15 @@
             box-shadow: 0 4px 10px rgba(0,0,0,0.03);
             box-sizing: border-box;
         }
-        .form-input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1); }
 
-        /* --- Buttons (完全复用) --- */
-        .btn-submit, .btn-secondary {
+        .form-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+        }
+
+        /* --- Button styles --- */
+        .btn-submit,
+        .btn-secondary {
             display: block;
             width: 100%;
             padding: 16px;
@@ -101,33 +157,62 @@
             font-family: inherit;
         }
 
-        /* Primary Action (Sign Up) - 黑底白字 */
+        /* Primary action button */
         .btn-submit {
             background-color: var(--text-dark);
             color: white;
             margin-top: 1rem;
         }
+
         .btn-submit:hover {
-            background-color: #000; border-color: #000;
+            background-color: #000;
+            border-color: #000;
             transform: translateY(-3px);
         }
-        .btn-submit:disabled { opacity: 0.7; cursor: not-allowed; }
 
-        /* Secondary Action (Login) - 白底黑字 */
+        .btn-submit:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        /* Secondary action button */
         .btn-secondary {
             background-color: white;
             color: var(--text-dark);
             margin-top: 1rem;
         }
+
         .btn-secondary:hover {
             background-color: #f9fafb;
             transform: translateY(-3px);
         }
 
-        .error-msg { color: #ef4444; font-size: 0.9rem; margin-top: 1rem; font-weight: 500; min-height: 1.2rem;}
-        .links-container { margin-top: 1.5rem; display: flex; flex-direction: column; gap: 12px; }
-        .text-link { display: block; color: #6b7280; text-decoration: none; font-size: 0.9rem; transition: 0.2s; }
-        .text-link:hover { color: var(--primary); }
+        .error-msg {
+            color: #ef4444;
+            font-size: 0.9rem;
+            margin-top: 1rem;
+            font-weight: 500;
+            min-height: 1.2rem;
+        }
+
+        .links-container {
+            margin-top: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .text-link {
+            display: block;
+            color: #6b7280;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: 0.2s;
+        }
+
+        .text-link:hover {
+            color: var(--primary);
+        }
     </style>
 </head>
 <body>
@@ -180,9 +265,10 @@
 </div>
 
 <script>
-    // 1. Floating Animation (Same as Login)
+    // Initialize floating background elements
     const container = document.getElementById('floating-container');
     const items = ['🔑', '🔒', '🛡️', '👋', '🎓', '🚀'];
+
     for (let i = 0; i < 10; i++) {
         const el = document.createElement('div');
         el.classList.add('floating-item');
@@ -193,36 +279,37 @@
         container.appendChild(el);
     }
 
-    // 2. Signup Logic
+    // Signup-related logic
     const sendCodeBtn = document.getElementById('sendCodeBtn');
-    
-    // 发送验证码
+
+    // Send email verification code
     sendCodeBtn.addEventListener('click', async () => {
         const email = document.getElementById('email').value;
         const msg = document.getElementById('msg');
-        
+
         if (!email) {
             msg.textContent = "Please enter your email first.";
             return;
         }
-        
+
         sendCodeBtn.disabled = true;
         sendCodeBtn.textContent = "Sending...";
         msg.textContent = "";
-        
+
         try {
             const res = await fetch('../api/send_verify_code.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email: email, purpose: 'signup' })
             });
+
             const data = await res.json();
-            
+
             if (data.success) {
                 msg.style.color = '#10B981';
                 msg.textContent = "Code sent! Check your inbox.";
                 sendCodeBtn.textContent = "Sent";
-                // 60秒倒计时
+
                 let countdown = 60;
                 const timer = setInterval(() => {
                     sendCodeBtn.textContent = `Resend (${countdown})`;
@@ -248,12 +335,12 @@
         }
     });
 
+    // Handle signup form submission
     document.getElementById('signupForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         const btn = document.getElementById('submitBtn');
         const msg = document.getElementById('msg');
 
-        // 简单的前端校验
         const p1 = document.getElementById('password').value;
         const p2 = document.getElementById('confirm_password').value;
         const code = document.getElementById('verify_code').value;
@@ -262,7 +349,7 @@
             msg.textContent = "Passwords do not match!";
             return;
         }
-        
+
         if (!code) {
             msg.textContent = "Please enter the verification code.";
             return;
@@ -280,7 +367,6 @@
         };
 
         try {
-            // 调用 API (注意路径: ../api/signup_user.php)
             const res = await fetch('../api/signup_user.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -294,7 +380,6 @@
                 btn.style.backgroundColor = '#10B981';
                 btn.style.borderColor = '#10B981';
 
-                // 注册成功跳转到登录页面
                 setTimeout(() => {
                     window.location.href = 'login.php';
                 }, 1000);

@@ -1,6 +1,6 @@
 <?php
 // api/verify_code.php
-// ✅ 修复版：解决验证码匹配不上/过期的问题
+// ✅ Fixed version: Solves code mismatch/expiry issues
 
 header('Content-Type: application/json');
 require_once '../api/config/treasurego_db_config.php';
@@ -18,8 +18,8 @@ if (empty($email) || empty($code)) {
 try {
     $pdo = getDBConnection();
 
-    // 1. 查找该邮箱最新的一条未使用的验证码
-    // 不在 SQL 里判断过期，防止 SQL 时区问题
+    // 1. Find the latest unused verification code for this email
+    // Do not check expiry in SQL to prevent SQL timezone issues
     $sql = "SELECT * FROM Email_Verification
             WHERE EV_Email = ? AND EV_Purpose = ? AND EV_Is_Used = 0
             ORDER BY EV_Created_At DESC LIMIT 1";
@@ -32,21 +32,21 @@ try {
         jsonResponse(false, 'No code found. Please click Resend.');
     }
 
-    // 2. 检查错误次数
+    // 2. Check error count
     if ($record['EV_Attempt_Count'] >= 5) {
         $pdo->prepare("UPDATE Email_Verification SET EV_Is_Used = 1 WHERE EV_ID = ?")->execute([$record['EV_ID']]);
         jsonResponse(false, 'Too many attempts. Code invalid.');
     }
 
-    // 3. 🔥 在 PHP 里检查过期 (解决时区 Bug) 🔥
+    // 3. 🔥 Check expiry in PHP (Solve Timezone Bug) 🔥
     $expireTime = strtotime($record['EV_Expires_At']);
     if (time() > $expireTime) {
         jsonResponse(false, 'Code expired. Please Resend.');
     }
 
-    // 4. 验证哈希
+    // 4. Verify Hash
     if (password_verify((string)$code, $record['EV_Code'])) {
-        // ✅ 成功
+        // ✅ Success
         $pdo->prepare("UPDATE Email_Verification SET EV_Is_Used = 1 WHERE EV_ID = ?")->execute([$record['EV_ID']]);
 
         if ($purpose === 'signup') {
@@ -54,7 +54,7 @@ try {
         }
         jsonResponse(true, 'Verification successful.');
     } else {
-        // ❌ 失败
+        // ❌ Failed
         $pdo->prepare("UPDATE Email_Verification SET EV_Attempt_Count = EV_Attempt_Count + 1 WHERE EV_ID = ?")->execute([$record['EV_ID']]);
         jsonResponse(false, 'Invalid code. Check your latest email.');
     }

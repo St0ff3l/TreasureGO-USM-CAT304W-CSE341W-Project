@@ -10,15 +10,13 @@ if (!isset($_SESSION['user_id'])) {
 require_once __DIR__ . '/config/treasurego_db_config.php';
 
 try {
-    // Delete the user account
-    // Note: Depending on foreign key constraints, this might fail if related data isn't handled (ON DELETE CASCADE).
-    // Assuming the database is set up to handle cascades or we just want to try deleting the user.
+    // Delete user account
     $sql = "DELETE FROM User WHERE User_ID = :uid";
     $stmt = $conn->prepare($sql);
     $stmt->execute([':uid' => $_SESSION['user_id']]);
 
     if ($stmt->rowCount() > 0) {
-        // Destroy session after deletion
+        // Destroy session
         session_unset();
         session_destroy();
         echo json_encode(['status' => 'success', 'message' => 'Account deleted successfully']);

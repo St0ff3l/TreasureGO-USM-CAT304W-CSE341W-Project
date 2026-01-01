@@ -1,6 +1,6 @@
 <?php
 // api/send_verify_code.php
-session_start(); // 开启 Session 以存储临时验证码
+session_start(); // Start Session to store temporary verification code
 header('Content-Type: application/json');
 
 require_once '../api/config/treasurego_db_config.php';
@@ -9,7 +9,7 @@ require_once '../includes/sendgrid_mailer.php';
 
 $input = getJsonInput();
 $email = trim($input['email'] ?? '');
-$purpose = $input['purpose'] ?? 'signup'; // signup 或 reset_password
+$purpose = $input['purpose'] ?? 'signup'; // signup or reset_password
 
 if (empty($email)) {
     jsonResponse(false, 'Email is required.');
@@ -19,29 +19,29 @@ try {
     $pdo = getDBConnection();
 
     // =================================================
-    // 场景 A: 注册 (Signup) - 用户还不存在
+    // Scenario A: Signup - User does not exist yet
     // =================================================
     if ($purpose === 'signup') {
-        // 1. 检查邮箱是否已被注册
+        // 1. Check if email is already registered
         $stmt = $pdo->prepare("SELECT User_ID FROM User WHERE User_Email = ? LIMIT 1");
         $stmt->execute([$email]);
         if ($stmt->fetch()) {
             jsonResponse(false, 'Email already registered. Please login.');
         }
 
-        // 2. 生成验证码
+        // 2. Generate verification code
         $code = generateVerificationCode();
         $codeHash = password_hash($code, PASSWORD_BCRYPT);
-        $expiresAt = time() + 600; // 10分钟后过期
+        $expiresAt = time() + 600; // Expires in 10 minutes
 
-        // 3. 存入 Session (不存数据库，因为没有 User_ID)
+        // 3. Store in Session (Not in DB because there is no User_ID)
         $_SESSION['signup_verify'] = [
             'email' => $email,
             'code_hash' => $codeHash,
             'expires_at' => $expiresAt
         ];
 
-        // 4. 发送邮件
+        // 4. Send email
         $subject = "Verify Your Email - TreasureGo";
         $body = "<h2>Welcome to TreasureGo!</h2><p>Your verification code is: <b style='font-size: 24px;'>$code</b></p><p>This code expires in 10 minutes.</p>";
 
@@ -53,7 +53,7 @@ try {
     } 
     
     // =================================================
-    // 场景 B: 更新邮箱 (Update Email) - 用户必须登录
+    // Scenario B: Update Email - User must be logged in
     // =================================================
     elseif ($purpose === 'update_email') {
         if (!isset($_SESSION['user_id'])) {
@@ -61,14 +61,14 @@ try {
         }
         $userId = $_SESSION['user_id'];
 
-        // 1. 检查邮箱是否已被其他用户注册
+        // 1. Check if email is already registered by another user
         $stmt = $pdo->prepare("SELECT User_ID FROM User WHERE User_Email = ? LIMIT 1");
         $stmt->execute([$email]);
         if ($stmt->fetch()) {
             jsonResponse(false, 'Email already registered by another user.');
         }
 
-        // 2. 限频检查 (60秒内不能重发)
+        // 2. Rate limit check (Cannot resend within 60 seconds)
         $stmtCheck = $pdo->prepare("SELECT EV_Created_At FROM Email_Verification WHERE EV_Email = ? AND EV_Purpose = ? ORDER BY EV_Created_At DESC LIMIT 1");
         $stmtCheck->execute([$email, $purpose]);
         $lastEv = $stmtCheck->fetch();
@@ -77,17 +77,17 @@ try {
             jsonResponse(false, 'Please wait 60 seconds before resending.');
         }
 
-        // 3. 生成新码
+        // 3. Generate new code
         $code = generateVerificationCode();
         $codeHash = password_hash($code, PASSWORD_BCRYPT);
         $expiresAt = date('Y-m-d H:i:s', strtotime('+10 minutes'));
 
-        // 4. 存入数据库
+        // 4. Insert into database
         $sqlEV = "INSERT INTO Email_Verification (User_ID, EV_Email, EV_Code, EV_Purpose, EV_Expires_At) VALUES (?, ?, ?, ?, ?)";
         $stmtEV = $pdo->prepare($sqlEV);
         $stmtEV->execute([$userId, $email, $codeHash, $purpose, $expiresAt]);
 
-        // 5. 发送邮件
+        // 5. Send email
         $subject = "Verify Your New Email - TreasureGo";
         $body = "<p>You are updating your email address.</p><p>Your verification code is: <b style='font-size: 24px;'>$code</b></p><p>Expires in 10 minutes.</p>";
 
@@ -99,21 +99,21 @@ try {
     }
 
     // =================================================
-    // 场景 C: 重置密码 (Reset Password) - 用户必须存在
+    // Scenario C: Reset Password - User must exist
     // =================================================
     else {
-        // 1. 确认用户存在
+        // 1. Confirm user exists
         $stmt = $pdo->prepare("SELECT User_ID FROM User WHERE User_Email = ? LIMIT 1");
         $stmt->execute([$email]);
         $user = $stmt->fetch();
 
         if (!$user) {
-            // 为了安全，也可以提示发送成功，防止枚举邮箱
+            // For security, you could also return success to prevent email enumeration
             jsonResponse(false, 'User not found.');
         }
         $userId = $user['User_ID'];
 
-        // 2. 限频检查 (60秒内不能重发)
+        // 2. Rate limit check (Cannot resend within 60 seconds)
         $stmtCheck = $pdo->prepare("SELECT EV_Created_At FROM Email_Verification WHERE EV_Email = ? AND EV_Purpose = ? ORDER BY EV_Created_At DESC LIMIT 1");
         $stmtCheck->execute([$email, $purpose]);
         $lastEv = $stmtCheck->fetch();
@@ -122,17 +122,17 @@ try {
             jsonResponse(false, 'Please wait 60 seconds before resending.');
         }
 
-        // 3. 生成新码
+        // 3. Generate new code
         $code = generateVerificationCode();
         $codeHash = password_hash($code, PASSWORD_BCRYPT);
         $expiresAt = date('Y-m-d H:i:s', strtotime('+10 minutes'));
 
-        // 4. 存入数据库
+        // 4. Insert into database
         $sqlEV = "INSERT INTO Email_Verification (User_ID, EV_Email, EV_Code, EV_Purpose, EV_Expires_At) VALUES (?, ?, ?, ?, ?)";
         $stmtEV = $pdo->prepare($sqlEV);
         $stmtEV->execute([$userId, $email, $codeHash, $purpose, $expiresAt]);
 
-        // 5. 发送邮件
+        // 5. Send email
         $subject = "Reset Your Password";
         $body = "<p>Your verification code is: <b style='font-size: 24px;'>$code</b></p><p>Expires in 10 minutes.</p>";
 

@@ -56,7 +56,7 @@ try {
     $stmt->execute($params);
     $messages = $stmt->fetchAll();
 
-    // 标记对方发给我的消息为已读
+    // Mark messages sent by the other party as read
     $updateSql = "
         UPDATE Message 
         SET Message_Is_Read = 1 

@@ -9,7 +9,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
     <style>
-        /* --- 1. 核心变量 --- */
+        /* --- 1. Core Variables --- */
         :root {
             --bg-color: #F3F6F9;
             --primary: #4F46E5;
@@ -25,7 +25,7 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            font-family: 'Poppins', sans-serif; /* headerbar.js 会自动加载字体，这里保留作为后备 */
+            font-family: 'Poppins', sans-serif; /* headerbar.js will automatically load fonts, kept here as backup */
             background-color: var(--bg-color);
             color: var(--text-dark);
             min-height: 100vh;
@@ -34,10 +34,10 @@
                     radial-gradient(circle at 90% 80%, rgba(245, 158, 11, 0.05) 0%, transparent 40%);
         }
 
-        /* --- 2. 布局系统 --- */
+        /* --- 2. Layout System --- */
         .layout-container {
             max-width: 1200px;
-            /* 核心修改：上下边距 30px，确保与 Headerbar 的距离 */
+            /* Core modification: top/bottom margin 30px, ensuring distance from Headerbar */
             margin: 30px auto;
             padding: 0 20px;
             display: grid;
@@ -46,11 +46,11 @@
             align-items: start;
         }
 
-        /* --- 左侧 Sidebar --- */
+        /* --- Left Sidebar --- */
         .sidebar-card {
             background: white; border-radius: var(--card-radius);
             padding: 20px; box-shadow: var(--card-shadow);
-            /* 保持吸顶并增加滑动样式/滚动容器 */
+            /* Keep sticky and add scrolling style/container */
             position: sticky;
             top: 110px;
             z-index: 5;
@@ -75,14 +75,14 @@
         .menu-item i { font-size: 1.2rem; }
         .menu-item.active-view { background: var(--primary); color: white; box-shadow: 0 4px 10px rgba(79, 70, 229, 0.3); }
 
-        /* --- 中间内容区 --- */
+        /* --- Middle Content Area --- */
         .main-content { display: flex; flex-direction: column; gap: 25px; }
 
         .view-section { display: none; animation: fadeIn 0.3s ease; }
         .view-section.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* --- 仪表板概览卡片 --- */
+        /* --- Dashboard Overview Cards --- */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -102,12 +102,12 @@
         .stat-value { font-size: 2rem; font-weight: 800; color: var(--primary); margin-bottom: 5px; }
         .stat-label { font-size: 0.9rem; color: var(--text-gray); }
 
-        /* --- 设置卡片 --- */
+        /* --- Settings Card --- */
         .settings-card { background: white; border-radius: var(--card-radius); padding: 30px; box-shadow: var(--card-shadow); }
         .settings-header { margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid #F3F4F6; }
         .settings-header h2 { font-size: 1.5rem; font-weight: 700; display: flex; align-items: center; gap: 10px; }
 
-        /* --- 表格样式 --- */
+        /* --- Table Styles --- */
         .table-container { background: white; border-radius: var(--card-radius); padding: 25px; box-shadow: var(--card-shadow); overflow-x: auto; }
         table { width: 100%; border-collapse: separate; border-spacing: 0; }
         th { text-align: left; padding: 15px; background: #F3F4F6; color: #4B5563; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #E5E7EB; }
@@ -117,7 +117,7 @@
         tr:hover td { background-color: #FAFAFA; }
         tr:last-child td { border-bottom: none; }
 
-        /* --- Badge样式 --- */
+        /* --- Badge Styles --- */
         .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; }
         .badge-active { background: #ECFDF5; color: #059669; }
         .badge-pending { background: #FEF3C7; color: #D97706; }
@@ -125,7 +125,7 @@
         .badge-admin { background: #EEF2FF; color: #4F46E5; }
         .badge-user { background: #F3F4F6; color: #6B7280; }
 
-        /* --- 按钮样式 --- */
+        /* --- Button Styles --- */
         .btn-outline { border: 1px solid #E5E7EB; background: white; padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.9rem; }
         .btn-outline:hover { background: #F3F4F6; }
         .btn-danger { color: #EF4444; border-color: #FEE2E2; background: #FEF2F2; }
@@ -137,11 +137,11 @@
         .search-box { display: flex; gap: 10px; margin-bottom: 20px; }
         .search-box .form-input { flex: 1; }
 
-        /* --- 右侧操作栏 --- */
+        /* --- Right Action Bar --- */
         .action-card {
             background: white; border-radius: var(--card-radius); padding: 20px; box-shadow: var(--card-shadow);
             display: flex; flex-direction: column; gap: 10px;
-            /* 同样：sticky + 内部滚动 + hover 浮动 */
+            /* Similarly: sticky + internal scroll + hover float */
             position: sticky;
             top: 110px;
             z-index: 5;
@@ -158,7 +158,7 @@
 
         .settings-card canvas { max-width: 100%; height: auto; }
 
-        /* --- 响应式调整 --- */
+        /* --- Responsive Adjustments --- */
         .layout-container.wide-view {
             grid-template-columns: 240px 1fr;
         }
@@ -173,17 +173,17 @@
             .action-card { display: none; }
         }
         @media (max-width: 900px) {
-            /* 强制覆盖 wide-view 的样式，确保移动端始终是单栏布局 */
-            .layout-container, .layout-container.wide-view { 
-                grid-template-columns: 1fr; 
-                gap: 15px; 
-                margin: 15px auto; 
-                padding: 0 15px; 
+            /* Force override wide-view styles, ensure mobile is always single column layout */
+            .layout-container, .layout-container.wide-view {
+                grid-template-columns: 1fr;
+                gap: 15px;
+                margin: 15px auto;
+                padding: 0 15px;
             }
-            .sidebar-card { 
-                position: static; 
-                width: 100%; 
-                max-height: none; 
+            .sidebar-card {
+                position: static;
+                width: 100%;
+                max-height: none;
                 margin-bottom: 15px;
                 display: flex;
                 flex-wrap: wrap;
@@ -192,35 +192,35 @@
             }
             .sidebar-card .menu-title { width: 100%; margin-top: 0; margin-bottom: 5px; }
             .sidebar-card .menu-item { width: auto; flex: 1; justify-content: center; margin-bottom: 0; font-size: 0.85rem; padding: 10px; }
-            .sidebar-card div[style*="border-top"] { display: none; } /* 隐藏分隔线 */
-            
+            .sidebar-card div[style*="border-top"] { display: none; } /* Hide separator line */
+
             .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 15px; }
             .stat-card { padding: 15px; }
             .stat-icon { font-size: 2rem; }
             .stat-value { font-size: 1.5rem; }
-            
+
             .settings-card { padding: 20px; }
             .settings-header h2 { font-size: 1.2rem; }
-            
-            /* 移动端表格适配 */
+
+            /* Mobile Table Adaptation */
             .table-container { padding: 0; border-radius: 12px; overflow: hidden; box-shadow: none; border: 1px solid #E5E7EB; }
             table { display: block; width: 100%; }
-            thead { display: none; } /* 隐藏表头 */
+            thead { display: none; } /* Hide table header */
             tbody { display: block; width: 100%; }
-            tr { 
-                display: block; 
-                background: white; 
-                border-bottom: 1px solid #E5E7EB; 
-                padding: 15px; 
+            tr {
+                display: block;
+                background: white;
+                border-bottom: 1px solid #E5E7EB;
+                padding: 15px;
                 position: relative;
             }
             tr:last-child { border-bottom: none; }
-            td { 
-                display: flex; 
-                justify-content: space-between; 
-                align-items: center; 
-                padding: 5px 0; 
-                border: none; 
+            td {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 5px 0;
+                border: none;
                 text-align: right;
             }
             td::before {
@@ -231,13 +231,13 @@
                 text-align: left;
                 margin-right: 15px;
             }
-            /* 特殊处理 ID 和 Actions */
+            /* Special handling for ID and Actions */
             td:first-child { font-weight: bold; color: var(--primary); padding-bottom: 10px; border-bottom: 1px dashed #F3F4F6; margin-bottom: 10px; }
-            td:last-child { 
-                justify-content: flex-end; 
-                padding-top: 15px; 
-                margin-top: 10px; 
-                border-top: 1px dashed #F3F4F6; 
+            td:last-child {
+                justify-content: flex-end;
+                padding-top: 15px;
+                margin-top: 10px;
+                border-top: 1px dashed #F3F4F6;
                 gap: 10px;
             }
             td:last-child::before { display: none; }
@@ -246,8 +246,8 @@
             .stats-grid { grid-template-columns: 1fr; }
             .search-box { flex-direction: column; }
             .search-box .form-input { width: 100%; }
-            
-            /* 弹窗适配 */
+
+            /* Modal Adaptation */
             .modal-card { width: 90% !important; max-width: 400px; }
             .ban-options { grid-template-columns: repeat(2, 1fr); }
         }
@@ -266,21 +266,21 @@
         @keyframes modalPop { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
         .modal-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 15px; color: #1F2937; }
         .modal-desc { color: #6B7280; font-size: 0.95rem; margin-bottom: 20px; line-height: 1.5; }
-        .ban-options { 
-            display: grid; 
-            grid-template-columns: repeat(3, 1fr); 
-            gap: 12px; 
-            margin-bottom: 0; /* 移除底部间距，由父容器 padding 控制 */
+        .ban-options {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 0; /* Remove bottom margin, controlled by parent container padding */
         }
         .ban-option {
-            border: 1px solid #E5E7EB; 
-            border-radius: 10px; 
-            padding: 12px 5px; /* 减少左右内边距，防止文字换行 */
-            text-align: center; 
-            cursor: pointer; 
+            border: 1px solid #E5E7EB;
+            border-radius: 10px;
+            padding: 12px 5px; /* Reduce left/right padding to prevent text wrapping */
+            text-align: center;
+            cursor: pointer;
             transition: 0.2s;
-            font-size: 0.9rem; /* 稍微减小字体 */
-            white-space: nowrap; /* 防止文字换行 */
+            font-size: 0.9rem; /* Slightly reduce font size */
+            white-space: nowrap; /* Prevent text wrapping */
             overflow: hidden;
             text-overflow: ellipsis;
         }
@@ -291,17 +291,16 @@
 </head>
 <body>
 
-<!-- Ban Modal -->
 <div id="banModal" class="modal-overlay">
     <div class="modal-card" style="width: 420px; padding: 0; overflow: hidden;">
         <div style="padding: 20px 25px; border-bottom: 1px solid #F3F4F6; display: flex; justify-content: space-between; align-items: center;">
             <h3 class="modal-title" style="margin: 0; font-size: 1.1rem;">Ban User</h3>
             <button onclick="closeBanModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #9CA3AF; line-height: 1;">&times;</button>
         </div>
-        
+
         <div style="padding: 25px;">
             <div class="modal-desc" style="margin-bottom: 20px;">Select the duration for the account suspension.</div>
-            
+
             <div class="ban-options" style="grid-template-columns: repeat(3, 1fr); gap: 12px;">
                 <div class="ban-option" onclick="selectBanDuration(1, this)">1 Day</div>
                 <div class="ban-option" onclick="selectBanDuration(3, this)">3 Days</div>
@@ -328,17 +327,16 @@
     </div>
 </div>
 
-<!-- Edit Role Modal -->
 <div id="editRoleModal" class="modal-overlay">
     <div class="modal-card" style="width: 420px; padding: 0; overflow: hidden;">
         <div style="padding: 20px 25px; border-bottom: 1px solid #F3F4F6; display: flex; justify-content: space-between; align-items: center;">
             <h3 class="modal-title" style="margin: 0; font-size: 1.1rem;">Edit User Role</h3>
             <button onclick="closeEditRoleModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #9CA3AF; line-height: 1;">&times;</button>
         </div>
-        
+
         <div style="padding: 25px;">
             <div class="modal-desc" style="margin-bottom: 20px;">Select the new role for this user.</div>
-            
+
             <div class="ban-options" style="grid-template-columns: repeat(2, 1fr); gap: 15px;">
                 <div class="ban-option" onclick="selectEditRole('user', this)" id="opt-user">
                     <i class="ri-user-line" style="display:block; font-size:1.5rem; margin-bottom:5px; color:#6B7280;"></i>
@@ -358,14 +356,13 @@
     </div>
 </div>
 
-<!-- Unban Modal -->
 <div id="unbanModal" class="modal-overlay">
     <div class="modal-card" style="width: 420px; padding: 0; overflow: hidden;">
         <div style="padding: 20px 25px; border-bottom: 1px solid #F3F4F6; display: flex; justify-content: space-between; align-items: center;">
             <h3 class="modal-title" style="margin: 0; font-size: 1.1rem;">Unban User</h3>
             <button onclick="closeUnbanModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #9CA3AF; line-height: 1;">&times;</button>
         </div>
-        
+
         <div style="padding: 25px; text-align: center;">
             <div style="width: 60px; height: 60px; background: #ECFDF5; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
                 <i class="ri-user-follow-line" style="font-size: 2rem; color: #10B981;"></i>
@@ -628,9 +625,9 @@
 
 <script src="../../Public_Assets/js/headerbar.js"></script>
 <script>
-    // 2. 挂载 Headerbar
-    // 假设此文件在 Module_User_Account_Management/views/ 目录下，
-    // 需要回退两层 (../../) 才能找到 Public_Assets 和其他模块
+    // 2. Mount Headerbar
+    // Assuming this file is in the Module_User_Account_Management/views/ directory,
+    // Need to go back two levels (../../) to find Public_Assets and other modules
     document.addEventListener("DOMContentLoaded", () => {
         TreasureGoHeaderbar.mount({ basePath: '../../' });
     });
@@ -648,7 +645,7 @@
         await loadDepositStats();
         await loadWithdrawalStats();
 
-        // 搜索和筛选事件
+        // Search and filter events
         document.getElementById('user-search').addEventListener('input', filterUsers);
         document.getElementById('status-filter').addEventListener('change', filterUsers);
     });
@@ -660,7 +657,7 @@
             if (json.success) {
                 const data = json.data;
 
-                // 更新统计卡片
+                // Update statistic cards
                 document.getElementById('stat-total-users').textContent = data.total_users || 0;
                 document.getElementById('stat-active-users').textContent = data.active_users || 0;
                 document.getElementById('stat-pending-users').textContent = data.pending_users || 0;
@@ -672,17 +669,17 @@
                 document.getElementById('stat-verified').textContent = data.verified_users || 0;
                 document.getElementById('stat-admins').textContent = data.admin_count || 0;
 
-                // 绘制注册趋势图
+                // Draw registration trend chart
                 if (data.daily_registrations && data.daily_registrations.length > 0) {
                     drawRegistrationChart(data.daily_registrations);
                 }
 
-                // 绘制状态分布饼图
+                // Draw status distribution pie chart
                 if (data.status_distribution && data.status_distribution.length > 0) {
                     drawStatusChart(data.status_distribution);
                 }
 
-                // 绘制登录流量图（如果数据可用）
+                // Draw login traffic chart (if data is available)
                 if (data.daily_logins && data.daily_logins.length > 0 && data.logins_7days > 0) {
                     document.getElementById('login-chart-container').style.display = 'block';
                     drawLoginChart(data.daily_logins);
@@ -843,7 +840,7 @@
             const roleClass = user.User_Role === 'admin' ? 'badge-admin' : 'badge-user';
             const createdDate = new Date(user.User_Created_At).toLocaleDateString();
 
-            // 计算封禁剩余时间
+            // Calculate remaining ban time
             let banInfo = '';
             if (user.User_Status === 'banned') {
                 if (user.Ban_End_Date) {
@@ -851,9 +848,9 @@
                     const now = new Date();
                     const diffTime = endDate - now;
                     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                    
+
                     if (diffDays > 0) {
-                        // 使用 min-width 和 padding 实现胶囊状自适应 (Pill shape)
+                        // Use min-width and padding to achieve pill shape adaptation (Pill shape)
                         banInfo = `<span style="display:inline-flex; align-items:center; justify-content:center; min-width:20px; height:20px; padding:0 6px; background:#EF4444; color:white; border-radius:10px; font-size:0.7rem; font-weight:bold; margin-left:5px;" title="${diffDays} days left">${diffDays}</span>`;
                     } else {
                         // Expired
@@ -907,17 +904,17 @@
     function editUserRole(userId, currentRole) {
         currentEditUserId = userId;
         currentEditRole = currentRole;
-        
+
         // Reset selection
         document.querySelectorAll('#editRoleModal .ban-option').forEach(opt => opt.classList.remove('selected'));
-        
+
         // Pre-select current role
         if (currentRole === 'user') {
             document.getElementById('opt-user').classList.add('selected');
         } else if (currentRole === 'admin') {
             document.getElementById('opt-admin').classList.add('selected');
         }
-        
+
         document.getElementById('editRoleModal').style.display = 'flex';
     }
 
@@ -1019,7 +1016,7 @@
 
         const customInput = document.getElementById('custom-ban-input');
         document.getElementById('ban-error-msg').style.display = 'none'; // Clear error
-        
+
         if (days === 'custom') {
             customInput.style.display = 'block';
             document.getElementById('customDays').focus();
@@ -1032,7 +1029,7 @@
 
     async function confirmBan(btn) {
         if (!currentBanUserId) return;
-        
+
         let duration = currentBanDuration;
         if (duration === 'custom') {
             const days = document.getElementById('customDays').value;
@@ -1042,7 +1039,7 @@
             }
             duration = parseInt(days);
         }
-        
+
         // UI Loading state
         const originalContent = btn.innerHTML;
         const originalBg = btn.style.backgroundColor;
@@ -1158,9 +1155,9 @@
         allBtns.forEach(btn => btn.classList.remove('active-view'));
         if (btnElement) { btnElement.classList.add('active-view'); }
 
-        // 动态调整布局：User Management 需要更多空间，隐藏右侧栏
+        // Dynamically adjust layout: User Management needs more space, hide right sidebar
         const layoutContainer = document.querySelector('.layout-container');
-        
+
         if (viewName === 'users') {
             layoutContainer.classList.add('wide-view');
         } else {
@@ -1207,5 +1204,3 @@
 </script>
 </body>
 </html>
-
-

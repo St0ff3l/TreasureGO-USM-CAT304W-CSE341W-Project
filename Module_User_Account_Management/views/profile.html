@@ -13,7 +13,7 @@
   <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
 
   <style>
-    /* --- 1. 核心变量 --- */
+    /* --- 1. Core Variables --- */
     :root {
       --bg-color: #F3F6F9;
       --primary: #4F46E5;
@@ -39,7 +39,7 @@
               radial-gradient(circle at 90% 80%, rgba(245, 158, 11, 0.05) 0%, transparent 40%);
     }
 
-    /* --- 2. 布局系统 --- */
+    /* --- 2. Layout System --- */
     .layout-container {
       max-width: 1200px;
       margin: 30px auto;
@@ -50,7 +50,7 @@
       align-items: start;
     }
 
-    /* --- 左侧 Sidebar --- */
+    /* --- Left Sidebar --- */
     .sidebar-card {
       background: white; border-radius: var(--card-radius);
       padding: 20px; box-shadow: var(--card-shadow);
@@ -75,7 +75,7 @@
     .menu-item i { font-size: 1.2rem; }
     .menu-item.active-view { background: var(--primary); color: white; box-shadow: 0 4px 10px rgba(79, 70, 229, 0.3); }
 
-    /* --- 中间内容区 --- */
+    /* --- Middle Content Area --- */
     .main-content { display: flex; flex-direction: column; gap: 25px; }
     .view-section { display: none; animation: fadeIn 0.3s ease; }
     .view-section.active { display: block; }
@@ -139,7 +139,7 @@
     .btn-outline { border: 1px solid #E5E7EB; background: white; padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; }
     .btn-danger { color: #EF4444; border-color: #FEE2E2; background: #FEF2F2; }
 
-    /* --- 右侧操作栏 --- */
+    /* --- Right Action Bar --- */
     .action-card {
       background: white; border-radius: var(--card-radius); padding: 20px; box-shadow: var(--card-shadow);
       display: flex; flex-direction: column; gap: 10px;
@@ -202,7 +202,7 @@
     }
     .add-addr-row:hover { border-color: var(--primary); color: var(--primary); background: #EEF2FF; }
 
-    /* 弹窗样式 */
+    /* Modal Styles */
     .modal-overlay {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(0,0,0,0.5); z-index: 1000;
@@ -383,7 +383,7 @@
       .product-img { height: 120px; }
     }
 
-    /* 确保列表项中的文字和图标对齐 */
+    /* Ensure text and icons in list items are aligned */
     .addr-main-text, .addr-name-bold, .addr-phone-text {
       display: inline-flex;
       align-items: center;
@@ -730,26 +730,26 @@
 
 <script>
   document.addEventListener('DOMContentLoaded', async () => {
-    // 1. 挂载 Headerbar 组件
+    // 1. Mount Headerbar Component
     if (typeof TreasureGoHeaderbar !== 'undefined') {
       TreasureGoHeaderbar.mount({ basePath: '../../' });
     } else {
       console.error("TreasureGoHeaderbar script not loaded.");
     }
 
-    // 2. 获取个人资料数据
+    // 2. Fetch Profile Data
     await fetchProfileData();
 
-    // 3. 获取 Active Listings
+    // 3. Fetch Active Listings
     await fetchActiveListings();
 
-    // 4. 获取 Sold Listings (Reviews Tab)
+    // 4. Fetch Sold Listings (Reviews Tab)
     await fetchSoldListings();
 
-    // 5. 支持 hash 深链接（例如 profile.php#address）
+    // 5. Support hash deep linking (e.g. profile.php#address)
     const hash = (window.location.hash || '').replace('#', '').trim();
     if (hash === 'address' || hash === 'personal' || hash === 'security' || hash === 'overview') {
-      // 找到对应的 sidebar button 并触发 switchView
+      // Find corresponding sidebar button and trigger switchView
       const btn = document.querySelector(`.sidebar-card button.menu-item[onclick="switchView('${hash}', this)"]`);
       await switchView(hash, btn || null);
     }
@@ -1344,7 +1344,7 @@
       await loadAddressSubview();
     }
 
-    // 记录 hash（让刷新/复制链接保持在当前页）
+    // Record hash (keep current page on refresh/copy link)
     try {
       if (viewName) window.location.hash = '#' + viewName;
     } catch (_) {}
@@ -1467,7 +1467,7 @@
   const pinModal = document.getElementById('pin-manager-modal');
 
   function openPinModal() {
-    // 1. 重置表单
+    // 1. Reset Form
     document.getElementById('input_new_pin').value = '';
     document.getElementById('input_confirm_pin').value = '';
     document.getElementById('input_old_pin').value = '';
@@ -1476,14 +1476,14 @@
     const oldGroup = document.getElementById('group_old_pin');
     const oldInput = document.getElementById('input_old_pin');
 
-    // 2. 根据是否已设置 PIN 来切换 UI
+    // 2. Toggle UI based on whether PIN is set
     if (window.currentUserHasPin) {
-      // 修改模式：必须验证旧密码
+      // Edit Mode: Must verify old PIN
       title.innerText = "Change Payment PIN";
       oldGroup.style.display = 'block';
       oldInput.required = true;
     } else {
-      // 设置模式：无需旧密码
+      // Setup Mode: No old PIN needed
       title.innerText = "Set Payment PIN";
       oldGroup.style.display = 'none';
       oldInput.required = false;
@@ -1503,7 +1503,7 @@
     const confirmPin = document.getElementById('input_confirm_pin').value;
     const oldPin = document.getElementById('input_old_pin').value;
 
-    // 1. PIN 格式校验
+    // 1. PIN Format Validation
     if (!/^\d{6}$/.test(newPin)) {
       StatusDialog.warning("Invalid Format", "New PIN must be exactly 6 digits.", "OK");
       return;
@@ -1513,21 +1513,21 @@
       return;
     }
 
-    // 如果是修改模式，检查旧 PIN 格式
+    // If Edit Mode, check old PIN format
     if (window.currentUserHasPin && !/^\d{6}$/.test(oldPin)) {
       StatusDialog.warning("Invalid Format", "Old PIN must be 6 digits.", "OK");
       return;
     }
 
-    // 2. 准备数据
+    // 2. Prepare Data
     const payload = {
       new_pin: newPin,
-      // 如果已设置过 PIN，必须传旧 PIN 给后端验证
+      // If PIN already set, must send old PIN to backend for verification
       old_pin: window.currentUserHasPin ? oldPin : null
     };
 
     try {
-      // 3. 发送请求
+      // 3. Send Request
       const res = await fetch('../api/update_pin.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1539,7 +1539,7 @@
       if (json.success) {
         closePinModal();
         StatusDialog.success("Success", "Payment PIN updated successfully!", "OK", () => {
-          // 更新 UI 状态
+          // Update UI State
           window.currentUserHasPin = true;
           document.getElementById('pin_status_text').innerText = "PIN is set. Used for transactions.";
           document.getElementById('pin_status_text').style.color = "#059669";

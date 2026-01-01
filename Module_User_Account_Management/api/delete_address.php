@@ -18,7 +18,7 @@ if (!$addr_id) {
 }
 
 try {
-    // 只能删除自己的地址
+    // Can only delete own address
     $sql = "DELETE FROM Address WHERE Address_ID = :aid AND Address_User_ID = :uid";
     $stmt = $conn->prepare($sql);
     $stmt->execute([':aid' => $addr_id, ':uid' => $_SESSION['user_id']]);
@@ -29,7 +29,7 @@ try {
         echo json_encode(['status' => 'fail', 'message' => 'Address not found or unauthorized']);
     }
 } catch (PDOException $e) {
-    // 如果被订单引用了，通常不能硬删除
+    // If referenced by an order, usually cannot be hard deleted
     if ($e->getCode() == '23000') {
         echo json_encode(['status' => 'fail', 'message' => 'Cannot delete address used in past orders.']);
     } else {

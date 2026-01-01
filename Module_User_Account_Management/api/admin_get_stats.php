@@ -17,7 +17,7 @@ try {
 
     $stats = [];
 
-    // === 基础统计 ===
+    // === Basic Statistics ===
     $stmt = $pdo->query("SELECT COUNT(*) as count FROM User");
     $stats['total_users'] = $stmt->fetch()['count'];
 
@@ -30,17 +30,17 @@ try {
     $stmt = $pdo->query("SELECT COUNT(*) as count FROM User WHERE User_Status = 'banned'");
     $stats['banned_users'] = $stmt->fetch()['count'];
 
-    // === 邮箱验证统计 ===
+    // === Email Verification Statistics ===
     $stmt = $pdo->query("SELECT COUNT(*) as count FROM User WHERE User_Email_Verified = 1");
     $verifiedCount = $stmt->fetch()['count'];
     $stats['verified_users'] = $verifiedCount;
     $stats['verification_rate'] = $stats['total_users'] > 0 ? round(($verifiedCount / $stats['total_users']) * 100, 1) : 0;
 
-    // === 管理员数量 ===
+    // === Admin Count ===
     $stmt = $pdo->query("SELECT COUNT(*) as count FROM User WHERE User_Role = 'admin'");
     $stats['admin_count'] = $stmt->fetch()['count'];
 
-    // === 最近30天每日注册量 ===
+    // === Daily Registrations (Last 30 Days) ===
     $stmt = $pdo->prepare("SELECT 
         DATE(User_Created_At) as date,
         COUNT(*) as count
@@ -51,7 +51,7 @@ try {
     $stmt->execute();
     $dailyRegistrations = $stmt->fetchAll();
 
-    // 填充缺失的日期（确保连续）
+    // Fill missing dates (ensure continuity)
     $registrationData = [];
     $startDate = new DateTime('-29 days');
     $endDate = new DateTime();
@@ -71,33 +71,33 @@ try {
     }
     $stats['daily_registrations'] = $registrationData;
 
-    // === 最近7天新用户 ===
+    // === New Users (Last 7 Days) ===
     $stmt = $pdo->query("SELECT COUNT(*) as count FROM User WHERE User_Created_At >= DATE_SUB(NOW(), INTERVAL 7 DAY)");
     $stats['new_users_7days'] = $stmt->fetch()['count'];
 
-    // === 最近30天新用户 ===
+    // === New Users (Last 30 Days) ===
     $stmt = $pdo->query("SELECT COUNT(*) as count FROM User WHERE User_Created_At >= DATE_SUB(NOW(), INTERVAL 30 DAY)");
     $stats['new_users_30days'] = $stmt->fetch()['count'];
 
-    // === 用户状态分布（用于饼图） ===
+    // === User Status Distribution (for Pie Chart) ===
     $stmt = $pdo->query("SELECT User_Status, COUNT(*) as count FROM User GROUP BY User_Status");
     $statusDistribution = $stmt->fetchAll();
     $stats['status_distribution'] = $statusDistribution;
 
-    // === 今日注册数 ===
+    // === Today's Registrations ===
     $stmt = $pdo->query("SELECT COUNT(*) as count FROM User WHERE DATE(User_Created_At) = CURDATE()");
     $stats['today_registrations'] = $stmt->fetch()['count'];
 
-    // === 本周注册数 ===
+    // === This Week's Registrations ===
     $stmt = $pdo->query("SELECT COUNT(*) as count FROM User WHERE YEARWEEK(User_Created_At) = YEARWEEK(NOW())");
     $stats['this_week_registrations'] = $stmt->fetch()['count'];
 
-    // === 尝试获取登录日志（如果User_Logins表存在） ===
+    // === Try to get login logs (if User_Logins table exists) ===
     try {
         $stmt = $pdo->query("SELECT COUNT(*) as count FROM User_Logins WHERE Login_Time >= DATE_SUB(NOW(), INTERVAL 7 DAY)");
         $stats['logins_7days'] = $stmt->fetch()['count'] ?? 0;
 
-        // 最近7天每日登录量
+        // Daily logins in the last 7 days
         $stmt = $pdo->prepare("SELECT 
             DATE(Login_Time) as date,
             COUNT(*) as count
@@ -126,7 +126,7 @@ try {
         }
         $stats['daily_logins'] = $loginData;
     } catch (Exception $e) {
-        // User_Logins表不存在或字段名不同，忽略
+        // User_Logins table does not exist or column names differ, ignore
         $stats['logins_7days'] = 0;
         $stats['daily_logins'] = [];
     }

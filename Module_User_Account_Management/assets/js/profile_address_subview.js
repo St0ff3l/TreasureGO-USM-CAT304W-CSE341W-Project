@@ -38,7 +38,7 @@
         const idx = rawHash.indexOf('?');
         const idx2 = rawHash.indexOf('&');
         const cut = idx === -1 ? idx2 : (idx2 === -1 ? idx : Math.min(idx, idx2));
-        const tail = cut === -1 ? '' : rawHash.slice(cut + 1);
+        const tail = cut === -1 ? rawHash : rawHash.slice(cut + 1);
         if (!tail) return '';
 
         const hashParams = new URLSearchParams(tail);

@@ -2,30 +2,30 @@
 // Module_User_Account_Management/api/submit_review.php
 
 // ---------------------------------------------------------
-// 🔥 修复区域开始：为了让你的逻辑能跑起来，必须添加这些配置代码
+// Fix Area Start: Must add these configuration codes to make logic work
 // ---------------------------------------------------------
 
-// 1. 设置错误显示，方便调试
+// 1. Set error display for debugging
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
 header('Content-Type: application/json');
 
-// 2. 自动寻找配置文件 (不修改原有引用，而是用这个替代)
+// 2. Automatically find config file (replace original reference)
 $configFileName = 'treasurego_db_config.php';
 $currentDir = __DIR__;
 $foundPath = null;
 
-// 向上查找配置文件
+// Look up for config file
 for ($i = 0; $i < 5; $i++) {
-    // 尝试常见路径
+    // Try common paths
     if (file_exists($currentDir . '/Config/' . $configFileName)) { $foundPath = $currentDir . '/Config/' . $configFileName; break; }
     if (file_exists($currentDir . '/config/' . $configFileName)) { $foundPath = $currentDir . '/config/' . $configFileName; break; }
     if (file_exists($currentDir . '/../api/config/' . $configFileName)) { $foundPath = $currentDir . '/../api/config/' . $configFileName; break; }
     $currentDir = dirname($currentDir);
 }
-// 硬编码救命路径 (针对你的项目结构)
+// Hardcoded fallback path (for your project structure)
 if (!$foundPath) {
     $manualPath = __DIR__ . '/../../Module_Product_Ecosystem/api/config/treasurego_db_config.php';
     if (file_exists($manualPath)) $foundPath = $manualPath;
@@ -39,9 +39,9 @@ if ($foundPath) {
     exit;
 }
 
-// 3. 🔥 关键修复：添加一个替身函数
-// 你的逻辑里用的是 getDBConnection，但配置文件里是 getDatabaseConnection
-// 这里加一个“桥梁”，这样就不用改你下面的核心代码了
+// 3. Key Fix: Add a proxy function
+// Your logic uses getDBConnection, but config file has getDatabaseConnection
+// Add a bridge here so core code below doesn't need changes
 if (!function_exists('getDBConnection')) {
     function getDBConnection() {
         if (function_exists('getDatabaseConnection')) {
@@ -52,10 +52,10 @@ if (!function_exists('getDBConnection')) {
 }
 
 // ---------------------------------------------------------
-// 🔥 修复区域结束。以下是你要求的原始内容 (逻辑未动)
+// Fix Area End. Below is original content requested (logic unchanged)
 // ---------------------------------------------------------
 
-// 注释掉这行，因为上面已经加载了配置，且 auth.php 可能不存在
+// Comment out this line because config is loaded above, and auth.php might not exist
 // require_once __DIR__ . '/config/treasurego_db_config.php';
 // require_once __DIR__ . '/../includes/auth.php';
 
@@ -92,7 +92,7 @@ try {
         }
     }
 
-    $pdo = getDBConnection(); // 这里现在可以正常工作了
+    $pdo = getDBConnection(); // This works normally now
     $pdo->beginTransaction();
 
     // 3. Check if already reviewed (Edit Mode vs Create Mode)
@@ -185,7 +185,7 @@ try {
     if (isset($pdo) && $pdo->inTransaction()) {
         $pdo->rollBack();
     }
-    http_response_code(500); // 改为 500 以便前端捕获
+    http_response_code(500); // Change to 500 for frontend capture
     echo json_encode(['success' => false, 'message' => 'Server Error: ' . $e->getMessage()]);
 }
 ?>

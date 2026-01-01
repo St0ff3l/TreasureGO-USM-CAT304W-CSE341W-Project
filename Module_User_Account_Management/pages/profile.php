@@ -2,10 +2,10 @@
 // pages/profile.php
 require_once '../includes/auth.php';
 
-// 🔒 门卫拦截：必须登录才能看
+// Gatekeeper: Must be logged in to view
 require_login();
 
-// 引入 View
+// Include View
 require_once '../views/profile.html';
 ?>
 

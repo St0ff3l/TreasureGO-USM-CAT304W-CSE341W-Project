@@ -9,8 +9,8 @@ require_once '../includes/auth.php';
 
 start_session_safe();
 
-// 允许未登录用户获取公开信息（例如商品详情页展示卖家信息），但为了安全，这里仅返回公开字段
-// 如果业务要求必须登录才能看卖家信息，可以取消注释下面这行
+// Allow non-logged-in users to get public info (e.g. seller info on product detail page), but only return public fields for security
+// If business requires login to view seller info, uncomment the line below
 // if (!is_logged_in()) { ... }
 
 $user_id = $_GET['user_id'] ?? null;
@@ -22,13 +22,13 @@ if (!$user_id) {
 
 try {
     $pdo = getDBConnection();
-    // 只查询公开信息：用户名、头像、注册时间、评分
+    // Only query public info: username, avatar, registration time, rating
     $stmt = $pdo->prepare("SELECT User_ID, User_Username, User_Profile_image as User_Avatar_Url, User_Created_At, User_Average_Rating FROM User WHERE User_ID = ?");
     $stmt->execute([$user_id]);
     $user = $stmt->fetch();
 
     if ($user) {
-        // 计算统计数据 (分开处理，防止一个失败影响其他)
+        // Calculate statistics (process separately to prevent one failure affecting others)
         
         // A. Published Count
         try {

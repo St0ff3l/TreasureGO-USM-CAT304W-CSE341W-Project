@@ -10,7 +10,7 @@ require_once '../includes/auth.php';
 
 start_session_safe();
 
-// 1. 严格校验 Session
+// 1. Strict Session Validation
 if (!is_logged_in()) {
     http_response_code(401);
     echo json_encode(['status' => 'error', 'message' => 'Unauthorized']);
@@ -22,8 +22,8 @@ $user_id = get_current_user_id();
 try {
     $pdo = getDBConnection();
 
-    // 2. 查询数据
-    // 🔥 修改点 1: 在这里添加了 User_Payment_PIN_Hash
+    // 2. Query Data
+    // Modification Point 1: Added User_Payment_PIN_Hash here
     $stmt = $pdo->prepare("
         SELECT 
             User_ID, 
@@ -38,19 +38,19 @@ try {
         WHERE User_ID = ?
     ");
     $stmt->execute([$user_id]);
-    $user = $stmt->fetch(PDO::FETCH_ASSOC); // 建议明确使用关联数组
+    $user = $stmt->fetch(PDO::FETCH_ASSOC); // Suggest explicitly using associative array
 
     if ($user) {
         // =================================================================
-        // 🔥 修改点 2: 检查是否有 PIN，生成 has_pin 字段给前端
+        // Modification Point 2: Check if PIN exists, generate has_pin field for frontend
         // =================================================================
         $user['has_pin'] = !empty($user['User_Payment_PIN_Hash']);
 
-        // 为了安全，把密码 Hash 删掉，绝对不要传给前端
+        // For security, remove password Hash, never send to frontend
         unset($user['User_Payment_PIN_Hash']);
         // =================================================================
 
-        // 3. 计算统计数据 (分开处理，防止一个失败影响其他)
+        // 3. Calculate statistics (process separately to prevent one failure affecting others)
 
         // A. Published Count
         try {
@@ -177,26 +177,26 @@ try {
         }
 
         // =================================================================
-        // D. 新增：Privileges (特权计算)
+        // D. New: Privileges (Privilege Calculation)
         // =================================================================
 
-        // 1. 获取当前计算出的等级，如果没有则默认为 Free
+        // 1. Get currently calculated tier, default to Free if none
         $current_tier = $user['Memberships_tier'] ?? 'Free';
 
-        // 2. 定义哪些等级可以免除平台费 (根据你的需求修改这里的字符串，大小写必须和数据库一致)
+        // 2. Define which tiers can waive platform fees (modify strings here based on requirements, case must match database)
         $waive_platform_fee_tiers = ['VIP', 'SVIP'];
 
-        // 3. 定义哪些等级可以免除提现费 (如果以后需要)
+        // 3. Define which tiers can waive withdrawal fees (if needed in future)
         $waive_withdrawal_fee_tiers = ['SVIP'];
 
-        // 4. 将特权状态注入到 user 数组中
+        // 4. Inject privilege status into user array
         $user['privileges'] = [
             'waive_platform_fee' => in_array($current_tier, $waive_platform_fee_tiers),
             'waive_withdrawal_fee' => in_array($current_tier, $waive_withdrawal_fee_tiers)
         ];
         // =================================================================
 
-        // 4. 返回 JSON
+        // 4. Return JSON
         echo json_encode(['status' => 'success', 'data' => $user]);
     } else {
         echo json_encode(['status' => 'error', 'message' => 'User not found']);

@@ -2,11 +2,11 @@
 // api/session_status.php
 header('Content-Type: application/json');
 
-// 引入你的底层能力
+// Include underlying capabilities
 require_once '../includes/auth.php';
 require_once '../api/config/treasurego_db_config.php';
 
-// 1. 开启 Session 检查
+// 1. Start Session check
 start_session_safe();
 
 $response = [
@@ -14,8 +14,8 @@ $response = [
     'user' => null
 ];
 
-// 2. 如果已登录，获取最基本的用户展示信息（头像、名字）
-// ... 前面的代码不变 ...
+// 2. If logged in, get basic user display info (avatar, name)
+// ... Previous code remains unchanged ...
 
 if (is_logged_in()) {
     $user_id = get_current_user_id();
@@ -23,7 +23,7 @@ if (is_logged_in()) {
     try {
         $pdo = getDBConnection();
         if (!$pdo) {
-            // 数据库连接失败时仍然返回会话信息
+            // Return session info even if database connection fails
             $response['is_logged_in'] = true;
             $response['user'] = [
                 'user_id' => $user_id,
@@ -45,11 +45,11 @@ if (is_logged_in()) {
                 'user_id' => $user_id, // Add user_id to response
                 'username' => $user['User_Username'],
                 'role' => $user['User_Role'],
-                // 👇 修改这里：如果有图就用图，没图就给 null
+                // 👇 Modify here: Use image if available, otherwise null
                 'avatar_url' => $user['User_Profile_Image'] ?? null
             ];
         } else {
-            // 如果用户行未找到，则回退到会话
+            // If user row not found, fallback to session
             $response['is_logged_in'] = true;
             $response['user'] = [
                 'user_id' => $user_id,
@@ -59,7 +59,7 @@ if (is_logged_in()) {
             ];
         }
     } catch (Throwable $e) {
-        // 永远不要中断 JSON 输出
+        // Never interrupt JSON output
         $response['is_logged_in'] = true;
         $response['user'] = [
             'user_id' => $user_id,

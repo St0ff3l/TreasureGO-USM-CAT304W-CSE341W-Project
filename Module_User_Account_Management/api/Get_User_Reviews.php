@@ -1,7 +1,7 @@
 <?php
-// 文件路径: Module_User_Account_Management/api/Get_User_Reviews.php
+// File path: Module_User_Account_Management/api/Get_User_Reviews.php
 
-// 1. 设置错误报告
+// 1. Set error reporting
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
@@ -9,33 +9,33 @@ error_reporting(E_ALL);
 header('Content-Type: application/json');
 
 try {
-    // 2. 启动 Session
+    // 2. Start Session
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
     }
 
-    // 3. --- 指定唯一的、正确的配置文件路径 ---
-    // 从当前文件 (Get_User_Reviews.php) 往上退两级，进入 Product 模块找配置
+    // 3. --- Specify unique, correct config file path ---
+    // Go up two levels from current file (Get_User_Reviews.php) to Product module to find config
     $configPath = __DIR__ . '/../../Module_Product_Ecosystem/api/config/treasurego_db_config.php';
 
     if (!file_exists($configPath)) {
-        throw new Exception("找不到数据库配置文件。请确认文件是否存在于: " . $configPath);
+        throw new Exception("Database config file not found. Please confirm file exists at: " . $configPath);
     }
 
     require_once $configPath;
 
-    // 4. 再次检查函数是否存在 (调试用)
+    // 4. Check if function exists again (for debugging)
     if (!function_exists('getDatabaseConnection')) {
-        // 如果还找不到，说明加载的文件内容不对，可能是空文件
-        throw new Exception("配置文件已加载，但在该文件中未找到 getDatabaseConnection() 函数。请检查该文件内容是否完整。");
+        // If still not found, loaded file content is incorrect, possibly empty file
+        throw new Exception("Config file loaded, but getDatabaseConnection() function not found. Please check if file content is complete.");
     }
 
     $pdo = getDatabaseConnection();
     if (!$pdo) {
-        throw new Exception("数据库连接失败 (PDO 返回为空)。");
+        throw new Exception("Database connection failed (PDO returned empty).");
     }
 
-    // 5. 检查登录
+    // 5. Check Login
     if (!isset($_SESSION['user_id'])) {
         echo json_encode(['success' => false, 'message' => 'Please login first']);
         exit;
@@ -43,7 +43,7 @@ try {
 
     $current_user_id = $_SESSION['user_id'];
 
-    // 6. 获取用户评分数据 (从 User 表)
+    // 6. Get user rating data (from User table)
     $sqlUser = "SELECT User_Average_Rating, User_Review_Count FROM User WHERE User_ID = ?";
     $stmtUser = $pdo->prepare($sqlUser);
     $stmtUser->execute([$current_user_id]);
@@ -53,7 +53,7 @@ try {
         $userStats = ['User_Average_Rating' => '0.0', 'User_Review_Count' => 0];
     }
 
-    // 7. 获取评价列表 (从 Review 表关联查询)
+    // 7. Get review list (join query from Review table)
     $sqlReviews = "
         SELECT 
             r.Reviews_ID,
@@ -68,7 +68,7 @@ try {
             u.User_Username as Reviewer_Name,
             u.User_Profile_Image as Reviewer_Avatar,
             
-            -- 判断评价者身份
+            -- Determine reviewer identity
             CASE 
                 WHEN o.Orders_Buyer_ID = r.User_ID THEN 'Buyer'
                 WHEN o.Orders_Seller_ID = r.User_ID THEN 'Seller'
@@ -88,7 +88,7 @@ try {
     $stmtReviews->execute([$current_user_id]);
     $reviewsList = $stmtReviews->fetchAll(PDO::FETCH_ASSOC);
 
-    // 8. 返回最终数据
+    // 8. Return final data
     echo json_encode([
         'success' => true,
         'user_stats' => $userStats,
@@ -96,7 +96,7 @@ try {
     ]);
 
 } catch (Throwable $e) {
-    // 捕获所有错误并返回 JSON
+    // Catch all errors and return JSON
     http_response_code(500);
     echo json_encode([
         'success' => false,
