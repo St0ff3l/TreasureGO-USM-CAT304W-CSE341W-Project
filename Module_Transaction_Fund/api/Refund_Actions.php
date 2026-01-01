@@ -2,13 +2,13 @@
 // api/Refund_Actions.php
 
 header('Content-Type: application/json');
-error_reporting(0); // 生产环境建议关闭错误回显
+error_reporting(0);
 ini_set('display_errors', 0);
 
 require_once __DIR__ . '/config/treasurego_db_config.php';
 session_start();
 
-// 1. 登录检查
+// Verify user is logged in
 if (!isset($_SESSION['user_id'])) {
     echo json_encode(['success' => false, 'message' => 'Unauthorized']);
     exit;
@@ -18,15 +18,12 @@ $input = json_decode(file_get_contents('php://input'), true);
 $userId = $_SESSION['user_id'];
 $action = $input['action'] ?? '';
 
-// 获取 PDO 连接对象
+// Get PDO connection object
 $conn = getDatabaseConnection();
 
 try {
-    // =================================================================
-    // 🔥 场景 0: 获取卖家地址列表 (PDO 写法修正)
-    // =================================================================
+    // Scenario 0: Get seller address list
     if ($action === 'get_seller_addresses') {
-        // PDO 直接用 execute 传参，不需要 bind_param
         $stmt = $conn->prepare("
             SELECT Address_ID, Address_Receiver_Name, Address_Phone_Number, Address_Detail, Address_Is_Default 
             FROM Address 
@@ -36,31 +33,28 @@ try {
 
         $stmt->execute([$userId]);
 
-        // PDO 获取所有结果的写法
         $addresses = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         echo json_encode(['success' => true, 'addresses' => $addresses]);
         exit;
     }
 
-    // --- 以下操作都需要 Order ID ---
+    // Operations below require Order ID
     $orderId = $input['order_id'] ?? 0;
     if (!$orderId) {
         throw new Exception("Missing Order ID");
     }
 
-    // =================================================================
-    // 🟢 场景 1: 卖家处理申请 (Approve / Reject)
-    // =================================================================
+    // Scenario 1: Seller handles refund request (Approve/Reject)
     if ($action === 'seller_decision') {
         $decision = $input['decision'];
-        $refundType = $input['refund_type'] ?? ''; // 防止未定义警告
+        $refundType = $input['refund_type'] ?? '';
 
         $rejectReasonCode = $input['reject_reason_code'] ?? null;
         $rejectReasonText = $input['reject_reason_text'] ?? null;
         $returnAddressSnapshot = $input['return_address'] ?? null;
 
-        // 验证卖家身份
+        // Verify seller identity
         $stmt = $conn->prepare("SELECT Orders_Seller_ID FROM Orders WHERE Orders_Order_ID = ?");
         $stmt->execute([$orderId]);
         $order = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -69,7 +63,7 @@ try {
             throw new Exception("You are not the seller of this order.");
         }
 
-        // --- 卖家拒绝 ---
+        // Seller rejects the refund request
         if ($decision === 'reject') {
             $stmtAttempt = $conn->prepare("SELECT COALESCE(Request_Attempt, 1) AS Request_Attempt FROM Refund_Requests WHERE Order_ID = ?");
             $stmtAttempt->execute([$orderId]);
@@ -89,9 +83,9 @@ try {
             echo json_encode(['success' => true, 'refund_status' => $newStatus]);
             exit;
         }
-        // --- 卖家同意 ---
+        // Seller approves the refund request
         else if ($decision === 'approve') {
-            // 情况 B1: 仅退款
+            // Case B1: Refund only
             if ($refundType === 'refund_only') {
                 $stmt = $conn->prepare("SELECT Refund_Amount, Buyer_ID FROM Refund_Requests WHERE Order_ID = ?");
                 $stmt->execute([$orderId]);
@@ -103,7 +97,7 @@ try {
 
                 $conn->beginTransaction();
                 try {
-                    // 查余额 (For Update)
+                    // Get current balance
                     $balanceStmt = $conn->prepare("SELECT Balance_After FROM Wallet_Logs WHERE User_ID = ? ORDER BY Log_ID DESC LIMIT 1 FOR UPDATE");
                     $balanceStmt->execute([$buyerId]);
                     $lastLog = $balanceStmt->fetch(PDO::FETCH_ASSOC);
@@ -111,11 +105,11 @@ try {
 
                     $newBalance = $currentBalance + $amount;
 
-                    // 写日志
+                    // Write wallet log
                     $logSql = "INSERT INTO Wallet_Logs (User_ID, Amount, Balance_After, Description, Reference_Type, Reference_ID, Created_AT) VALUES (?, ?, ?, ?, ?, ?, NOW())";
                     $conn->prepare($logSql)->execute([$buyerId, $amount, $newBalance, "Refund for Order #$orderId (Refund Only)", 'Order', $orderId]);
 
-                    // 更新状态
+                    // Update refund status
                     $conn->prepare("UPDATE Refund_Requests SET Refund_Status = 'completed', Refund_Completed_At = NOW() WHERE Order_ID = ?")->execute([$orderId]);
                     $conn->prepare("UPDATE Orders SET Orders_Status = 'cancelled' WHERE Orders_Order_ID = ?")->execute([$orderId]);
 
@@ -125,7 +119,7 @@ try {
                     throw $e;
                 }
             }
-            // 情况 B2: 退货退款
+            // Case B2: Return and refund
             else {
                 if (!$returnAddressSnapshot) {
                     throw new Exception("Return address is required for approval.");
@@ -144,9 +138,7 @@ try {
         exit;
     }
 
-    // =================================================================
-    // 🟣 场景: 卖家拒收退货
-    // =================================================================
+    // Scenario: Seller refuses received return
     else if ($action === 'seller_refuse_return_received') {
         $reasonCode = $input['reason_code'] ?? null;
         $reasonText = $input['reason_text'] ?? null;
@@ -171,9 +163,7 @@ try {
         exit;
     }
 
-    // =================================================================
-    // 🟢 场景 2: 卖家确认收到退货
-    // =================================================================
+    // Scenario 2: Seller confirms received return
     else if ($action === 'seller_confirm_return_received') {
         $stmt = $conn->prepare("SELECT Orders_Seller_ID FROM Orders WHERE Orders_Order_ID = ?");
         $stmt->execute([$orderId]);
@@ -214,14 +204,12 @@ try {
         }
     }
 
-    // =================================================================
-    // 🟢 场景 3: 买家提交快递单号 (已加安全验证 - PDO版)
-    // =================================================================
+    // Scenario 3: Buyer submits return tracking number
     else if ($action === 'submit_return_tracking') {
         $tracking = $input['tracking'] ?? '';
         if (!$tracking) throw new Exception("Tracking required");
 
-        // 验证必须是买家
+        // Verify user is the buyer
         $checkStmt = $conn->prepare("SELECT Orders_Buyer_ID FROM Orders WHERE Orders_Order_ID = ?");
         $checkStmt->execute([$orderId]);
         $orderInfo = $checkStmt->fetch(PDO::FETCH_ASSOC);
@@ -236,11 +224,9 @@ try {
         echo json_encode(['success' => true]);
     }
 
-    // =================================================================
-    // 🟢 场景 4: 买家确认面交退货 (已加安全验证 - PDO版)
-    // =================================================================
+    // Scenario 4: Buyer confirms in-person return handover
     else if ($action === 'confirm_return_handover') {
-        // 验证必须是买家
+        // Verify user is the buyer
         $checkStmt = $conn->prepare("SELECT Orders_Buyer_ID FROM Orders WHERE Orders_Order_ID = ?");
         $checkStmt->execute([$orderId]);
         $orderInfo = $checkStmt->fetch(PDO::FETCH_ASSOC);
