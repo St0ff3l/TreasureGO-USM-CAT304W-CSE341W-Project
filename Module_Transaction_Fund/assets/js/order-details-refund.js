@@ -53,9 +53,34 @@
 
   // Try to format seller's return address for buyers during return shipping.
   // Source priority:
-  // 1) Address module current address object (selected by seller on approve)
-  // 2) Common order fields (best-effort)
-  function getReturnAddressHtml() {
+  // 1) Order-level snapshot fields from orders API (Seller_Return_Address/Seller_Name/Seller_Phone)
+  // 2) Address module current address object (best-effort)
+  function getReturnAddressHtml(order) {
+    try {
+      const sellerReturnAddr =
+          order?.Seller_Return_Address ??
+          order?.seller_return_address ??
+          order?.Return_Address_Detail ??
+          order?.return_address_detail ??
+          '';
+      const sellerName = order?.Seller_Name ?? order?.seller_name ?? '';
+      const sellerPhone = order?.Seller_Phone ?? order?.seller_phone ?? '';
+
+      if (String(sellerReturnAddr + sellerName + sellerPhone).trim()) {
+        return `
+          <div style="margin-top:10px; padding:10px; background:#FFF7ED; border:1px solid #FED7AA; border-radius:8px;">
+            <div style="font-size:0.75rem; color:#9A3412; font-weight:700; margin-bottom:6px;">RETURN ADDRESS</div>
+            ${sellerName ? `<div style="font-weight:700; color:#7C2D12;">${escapeHtml(sellerName)}</div>` : ''}
+            ${sellerPhone ? `<div style="color:#7C2D12;">${escapeHtml(sellerPhone)}</div>` : ''}
+            ${sellerReturnAddr ? `<div style="color:#7C2D12; margin-top:6px; white-space:pre-line;">${escapeHtml(sellerReturnAddr)}</div>` : ''}
+          </div>
+        `;
+      }
+    } catch (_) {
+      // ignore
+    }
+
+    // Fallback: try address module (may hold buyer shipping address; keep for compatibility)
     try {
       const addr = global.OrderDetailsAddress?.getCurrentOrderAddress?.();
       if (addr) {
@@ -76,6 +101,7 @@
     } catch (_) {
       // ignore
     }
+
     return '';
   }
 
@@ -174,7 +200,7 @@
       const returnTracking = order.Return_Tracking_Number || order.return_tracking_number || '';
       const deliveryMethod = String(order.Delivery_Method || 'shipping').toLowerCase().trim();
 
-      const returnAddressHtml = isBuyer ? getReturnAddressHtml() : '';
+      const returnAddressHtml = isBuyer ? getReturnAddressHtml(order) : '';
 
       // Meet-up Logic
       if (deliveryMethod === 'meetup') {

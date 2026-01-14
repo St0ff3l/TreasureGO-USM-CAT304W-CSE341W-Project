@@ -405,6 +405,19 @@
             return;
           }
 
+          // Prefer shared helper (consistent with Product Detail chat behavior).
+          // This also covers cases where the page has a "Contact Buyer"/"Contact Seller" label but no wiring.
+          if (typeof global.goToOrderChat === 'function') {
+            global.goToOrderChat({
+              contactId,
+              productId: order.Product_ID || '',
+              // for debugging/analytics if needed
+              orderId: order.Orders_Order_ID || '',
+            });
+            return;
+          }
+
+          // Fallback: local session check + jump.
           let currentUserId = state.CURRENT_USER_ID;
           if (!currentUserId) {
             try {
