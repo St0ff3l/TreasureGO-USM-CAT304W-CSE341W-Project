@@ -37,7 +37,16 @@
       min-height: 100vh;
       display: flex;
       flex-direction: column;
-      overflow: hidden; /* Prevent double scrollbars */
+
+      /*
+        IMPORTANT:
+        Don't lock scrolling on the whole page.
+        Mobile browsers (esp. iOS Safari) + fixed vh containers can trap scroll.
+        Keep horizontal overflow hidden, allow vertical scroll.
+      */
+      overflow-x: hidden;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
     }
 
     .main-container {
@@ -53,9 +62,21 @@
       /* Container margin adjusted to 40px */
       margin: 40px auto;
 
-      /* Recalculate height: 100vh - top(40) - bottom(40) - HeaderBar(approx 60px) */
-      /* Ensures chat window scrolls within card, not the whole page */
+      /*
+        Desktop can keep the fixed card height to make the messages area scroll.
+        On mobile, 100vh is unstable (address bar), so use max-height with dvh.
+      */
       height: calc(100vh - 140px);
+    }
+
+    /* Mobile: let the card size adapt and avoid scroll-trap */
+    @media (max-width: 767.98px) {
+      .main-container {
+        height: auto;
+        max-height: calc(100vh - 140px);
+        max-height: calc(100dvh - 140px);
+        margin: 12px auto; /* bring the card closer to headerbar on small screens */
+      }
     }
 
     @media (min-width: 768px) {
